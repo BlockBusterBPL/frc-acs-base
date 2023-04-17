@@ -17,9 +17,9 @@ public class Twist2d {
         return kIdentity;
     }
 
-    public final double dx;
-    public final double dy;
-    public final double dtheta; // Radians!
+    public double dx;
+    public double dy;
+    public double dtheta; // Radians!
 
     public Twist2d(double dx, double dy, double dtheta) {
         this.dx = dx;

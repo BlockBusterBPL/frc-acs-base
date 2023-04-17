@@ -101,7 +101,7 @@ public final class Constants {
   // Drive constants
   public static final double kDriveReduction = (14.0 / 50.0) * (28.0 / 16.0) * (15.0 / 45.0);
   public static final double kSteerReduction = (14.0 / 50.0) * (10.0 / 60.0);
-  public static final double kDriveWheelDiameter = 0.10033 * 81.0 / 84.213; /// meters, TODO measure
+  public static final double kDriveWheelDiameter = Units.inchesToMeters(4); /// meters, TODO measure
   public static final double kDriveTrackwidthMeters = 0.61595; // DONE Measure and set trackwidth
   public static final double kDriveWheelbaseMeters = 0.61595; // DONE Measure and set wheelbase
 
@@ -235,6 +235,13 @@ public final class Constants {
   public static final double kMaintainRadiusKp = 1.5;
   public static final double kMaintainRadiusKi = 0.0;
   public static final double kMaintainRadiusKd = 0.0;
+
+  //Pure Pursuit Constants
+  public static final double kPathLookaheadTime = 0.25; // From 1323 (2019)
+  public static final double kPathMinLookaheadDistance = 12.0; //From 1323 (2019)
+  public static final double kAdaptivePathMinLookaheadDistance = 6.0;
+  public static final double kAdaptivePathMaxLookaheadDistance = 24.0;
+  public static final double kAdaptiveErrorLookaheadCoefficient = 0.01;
 
   /** Checks whether the robot the correct robot is selected when deploying. */
   public static void main(String... args) {

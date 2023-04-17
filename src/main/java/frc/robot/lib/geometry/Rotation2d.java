@@ -84,6 +84,10 @@ public class Rotation2d implements IRotation2d<Rotation2d> {
         return fromRadians(Math.toRadians(angle_degrees));
     }
 
+    public static Rotation2d fromRotations(double angle_rotations) {
+        return fromDegrees(angle_rotations * 360);
+    }
+
     public double cos() {
         ensureTrigComputed();
         return cos_angle_;

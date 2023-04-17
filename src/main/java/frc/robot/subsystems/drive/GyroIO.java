@@ -4,5 +4,12 @@
 
 package frc.robot.subsystems.drive;
 
+import org.littletonrobotics.junction.AutoLog;
+
 /** Add your docs here. */
-public class DriveIO {}
+public interface GyroIO {
+    @AutoLog
+    public static class GryoIOInputs {
+        public double angleRotations;
+    }
+}
