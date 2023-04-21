@@ -33,13 +33,13 @@ public class Pose2dWithCurvature implements IPose2d<Pose2dWithCurvature>, ICurva
         dcurvature_ds_ = dcurvature_ds;
     }
 
-    public Pose2dWithCurvature(final Translation2d translation, final Rotation2d rotation, double curvature) {
+    public Pose2dWithCurvature(final Translation2d translation, final ImprovedRotation2d rotation, double curvature) {
         pose_ = new Pose2d(translation, rotation);
         curvature_ = curvature;
         dcurvature_ds_ = 0.0;
     }
 
-    public Pose2dWithCurvature(final Translation2d translation, final Rotation2d rotation, double curvature, double dcurvature_ds) {
+    public Pose2dWithCurvature(final Translation2d translation, final ImprovedRotation2d rotation, double curvature, double dcurvature_ds) {
         pose_ = new Pose2d(translation, rotation);
         curvature_ = curvature;
         dcurvature_ds_ = dcurvature_ds;
@@ -76,7 +76,7 @@ public class Pose2dWithCurvature implements IPose2d<Pose2dWithCurvature>, ICurva
     }
 
     @Override
-    public final Rotation2d getRotation() {
+    public final ImprovedRotation2d getRotation() {
         return getPose().getRotation();
     }
 
@@ -115,7 +115,7 @@ public class Pose2dWithCurvature implements IPose2d<Pose2dWithCurvature>, ICurva
     }
 
     @Override
-    public Pose2dWithCurvature rotateBy(Rotation2d other) {
+    public Pose2dWithCurvature rotateBy(ImprovedRotation2d other) {
         return new Pose2dWithCurvature(getPose().rotateBy(other), getCurvature(), getDCurvatureDs());
     }
 

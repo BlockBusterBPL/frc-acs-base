@@ -1,10 +1,12 @@
 package frc.robot.lib.swerve;
 
+import edu.wpi.first.math.kinematics.SwerveModuleState;
+
 public class SwerveSetpoint {
-    public ChassisSpeeds mChassisSpeeds;
+    public ImprovedChassisSpeeds mChassisSpeeds;
     public SwerveModuleState[] mModuleStates;
 
-    public SwerveSetpoint(ChassisSpeeds chassisSpeeds, SwerveModuleState[] initialStates) {
+    public SwerveSetpoint(ImprovedChassisSpeeds chassisSpeeds, SwerveModuleState[] initialStates) {
         this.mChassisSpeeds = chassisSpeeds;
         this.mModuleStates = initialStates;
     }

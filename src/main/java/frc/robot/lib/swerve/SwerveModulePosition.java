@@ -6,7 +6,7 @@ package frc.robot.lib.swerve;
 
 import java.util.Objects;
 
-import frc.robot.lib.geometry.Rotation2d;
+import frc.robot.lib.geometry.ImprovedRotation2d;
 
 /** Represents the state of one swerve module. */
 public class SwerveModulePosition implements Comparable<SwerveModulePosition> {
@@ -14,7 +14,7 @@ public class SwerveModulePosition implements Comparable<SwerveModulePosition> {
   public double distanceMeters;
 
   /** Angle of the module. */
-  public Rotation2d angle = Rotation2d.fromDegrees(0);
+  public ImprovedRotation2d angle = ImprovedRotation2d.fromDegrees(0);
 
   /** Constructs a SwerveModulePosition with zeros for distance and angle. */
   public SwerveModulePosition() {}
@@ -25,7 +25,7 @@ public class SwerveModulePosition implements Comparable<SwerveModulePosition> {
    * @param distanceMeters The distance measured by the wheel of the module.
    * @param angle The angle of the module.
    */
-  public SwerveModulePosition(double distanceMeters, Rotation2d angle) {
+  public SwerveModulePosition(double distanceMeters, ImprovedRotation2d angle) {
     this.distanceMeters = distanceMeters;
     this.angle = angle;
   }

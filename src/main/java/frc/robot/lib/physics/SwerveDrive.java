@@ -1,6 +1,6 @@
 package frc.robot.lib.physics;
 
-import frc.robot.lib.geometry.Rotation2d;
+import frc.robot.lib.geometry.ImprovedRotation2d;
 import frc.robot.lib.geometry.Translation2d;
 import java.text.DecimalFormat;
 
@@ -23,22 +23,22 @@ public class SwerveDrive {
     // Can refer to velocity or acceleration depending on context.
     public static class ChassisState {
         public Translation2d movement;
-        public Rotation2d heading;
+        public ImprovedRotation2d heading;
 
-        public ChassisState(Translation2d movement, Rotation2d heading) {
+        public ChassisState(Translation2d movement, ImprovedRotation2d heading) {
             this.heading = heading;
             this.movement = movement;
         }
 
         public ChassisState(Translation2d movement) {
             this.movement = movement;
-            this.heading = Rotation2d.identity();
+            this.heading = ImprovedRotation2d.identity();
         }
 
 
         public ChassisState() {
             this.movement = Translation2d.identity();
-            this.heading = Rotation2d.identity();
+            this.heading = ImprovedRotation2d.identity();
         }
 
         @Override

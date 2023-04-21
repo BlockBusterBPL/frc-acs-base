@@ -5,9 +5,7 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.lib.control.Lookahead;
 import frc.robot.lib.geometry.*;
 import frc.robot.lib.physics.SwerveDrive;
-import frc.robot.lib.swerve.ChassisSpeeds;
-import frc.robot.lib.swerve.SwerveDriveKinematics;
-import frc.robot.lib.swerve.SwerveDriveOdometry;
+import frc.robot.lib.swerve.ImprovedChassisSpeeds;
 import frc.robot.lib.trajectory.*;
 import frc.robot.lib.trajectory.timing.*;
 import frc.robot.lib.util.*;
@@ -40,27 +38,27 @@ public class DriveMotionPlanner implements CSVWritable {
     private double defaultCook = 0.4;
     private boolean useDefaultCook = true;
 
-    TrajectoryIterator<TimedState<Pose2dWithCurvature>, TimedState<Rotation2d>> mCurrentTrajectory;
+    TrajectoryIterator<TimedState<Pose2dWithCurvature>, TimedState<ImprovedRotation2d>> mCurrentTrajectory;
     boolean mIsReversed = false;
     double mLastTime = Double.POSITIVE_INFINITY;
     public TimedState<Pose2dWithCurvature> mLastPathSetpoint = null;
     public TimedState<Pose2dWithCurvature> mPathSetpoint = new TimedState<>(Pose2dWithCurvature.identity());
-    public TimedState<Rotation2d> mHeadingSetpoint = null;
-    public TimedState<Rotation2d> mLastHeadingSetpoint = new TimedState<>(Rotation2d.identity());
+    public TimedState<ImprovedRotation2d> mHeadingSetpoint = null;
+    public TimedState<ImprovedRotation2d> mLastHeadingSetpoint = new TimedState<>(ImprovedRotation2d.identity());
 
     Pose2d mError = Pose2d.identity();
 
     Translation2d mTranslationalError = Translation2d.identity();
-    Rotation2d mHeadingError = Rotation2d.identity();
-    Rotation2d mInitialHeading = Rotation2d.identity();
-    Rotation2d mRotationDiff = Rotation2d.identity();
+    ImprovedRotation2d mHeadingError = ImprovedRotation2d.identity();
+    ImprovedRotation2d mInitialHeading = ImprovedRotation2d.identity();
+    ImprovedRotation2d mRotationDiff = ImprovedRotation2d.identity();
     Pose2d mCurrentState = Pose2d.identity();
 
     double mCurrentTrajectoryLength = 0.0;
     double mTotalTime = Double.POSITIVE_INFINITY;
     double mStartTime = Double.POSITIVE_INFINITY;
     double mDTheta = 0.0;
-    ChassisSpeeds mOutput = new ChassisSpeeds();
+    ImprovedChassisSpeeds mOutput = new ImprovedChassisSpeeds();
 
     Lookahead mSpeedLookahead = null;
 
@@ -79,7 +77,7 @@ public class DriveMotionPlanner implements CSVWritable {
         SmartDashboard.putNumber("Adaptive Lookahead", -1.0);
     }
 
-    public void setTrajectory(final TrajectoryIterator<TimedState<Pose2dWithCurvature>, TimedState<Rotation2d>> trajectory) {
+    public void setTrajectory(final TrajectoryIterator<TimedState<Pose2dWithCurvature>, TimedState<ImprovedRotation2d>> trajectory) {
         mCurrentTrajectory = trajectory;
         mPathSetpoint = trajectory.getState();
         mHeadingSetpoint = trajectory.getHeading();
@@ -101,17 +99,17 @@ public class DriveMotionPlanner implements CSVWritable {
 
     public void reset() {
         mTranslationalError = Translation2d.identity();
-        mHeadingError = Rotation2d.identity();
+        mHeadingError = ImprovedRotation2d.identity();
         mLastHeadingSetpoint = null;
         mLastPathSetpoint = null;
-        mOutput = new ChassisSpeeds();
+        mOutput = new ImprovedChassisSpeeds();
         mLastTime = Double.POSITIVE_INFINITY;
     }
 
-    public Trajectory<TimedState<Pose2dWithCurvature>, TimedState<Rotation2d>> generateTrajectory(
+    public Trajectory<TimedState<Pose2dWithCurvature>, TimedState<ImprovedRotation2d>> generateTrajectory(
             boolean reversed,
             final List<Pose2d> waypoints,
-            final List<Rotation2d> headings,
+            final List<ImprovedRotation2d> headings,
             final List<TimingConstraint<Pose2dWithCurvature>> constraints,
             double max_vel,  // inches/s
             double max_accel,  // inches/s^2
@@ -119,10 +117,10 @@ public class DriveMotionPlanner implements CSVWritable {
         return generateTrajectory(reversed, waypoints, headings, constraints, 0.0, 0.0, max_vel, max_accel, max_voltage);
     }
 
-    public Trajectory<TimedState<Pose2dWithCurvature>, TimedState<Rotation2d>> generateTrajectory(
+    public Trajectory<TimedState<Pose2dWithCurvature>, TimedState<ImprovedRotation2d>> generateTrajectory(
             boolean reversed,
             final List<Pose2d> waypoints,
-            final List<Rotation2d> headings,
+            final List<ImprovedRotation2d> headings,
             final List<TimingConstraint<Pose2dWithCurvature>> constraints,
             double start_vel,
             double end_vel,
@@ -130,8 +128,8 @@ public class DriveMotionPlanner implements CSVWritable {
             double max_accel,  // inches/s^2
             double max_voltage) {
         List<Pose2d> waypoints_maybe_flipped = waypoints;
-        List<Rotation2d> headings_maybe_flipped = headings;
-        final Pose2d flip = Pose2d.fromRotation(new Rotation2d(-1, 0, false));
+        List<ImprovedRotation2d> headings_maybe_flipped = headings;
+        final Pose2d flip = Pose2d.fromRotation(new ImprovedRotation2d(-1, 0, false));
         // TODO re-architect the spline generator to support reverse.
         if (reversed) {
             waypoints_maybe_flipped = new ArrayList<>(waypoints.size());
@@ -143,16 +141,16 @@ public class DriveMotionPlanner implements CSVWritable {
         }
 
         // Create a trajectory from splines.
-        Trajectory<Pose2dWithCurvature, Rotation2d> trajectory = TrajectoryUtil.trajectoryFromWaypoints(
+        Trajectory<Pose2dWithCurvature, ImprovedRotation2d> trajectory = TrajectoryUtil.trajectoryFromWaypoints(
                 waypoints_maybe_flipped, headings_maybe_flipped, kMaxDx, kMaxDy, kMaxDTheta);
 
         if (reversed) {
             List<Pose2dWithCurvature> flipped_points = new ArrayList<>(trajectory.length());
-            List<Rotation2d> flipped_headings = new ArrayList<>(trajectory.length());
+            List<ImprovedRotation2d> flipped_headings = new ArrayList<>(trajectory.length());
             for (int i = 0; i < trajectory.length(); ++i) {
                 flipped_points.add(new Pose2dWithCurvature(trajectory.getPoint(i).state().getPose().transformBy(flip), -trajectory
                         .getPoint(i).state().getCurvature(), trajectory.getPoint(i).state().getDCurvatureDs()));
-                flipped_headings.add(new Rotation2d(trajectory.getPoint(i).heading().rotateBy(flip.getRotation())));
+                flipped_headings.add(new ImprovedRotation2d(trajectory.getPoint(i).heading().rotateBy(flip.getRotation())));
             }
             trajectory = new Trajectory<>(flipped_points, flipped_headings);
         }
@@ -168,7 +166,7 @@ public class DriveMotionPlanner implements CSVWritable {
         }
 
         // Generate the timed trajectory.
-        Trajectory<TimedState<Pose2dWithCurvature>, TimedState<Rotation2d>> timed_trajectory = TimingUtil.timeParameterizeTrajectory
+        Trajectory<TimedState<Pose2dWithCurvature>, TimedState<ImprovedRotation2d>> timed_trajectory = TimingUtil.timeParameterizeTrajectory
                 (reversed, new
                         DistanceView<>(trajectory), kMaxDx, Arrays.asList(), start_vel, end_vel, max_vel, max_accel);
         return timed_trajectory;
@@ -184,7 +182,7 @@ public class DriveMotionPlanner implements CSVWritable {
         return ret + mPathSetpoint.toCSV() + mHeadingSetpoint.toCSV();
     }
 
-    protected ChassisSpeeds updatePIDChassis(ChassisSpeeds chassisSpeeds) {
+    protected ImprovedChassisSpeeds updatePIDChassis(ImprovedChassisSpeeds chassisSpeeds) {
         // Feedback on longitudinal error (distance).
         final double kPathk = 0.6/* * Math.hypot(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond)*/;//0.15;
         final double kPathKTheta = 0.3;
@@ -199,7 +197,7 @@ public class DriveMotionPlanner implements CSVWritable {
         return chassisSpeeds;
     }
 
-    protected ChassisSpeeds updatePurePursuit(Pose2d current_state, double feedforwardOmegaRadiansPerSecond) {
+    protected ImprovedChassisSpeeds updatePurePursuit(Pose2d current_state, double feedforwardOmegaRadiansPerSecond) {
         double lookahead_time = Constants.kPathLookaheadTime;
         final double kLookaheadSearchDt = 0.01;
         TimedState<Pose2dWithCurvature> lookahead_state = mCurrentTrajectory.preview(lookahead_time).state();
@@ -233,7 +231,7 @@ public class DriveMotionPlanner implements CSVWritable {
         		lookahead_state.state().getTranslation());
 
         //Set the steering direction as the direction of the vector
-        Rotation2d steeringDirection = lookaheadTranslation.direction();
+        ImprovedRotation2d steeringDirection = lookaheadTranslation.direction();
         SmartDashboard.putString("Steering Direction", steeringDirection.toString());
         
         //Convert from field-relative steering direction to robot-relative
@@ -254,7 +252,7 @@ public class DriveMotionPlanner implements CSVWritable {
         //Convert the Polar Coordinate (speed, direction) into a Rectangular Coordinate (Vx, Vy) in Robot Frame
         final Translation2d steeringVector = new Translation2d(steeringDirection.cos() * normalizedSpeed, steeringDirection.sin() * normalizedSpeed);
         SmartDashboard.putString("Steering Vector", steeringVector.toString());
-        ChassisSpeeds chassisSpeeds = new ChassisSpeeds(steeringVector.x() * Constants.kMaxVelocityMetersPerSecond, steeringVector.y() * Constants.kMaxVelocityMetersPerSecond, feedforwardOmegaRadiansPerSecond);
+        ImprovedChassisSpeeds chassisSpeeds = new ImprovedChassisSpeeds(steeringVector.x() * Constants.kMaxVelocityMetersPerSecond, steeringVector.y() * Constants.kMaxVelocityMetersPerSecond, feedforwardOmegaRadiansPerSecond);
         
 
         //Use the P-Controller for To Follow the Time-Parametrized Heading
@@ -265,14 +263,14 @@ public class DriveMotionPlanner implements CSVWritable {
         return chassisSpeeds;
     }
 
-    public ChassisSpeeds update(double timestamp, Pose2d current_state) {
+    public ImprovedChassisSpeeds update(double timestamp, Pose2d current_state) {
         if (mCurrentTrajectory == null) return null;
 
         if (mCurrentTrajectory.getProgress() == 0.0 && !Double.isFinite(mLastTime)) {
             mLastTime = timestamp;
 
             mInitialHeading =
-                    new Rotation2d(
+                    new ImprovedRotation2d(
                     mCurrentTrajectory.trajectory().getPoint(0).heading().state());
             var finalHeading = mCurrentTrajectory.trajectory().getLastPoint().heading().state();
             mTotalTime = mCurrentTrajectory.trajectory().getLastPoint().state().t() -
@@ -280,7 +278,7 @@ public class DriveMotionPlanner implements CSVWritable {
             // Interpolate heading
             mRotationDiff = finalHeading.rotateBy(mInitialHeading.inverse());
             if (mRotationDiff.getRadians() > Math.PI) {
-                mRotationDiff = mRotationDiff.inverse().rotateBy(Rotation2d.fromRadians( Math.PI));
+                mRotationDiff = mRotationDiff.inverse().rotateBy(ImprovedRotation2d.fromRadians( Math.PI));
             }
 
             mStartTime = timestamp;
@@ -293,7 +291,7 @@ public class DriveMotionPlanner implements CSVWritable {
 
         mDt = timestamp - mLastTime;
         mLastTime = timestamp;
-        TrajectorySamplePoint<TimedState<Pose2dWithCurvature>, TimedState<Rotation2d>> sample_point;
+        TrajectorySamplePoint<TimedState<Pose2dWithCurvature>, TimedState<ImprovedRotation2d>> sample_point;
 
         mHeadingSetpoint = new TimedState<>(mInitialHeading.rotateBy(mRotationDiff.times(Math.min(1.0,
                 (timestamp - mStartTime) / mTotalTime))));
@@ -310,7 +308,7 @@ public class DriveMotionPlanner implements CSVWritable {
                 
                 // Generate feedforward voltages.
                 final double velocity_m = Units.inches_to_meters(mPathSetpoint.velocity());
-                final Rotation2d rotation = mPathSetpoint.state().getRotation();
+                final ImprovedRotation2d rotation = mPathSetpoint.state().getRotation();
 
                 // In field frame
                 var chassis_v = new Translation2d( rotation.cos() * velocity_m,
@@ -318,12 +316,12 @@ public class DriveMotionPlanner implements CSVWritable {
                 // Convert to robot frame
                 chassis_v = chassis_v.rotateBy(mHeadingSetpoint.state().getRotation().inverse());
 
-                var chassis_twist = new Twist2d(
+                var chassis_twist = new ImprovedTwist2d(
                         chassis_v.x(),
                         chassis_v.y(), mDTheta);
 
         
-                var chassis_speeds = new ChassisSpeeds(
+                var chassis_speeds = new ImprovedChassisSpeeds(
                         chassis_twist.dx, chassis_twist.dy, chassis_twist.dtheta);
                 // PID is in robot frame
                 mOutput = updatePIDChassis(chassis_speeds);
@@ -355,7 +353,7 @@ public class DriveMotionPlanner implements CSVWritable {
             }
         } else {
             // TODO Possibly switch to a pose stabilizing controller?
-            mOutput = new ChassisSpeeds();
+            mOutput = new ImprovedChassisSpeeds();
         }
         return mOutput;
     }
@@ -370,7 +368,7 @@ public class DriveMotionPlanner implements CSVWritable {
                 Units.inches_to_meters(mError.getTranslation().y()));
     }
 
-    public synchronized Rotation2d getHeadingError() {
+    public synchronized ImprovedRotation2d getHeadingError() {
         return mError.getRotation();
     }
 
@@ -382,7 +380,7 @@ public class DriveMotionPlanner implements CSVWritable {
         return mPathSetpoint;
     }
 
-    public synchronized TimedState<Rotation2d> getHeadingSetpoint() {
+    public synchronized TimedState<ImprovedRotation2d> getHeadingSetpoint() {
         return mHeadingSetpoint;
     }
 }

@@ -96,12 +96,12 @@ public class Translation2d implements ITranslation2d<Translation2d> {
      * @param rotation The rotation to apply.
      * @return This translation rotated by rotation.
      */
-    public Translation2d rotateBy(final Rotation2d rotation) {
+    public Translation2d rotateBy(final ImprovedRotation2d rotation) {
         return new Translation2d(x_ * rotation.cos() - y_ * rotation.sin(), x_ * rotation.sin() + y_ * rotation.cos());
     }
 
-    public Rotation2d direction() {
-        return new Rotation2d(x_, y_, true);
+    public ImprovedRotation2d direction() {
+        return new ImprovedRotation2d(x_, y_, true);
     }
 
     /**
@@ -151,12 +151,12 @@ public class Translation2d implements ITranslation2d<Translation2d> {
         return a.x_ * b.x_ + a.y_ * b.y_;
     }
 
-    public static Rotation2d getAngle(final Translation2d a, final Translation2d b) {
+    public static ImprovedRotation2d getAngle(final Translation2d a, final Translation2d b) {
         double cos_angle = dot(a, b) / (a.norm() * b.norm());
         if (Double.isNaN(cos_angle)) {
-            return new Rotation2d();
+            return new ImprovedRotation2d();
         }
-        return Rotation2d.fromRadians(Math.acos(Util.limit(cos_angle, 1.0)));
+        return ImprovedRotation2d.fromRadians(Math.acos(Util.limit(cos_angle, 1.0)));
     }
 
     public static double cross(final Translation2d a, final Translation2d b) {

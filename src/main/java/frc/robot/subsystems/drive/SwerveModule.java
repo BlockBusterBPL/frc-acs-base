@@ -7,14 +7,15 @@ package frc.robot.subsystems.drive;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 
 import static frc.robot.Constants.kDriveReduction;
 import static frc.robot.Constants.kSteerReduction;
 import static frc.robot.Constants.kDriveWheelDiameter;
 
-import frc.robot.lib.geometry.Rotation2d;
-import frc.robot.lib.swerve.SwerveModulePosition;
-import frc.robot.lib.swerve.SwerveModuleState;
+import frc.robot.lib.geometry.ImprovedRotation2d;
 import frc.robot.lib.util.LoggedTunableNumber;
 
 /** Add your docs here. */
@@ -108,6 +109,11 @@ public class SwerveModule {
 
     public SwerveModulePosition getPosition() {
         return new SwerveModulePosition(getDistance(), getAngle());
+    }
+
+    public void setState(SwerveModuleState state) {
+        io.setDriveSpeedTarget(convertMetersToRotations(state.speedMetersPerSecond));
+        io.setSteerPositionTarget(state.angle.getRotations());
     }
 
 }

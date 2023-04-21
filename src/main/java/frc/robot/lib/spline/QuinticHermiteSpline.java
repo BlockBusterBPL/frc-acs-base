@@ -1,7 +1,7 @@
 package frc.robot.lib.spline;
 
 import frc.robot.lib.geometry.Pose2d;
-import frc.robot.lib.geometry.Rotation2d;
+import frc.robot.lib.geometry.ImprovedRotation2d;
 import frc.robot.lib.geometry.Translation2d;
 
 import java.util.List;
@@ -82,14 +82,14 @@ public class QuinticHermiteSpline extends Spline {
     public Pose2d getStartPose() {
         return new Pose2d(
                 new Translation2d(x0, y0),
-                new Rotation2d(dx0, dy0, true)
+                new ImprovedRotation2d(dx0, dy0, true)
         );
     }
 
     public Pose2d getEndPose() {
         return new Pose2d(
                 new Translation2d(x1, y1),
-                new Rotation2d(dx1, dy1, true)
+                new ImprovedRotation2d(dx1, dy1, true)
         );
     }
 
@@ -153,8 +153,8 @@ public class QuinticHermiteSpline extends Spline {
     }
 
     @Override
-    public Rotation2d getHeading(double t) {
-        return new Rotation2d(dx(t), dy(t), true);
+    public ImprovedRotation2d getHeading(double t) {
+        return new ImprovedRotation2d(dx(t), dy(t), true);
     }
 
     /**

@@ -6,10 +6,13 @@ package frc.robot.subsystems.drive;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.lib.geometry.Rotation2d;
+import frc.robot.lib.geometry.ImprovedRotation2d;
+import frc.robot.lib.swerve.ImprovedChassisSpeeds;
+import frc.robot.lib.swerve.SwerveSetpoint;
 import frc.robot.lib.swerve.SwerveSetpointGenerator;
 import frc.robot.lib.swerve.SwerveSetpointGenerator.KinematicLimits;
 import frc.robot.planners.DriveMotionPlanner;
@@ -17,7 +20,7 @@ import frc.robot.planners.DriveMotionPlanner;
 /** Add your docs here. */
 public class Drive extends SubsystemBase {
     private GyroIO gyroIO;
-    private GryoIOInputsAutoLogged gyroInputs;
+    private GyroIOInputsAutoLogged gyroInputs;
 
     private final SwerveModule[] mModules;
     private final int kFrontLeftID = 0;
@@ -26,8 +29,9 @@ public class Drive extends SubsystemBase {
     private final int kRearRightID = 3;
 
     private SwerveSetpointGenerator mSetpointGenerator;
+    private SwerveSetpoint mLastSetpoint;
 
-    private Rotation2d mYawOffset;
+    private ImprovedRotation2d mYawOffset;
 
     private final DriveMotionPlanner mMotionPlanner;
     private boolean mOverrideTrajectory = false;
@@ -58,6 +62,24 @@ public class Drive extends SubsystemBase {
 
     @Override
     public void periodic() {
+        gyroIO.updateInputs(gyroInputs);
         Logger.getInstance().processInputs("Drive/Gyro", gyroInputs);
+
+        for (SwerveModule swerveModule : mModules) {
+            swerveModule.periodic();
+        }
+
+    }
+
+    public void swerveDrive(ImprovedChassisSpeeds speeds) {
+        KinematicLimits limits = Constants.kTeleopKinematicLimits;
+        SwerveSetpoint newSetpoint = mSetpointGenerator.generateSetpoint(limits, mLastSetpoint, speeds, 0.02);
+        setModuleStates(newSetpoint.mModuleStates);
+    }
+
+    public void setModuleStates(SwerveModuleState[] moduleStates) {
+        for (int i = 0; i < moduleStates.length; i++) {
+            mModules[i].setState(moduleStates[i]);
+        }
     }
 }

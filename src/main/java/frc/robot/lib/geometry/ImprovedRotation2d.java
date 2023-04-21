@@ -2,6 +2,7 @@ package frc.robot.lib.geometry;
 
 import java.text.DecimalFormat;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.lib.util.Util;
 import static frc.robot.lib.util.Util.kEpsilon;
 
@@ -11,12 +12,12 @@ import static frc.robot.lib.util.Util.kEpsilon;
  * <p>
  * Inspired by Sophus (https://github.com/strasdat/Sophus/tree/master/sophus)
  */
-public class Rotation2d implements IRotation2d<Rotation2d> {
-    public static final Rotation2d kIdentity = new Rotation2d();
-    public static final Rotation2d kPi = new Rotation2d(Math.PI, false);
-    public static final Rotation2d kHalfPi = new Rotation2d(Math.PI / 2.0, false);
+public class ImprovedRotation2d implements IRotation2d<ImprovedRotation2d> {
+    public static final ImprovedRotation2d kIdentity = new ImprovedRotation2d();
+    public static final ImprovedRotation2d kPi = new ImprovedRotation2d(Math.PI, false);
+    public static final ImprovedRotation2d kHalfPi = new ImprovedRotation2d(Math.PI / 2.0, false);
 
-    public static Rotation2d identity() {
+    public static ImprovedRotation2d identity() {
         return kIdentity;
     }
 
@@ -24,24 +25,24 @@ public class Rotation2d implements IRotation2d<Rotation2d> {
     protected double sin_angle_ = Double.NaN;
     protected double radians_ = Double.NaN;
 
-    protected Rotation2d(double x, double y, double radians) {
+    protected ImprovedRotation2d(double x, double y, double radians) {
         cos_angle_ = x;
         sin_angle_ = y;
         radians_ = radians;
     }
 
-    public Rotation2d() {
+    public ImprovedRotation2d() {
         this(1.0, 0.0, 0.0);
     }
 
-    public Rotation2d(double radians, boolean normalize) {
+    public ImprovedRotation2d(double radians, boolean normalize) {
         if (normalize) {
             radians = WrapRadians(radians);
         }
         radians_ = radians;
     }
 
-    public Rotation2d(double x, double y, boolean normalize) {
+    public ImprovedRotation2d(double x, double y, boolean normalize) {
         if (normalize) {
             // From trig, we know that sin^2 + cos^2 == 1, but as we do math on this object
             // we might accumulate rounding errors.
@@ -60,31 +61,31 @@ public class Rotation2d implements IRotation2d<Rotation2d> {
         }
     }
 
-    public Rotation2d(final Rotation2d other) {
+    public ImprovedRotation2d(final ImprovedRotation2d other) {
         cos_angle_ = other.cos_angle_;
         sin_angle_ = other.sin_angle_;
         radians_ = other.radians_;
     }
 
-    public Rotation2d(final edu.wpi.first.math.geometry.Rotation2d other) {
+    public ImprovedRotation2d(final edu.wpi.first.math.geometry.Rotation2d other) {
         cos_angle_ = other.getCos();
         sin_angle_ = other.getSin();
         radians_ = other.getRadians();
     }
 
-    public Rotation2d(final Translation2d direction, boolean normalize) {
+    public ImprovedRotation2d(final Translation2d direction, boolean normalize) {
         this(direction.x(), direction.y(), normalize);
     }
 
-    public static Rotation2d fromRadians(double angle_radians) {
-        return new Rotation2d(angle_radians, true);
+    public static ImprovedRotation2d fromRadians(double angle_radians) {
+        return new ImprovedRotation2d(angle_radians, true);
     }
 
-    public static Rotation2d fromDegrees(double angle_degrees) {
+    public static ImprovedRotation2d fromDegrees(double angle_degrees) {
         return fromRadians(Math.toRadians(angle_degrees));
     }
 
-    public static Rotation2d fromRotations(double angle_rotations) {
+    public static ImprovedRotation2d fromRotations(double angle_rotations) {
         return fromDegrees(angle_rotations * 360);
     }
 
@@ -120,7 +121,7 @@ public class Rotation2d implements IRotation2d<Rotation2d> {
      *
      * @return Rotation2d representing the angle of the nearest axis to the angle in standard position
      */
-    public Rotation2d nearestPole() {
+    public ImprovedRotation2d nearestPole() {
         double pole_sin = 0.0;
         double pole_cos = 0.0;
         if (Math.abs(cos_angle_) > Math.abs(sin_angle_)) {
@@ -130,23 +131,27 @@ public class Rotation2d implements IRotation2d<Rotation2d> {
             pole_cos = 0.0;
             pole_sin = Math.signum(sin_angle_);
         }
-        return new Rotation2d(pole_cos, pole_sin, false);
+        return new ImprovedRotation2d(pole_cos, pole_sin, false);
     }
 
     public double getDegrees() {
         return Math.toDegrees(getRadians());
     }
 
-    public Rotation2d unaryMinus() {
-        return new Rotation2d(-radians_, true);
+    public double getRotations() {
+        return getDegrees() / 360.0;
     }
 
-    public Rotation2d minus(Rotation2d other) {
+    public ImprovedRotation2d unaryMinus() {
+        return new ImprovedRotation2d(-radians_, true);
+    }
+
+    public ImprovedRotation2d minus(ImprovedRotation2d other) {
         return rotateBy(other.unaryMinus());
     }
 
-    public Rotation2d times(double scalar) {
-        return new Rotation2d(radians_ * scalar, true);
+    public ImprovedRotation2d times(double scalar) {
+        return new ImprovedRotation2d(radians_ * scalar, true);
     }
 
     /**
@@ -157,9 +162,9 @@ public class Rotation2d implements IRotation2d<Rotation2d> {
      *              https://en.wikipedia.org/wiki/Rotation_matrix
      * @return This rotation rotated by other.
      */
-    public Rotation2d rotateBy(final Rotation2d other) {
+    public ImprovedRotation2d rotateBy(final ImprovedRotation2d other) {
         if (hasTrig() && other.hasTrig()) {
-            return new Rotation2d(cos_angle_ * other.cos_angle_ - sin_angle_ * other.sin_angle_,
+            return new ImprovedRotation2d(cos_angle_ * other.cos_angle_ - sin_angle_ * other.sin_angle_,
                     cos_angle_ * other.sin_angle_ + sin_angle_ * other.cos_angle_, true);
         } else {
             return fromRadians(getRadians() + other.getRadians());
@@ -167,13 +172,13 @@ public class Rotation2d implements IRotation2d<Rotation2d> {
     }
 
     @Override
-    public Rotation2d mirror() {
-        return Rotation2d.fromRadians(-radians_);
+    public ImprovedRotation2d mirror() {
+        return ImprovedRotation2d.fromRadians(-radians_);
     }
 
-    public Rotation2d normal() {
+    public ImprovedRotation2d normal() {
         if (hasTrig()) {
-            return new Rotation2d(-sin_angle_, cos_angle_, false);
+            return new ImprovedRotation2d(-sin_angle_, cos_angle_, false);
         } else {
             return fromRadians(getRadians() - Math.PI / 2.0);
         }
@@ -184,9 +189,9 @@ public class Rotation2d implements IRotation2d<Rotation2d> {
      *
      * @return The inverse of this rotation.
      */
-    public Rotation2d inverse() {
+    public ImprovedRotation2d inverse() {
         if (hasTrig()) {
-            return new Rotation2d(cos_angle_, -sin_angle_, false);
+            return new ImprovedRotation2d(cos_angle_, -sin_angle_, false);
         } else {
             return fromRadians(-getRadians());
         }
@@ -196,15 +201,15 @@ public class Rotation2d implements IRotation2d<Rotation2d> {
      * Obtain a Rotation2d that points in the opposite direction from this rotation.
      * @return This rotation rotated by 180 degrees.
      */
-    public Rotation2d flip() {
+    public ImprovedRotation2d flip() {
         if (hasTrig()) {
-            return new Rotation2d(-cos_angle_, -sin_angle_, false);
+            return new ImprovedRotation2d(-cos_angle_, -sin_angle_, false);
         } else {
             return fromRadians(getRadians() + Math.PI);
         }
     }
 
-    public boolean isParallel(final Rotation2d other) {
+    public boolean isParallel(final ImprovedRotation2d other) {
         if (hasRadians() && other.hasRadians()) {
             return Util.epsilonEquals(radians_, other.radians_)
                     || Util.epsilonEquals(radians_, WrapRadians(other.radians_ + Math.PI));
@@ -255,14 +260,14 @@ public class Rotation2d implements IRotation2d<Rotation2d> {
     }
 
     @Override
-    public Rotation2d interpolate(final Rotation2d other, double x) {
+    public ImprovedRotation2d interpolate(final ImprovedRotation2d other, double x) {
         if (x <= 0.0) {
-            return new Rotation2d(this);
+            return new ImprovedRotation2d(this);
         } else if (x >= 1.0) {
-            return new Rotation2d(other);
+            return new ImprovedRotation2d(other);
         }
         double angle_diff = inverse().rotateBy(other).getRadians();
-        return this.rotateBy(Rotation2d.fromRadians(angle_diff * x));
+        return this.rotateBy(ImprovedRotation2d.fromRadians(angle_diff * x));
     }
 
     @Override
@@ -276,26 +281,31 @@ public class Rotation2d implements IRotation2d<Rotation2d> {
     }
 
     @Override
-    public double distance(final Rotation2d other) {
+    public double distance(final ImprovedRotation2d other) {
         return inverse().rotateBy(other).getRadians();
     }
 
     @Override
-    public Rotation2d add(Rotation2d other) {
+    public ImprovedRotation2d add(ImprovedRotation2d other) {
         return this.rotateBy(other);
     }
 
     @Override
     public boolean equals(final Object other) {
-        if (!(other instanceof Rotation2d)) {
+        if (!(other instanceof ImprovedRotation2d)) {
             return false;
         }
 
-        return distance((Rotation2d) other) < Util.kEpsilon;
+        return distance((ImprovedRotation2d) other) < Util.kEpsilon;
     }
 
     @Override
-    public Rotation2d getRotation() {
+    public ImprovedRotation2d getRotation() {
         return this;
+    }
+
+    public Rotation2d toOld() {
+        ensureRadiansComputed();
+        return new Rotation2d(radians_);
     }
 }

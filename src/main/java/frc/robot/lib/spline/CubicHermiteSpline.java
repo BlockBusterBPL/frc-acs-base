@@ -1,7 +1,7 @@
 package frc.robot.lib.spline;
 
 import frc.robot.lib.geometry.Pose2d;
-import frc.robot.lib.geometry.Rotation2d;
+import frc.robot.lib.geometry.ImprovedRotation2d;
 import frc.robot.lib.geometry.Translation2d;
 
 /**
@@ -39,10 +39,10 @@ public class CubicHermiteSpline extends Spline {
     }
 
     @Override
-    public Rotation2d getHeading(double t) {
+    public ImprovedRotation2d getHeading(double t) {
         final double dx = 3 * t * t * ax + 2 * t * bx + cx;
         final double dy = 3 * t * t * ay + 2 * t * by + cy;
-        return new Rotation2d(dx, dy, true);
+        return new ImprovedRotation2d(dx, dy, true);
     }
 
     @Override

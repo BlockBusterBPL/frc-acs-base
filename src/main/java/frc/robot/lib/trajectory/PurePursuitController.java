@@ -18,11 +18,11 @@ public class PurePursuitController<S extends ITranslation2d<S>, T extends IRotat
         iterator_ = new TrajectoryIterator<S, T>(path);
     }
 
-    public Twist2d steer(final Pose2d current_pose) {
+    public ImprovedTwist2d steer(final Pose2d current_pose) {
         done_ = done_ || (iterator_.isDone()
                 && current_pose.getTranslation().distance(iterator_.getState().getTranslation()) <= goal_tolerance_);
         if (isDone()) {
-            return new Twist2d(0.0, 0.0, 0.0);
+            return new ImprovedTwist2d(0.0, 0.0, 0.0);
         }
 
         final double remaining_progress = iterator_.getRemainingProgress();
@@ -47,11 +47,11 @@ public class PurePursuitController<S extends ITranslation2d<S>, T extends IRotat
         iterator_.advance(goal_progress);
 //        final Arc<S> arc = new Arc<S>(current_pose, iterator_.getState());
         final Translation2d path_setpoint = current_pose.getTranslation().inverse().translateBy(iterator_.getState().getTranslation());
-        final Rotation2d heading_setpoint = current_pose.getRotation().inverse().rotateBy(iterator_.getHeading().getRotation());
+        final ImprovedRotation2d heading_setpoint = current_pose.getRotation().inverse().rotateBy(iterator_.getHeading().getRotation());
         if (path_setpoint.norm() < Util.kEpsilon) {
-            return new Twist2d(0.0, 0.0, 0.0);
+            return new ImprovedTwist2d(0.0, 0.0, 0.0);
         } else {
-            return new Twist2d(path_setpoint.x(), path_setpoint.y(), heading_setpoint.getRadians());
+            return new ImprovedTwist2d(path_setpoint.x(), path_setpoint.y(), heading_setpoint.getRadians());
         }
     }
 
@@ -80,7 +80,7 @@ public class PurePursuitController<S extends ITranslation2d<S>, T extends IRotat
 
         protected Translation2d findCenter(Pose2d pose, S point) {
             final Translation2d poseToPointHalfway = pose.getTranslation().interpolate(point.getTranslation(), 0.5);
-            final Rotation2d normal = pose.getTranslation().inverse().translateBy(poseToPointHalfway).direction()
+            final ImprovedRotation2d normal = pose.getTranslation().inverse().translateBy(poseToPointHalfway).direction()
                     .normal();
             final Pose2d perpendicularBisector = new Pose2d(poseToPointHalfway, normal);
             final Pose2d normalFromPose = new Pose2d(pose.getTranslation(),
@@ -101,7 +101,7 @@ public class PurePursuitController<S extends ITranslation2d<S>, T extends IRotat
                 final boolean behind = Math.signum(
                         Translation2d.cross(pose.getRotation().normal().toTranslation(),
                                 new Translation2d(pose.getTranslation(), point.getTranslation()))) > 0.0;
-                final Rotation2d angle = Translation2d.getAngle(centerToPose, centerToPoint);
+                final ImprovedRotation2d angle = Translation2d.getAngle(centerToPose, centerToPoint);
                 return radius * (behind ? 2.0 * Math.PI - Math.abs(angle.getRadians()) : Math.abs(angle.getRadians()));
             } else {
                 return new Translation2d(pose.getTranslation(), point.getTranslation()).norm();

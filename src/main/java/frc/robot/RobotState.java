@@ -4,9 +4,9 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.lib.geometry.Pose2d;
-import frc.robot.lib.geometry.Rotation2d;
+import frc.robot.lib.geometry.ImprovedRotation2d;
 import frc.robot.lib.geometry.Translation2d;
-import frc.robot.lib.geometry.Twist2d;
+import frc.robot.lib.geometry.ImprovedTwist2d;
 import frc.robot.lib.util.InterpolatingDouble;
 import frc.robot.lib.util.InterpolatingTreeMap;
 import frc.robot.lib.util.MovingAverageTwist2d;
@@ -71,14 +71,14 @@ public class RobotState {
     private InterpolatingTreeMap<InterpolatingDouble, Pose2d> field_to_vehicle_;
     private InterpolatingTreeMap<InterpolatingDouble, Pose2d> vehicle_to_turret_;
 
-    private Twist2d vehicle_velocity_predicted_;
-    private Twist2d vehicle_velocity_measured_;
+    private ImprovedTwist2d vehicle_velocity_predicted_;
+    private ImprovedTwist2d vehicle_velocity_measured_;
     private MovingAverageTwist2d vehicle_velocity_measured_filtered_;
 
     // In deg/s
     private double turret_velocity_measured_;
 
-    public Rotation2d prev_heading_;
+    public ImprovedRotation2d prev_heading_;
 
     private RobotState() {
         reset(0.0, Pose2d.identity(), Pose2d.identity());
@@ -97,8 +97,8 @@ public class RobotState {
     public synchronized void reset(double start_time, Pose2d initial_field_to_vehicle) {
         field_to_vehicle_ = new InterpolatingTreeMap<>(kObservationBufferSize);
         field_to_vehicle_.put(new InterpolatingDouble(start_time), initial_field_to_vehicle);
-        vehicle_velocity_predicted_ = Twist2d.identity();
-        vehicle_velocity_measured_ = Twist2d.identity();
+        vehicle_velocity_predicted_ = ImprovedTwist2d.identity();
+        vehicle_velocity_measured_ = ImprovedTwist2d.identity();
         vehicle_velocity_measured_filtered_ = new MovingAverageTwist2d(25);
     }
 
@@ -155,7 +155,7 @@ public class RobotState {
         field_to_vehicle_.put(new InterpolatingDouble(timestamp), observation);
     }
 
-    public synchronized void addObservations(double timestamp, Pose2d field_to_robot, Twist2d measured_velocity, Twist2d predicted_velocity) {
+    public synchronized void addObservations(double timestamp, Pose2d field_to_robot, ImprovedTwist2d measured_velocity, ImprovedTwist2d predicted_velocity) {
         addFieldToVehicleObservation(timestamp, field_to_robot);
 
         vehicle_velocity_measured_ = measured_velocity;
@@ -163,11 +163,11 @@ public class RobotState {
         vehicle_velocity_predicted_ = predicted_velocity;
     }
 
-    public synchronized Twist2d getPredictedVelocity() {
+    public synchronized ImprovedTwist2d getPredictedVelocity() {
         return vehicle_velocity_predicted_;
     }
 
-    public synchronized Twist2d getMeasuredVelocity() {
+    public synchronized ImprovedTwist2d getMeasuredVelocity() {
         return vehicle_velocity_measured_;
     }
 
@@ -175,7 +175,7 @@ public class RobotState {
         return turret_velocity_measured_;
     }
 
-    public synchronized Twist2d getSmoothedVelocity() {
+    public synchronized ImprovedTwist2d getSmoothedVelocity() {
         return vehicle_velocity_measured_filtered_.getAverage();
     }
 
@@ -191,8 +191,8 @@ public class RobotState {
     //     updateGoalTracker(timestamp, getCameraToGoalTranslation(observations.get(0), source), goal_tracker_, source);
     // }
 
-    public Rotation2d getCameraToTargetRotation() {
-        return new Rotation2d(camera_to_goal_, true);
+    public ImprovedRotation2d getCameraToTargetRotation() {
+        return new ImprovedRotation2d(camera_to_goal_, true);
 
     }
 

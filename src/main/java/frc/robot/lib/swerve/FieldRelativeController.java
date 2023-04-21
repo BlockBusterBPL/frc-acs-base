@@ -5,6 +5,7 @@ import frc.robot.Robot;
 import frc.robot.RobotState;
 import frc.robot.lib.control.RadiusController;
 import frc.robot.lib.control.SwerveHeadingController;
+import frc.robot.lib.geometry.ImprovedRotation2d;
 import frc.robot.lib.geometry.Pose2d;
 import frc.robot.lib.swerve.IDriveController;
 
@@ -23,7 +24,7 @@ public class FieldRelativeController implements IDriveController {
     }
 
     @Override
-    public ChassisSpeeds transform(DriveInput driveInput, Pose2d robotPose) {
+    public ImprovedChassisSpeeds transform(DriveInput driveInput, Pose2d robotPose) {
         mRadiusController.setRadiusControllerState(RadiusController.RadiusControllerState.OFF);
         if ((mSwerveHeadingController
                 .getHeadingControllerState() == SwerveHeadingController.HeadingControllerState.SNAP
@@ -31,16 +32,18 @@ public class FieldRelativeController implements IDriveController {
             mSwerveHeadingController
                     .setHeadingControllerState(SwerveHeadingController.HeadingControllerState.MAINTAIN);
             mSwerveHeadingController.setGoal(mRobotState.getLatestFieldToVehicle().getValue().getRotation().getDegrees());
-            return ChassisSpeeds.fromFieldRelativeSpeeds(
+            return ImprovedChassisSpeeds.fromFieldRelativeSpeeds(
                     driveInput.getThrottle() * Constants.kMaxVelocityMetersPerSecond * Constants.kScaleTranslationInputs,
                     driveInput.getStrafe() * Constants.kMaxVelocityMetersPerSecond * Constants.kScaleTranslationInputs,
                     mSwerveHeadingController.update(robotPose.getRotation().getDegrees()) * Constants.kMaxAngularVelocityRadiansPerSecond,
-                    robotPose.getRotation());
+                    robotPose.getRotation().toOld()
+            );
         }
-        return ChassisSpeeds.fromFieldRelativeSpeeds(
+        return ImprovedChassisSpeeds.fromFieldRelativeSpeeds(
                 driveInput.getThrottle() * Constants.kMaxVelocityMetersPerSecond * Constants.kScaleTranslationInputs,
                 driveInput.getStrafe() * Constants.kMaxVelocityMetersPerSecond * Constants.kScaleTranslationInputs,
                 driveInput.getRotation() * Constants.kMaxAngularVelocityRadiansPerSecond * Constants.kScaleRotationInputs,
-                robotPose.getRotation());
+                robotPose.getRotation().toOld()
+            );
     }
 }

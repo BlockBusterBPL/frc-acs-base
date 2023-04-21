@@ -10,10 +10,10 @@ import frc.robot.lib.util.Util;
  * <p>
  * A Twist can be used to represent a difference between two poses, a velocity, an acceleration, etc.
  */
-public class Twist2d {
-    protected static final Twist2d kIdentity = new Twist2d(0.0, 0.0, 0.0);
+public class ImprovedTwist2d {
+    protected static final ImprovedTwist2d kIdentity = new ImprovedTwist2d(0.0, 0.0, 0.0);
 
-    public static Twist2d identity() {
+    public static ImprovedTwist2d identity() {
         return kIdentity;
     }
 
@@ -21,14 +21,14 @@ public class Twist2d {
     public double dy;
     public double dtheta; // Radians!
 
-    public Twist2d(double dx, double dy, double dtheta) {
+    public ImprovedTwist2d(double dx, double dy, double dtheta) {
         this.dx = dx;
         this.dy = dy;
         this.dtheta = dtheta;
     }
 
-    public Twist2d scaled(double scale) {
-        return new Twist2d(dx * scale, dy * scale, dtheta * scale);
+    public ImprovedTwist2d scaled(double scale) {
+        return new ImprovedTwist2d(dx * scale, dy * scale, dtheta * scale);
     }
 
     public double norm() {
@@ -44,7 +44,7 @@ public class Twist2d {
         return dtheta / norm();
     }
 
-    public boolean epsilonEquals(final Twist2d other, double epsilon) {
+    public boolean epsilonEquals(final ImprovedTwist2d other, double epsilon) {
         return Util.epsilonEquals(dx, other.dx, epsilon) &&
                Util.epsilonEquals(dy, other.dy, epsilon) &&
                Util.epsilonEquals(dtheta, other.dtheta, epsilon);

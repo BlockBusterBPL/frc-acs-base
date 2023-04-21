@@ -9,7 +9,21 @@ import org.littletonrobotics.junction.AutoLog;
 /** Add your docs here. */
 public interface GyroIO {
     @AutoLog
-    public static class GryoIOInputs {
-        public double angleRotations;
+    public static class GyroIOInputs {
+        public double yawAngleRotations;
+        public double pitchAngleRotations;
+        public double rollAngleRotations;
+
+        public boolean connected;
+        public boolean calibrating;
+
+        public double quaternionW;
+        public double quaternionX;
+        public double quaternionY;
+        public double quaternionZ;
     }
+
+    public default void updateInputs(GyroIOInputs inputs) {}
+
+    public default void calibrate() {}
 }

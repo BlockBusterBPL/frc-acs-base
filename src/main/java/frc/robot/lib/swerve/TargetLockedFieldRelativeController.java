@@ -21,7 +21,7 @@ public class TargetLockedFieldRelativeController implements IDriveController {
     }
 
     @Override
-    public ChassisSpeeds transform(DriveInput driveInput, Pose2d robotPose) {
+    public ImprovedChassisSpeeds transform(DriveInput driveInput, Pose2d robotPose) {
         mRadiusController.setRadiusControllerState(RadiusController.RadiusControllerState.OFF);
         if((mSwerveHeadingController
                 .getHeadingControllerState() == SwerveHeadingController.HeadingControllerState.POLAR_SNAP
@@ -32,10 +32,11 @@ public class TargetLockedFieldRelativeController implements IDriveController {
             mSwerveHeadingController.setHeadingControllerState(SwerveHeadingController.HeadingControllerState.POLAR_SNAP);
             mSwerveHeadingController.setGoal(mSwerveHeadingController.calculateAngleToOrigin(mRobotState.getLatestFieldToVehicle().getValue()));
         }
-        return ChassisSpeeds.fromFieldRelativeSpeeds(
+        return ImprovedChassisSpeeds.fromFieldRelativeSpeeds(
                 driveInput.getThrottle() * Constants.kMaxVelocityMetersPerSecond * Constants.kScaleTranslationInputs,
                 driveInput.getStrafe() * Constants.kMaxVelocityMetersPerSecond * Constants.kScaleTranslationInputs,
                 mSwerveHeadingController.update(robotPose.getRotation().getDegrees()) * Constants.kMaxAngularVelocityRadiansPerSecond,
-                robotPose.getRotation());
+                robotPose.getRotation().toOld()
+                );
     }
 }

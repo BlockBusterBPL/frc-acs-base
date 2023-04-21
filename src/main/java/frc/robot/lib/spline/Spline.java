@@ -2,13 +2,13 @@ package frc.robot.lib.spline;
 
 import frc.robot.lib.geometry.Pose2d;
 import frc.robot.lib.geometry.Pose2dWithCurvature;
-import frc.robot.lib.geometry.Rotation2d;
+import frc.robot.lib.geometry.ImprovedRotation2d;
 import frc.robot.lib.geometry.Translation2d;
 
 public abstract class Spline {
     public abstract Translation2d getPoint(double t);
 
-    public abstract Rotation2d getHeading(double t);
+    public abstract ImprovedRotation2d getHeading(double t);
 
     public abstract double getCurvature(double t);
 

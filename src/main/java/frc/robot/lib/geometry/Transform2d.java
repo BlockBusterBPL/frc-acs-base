@@ -9,7 +9,7 @@ import java.util.Objects;
 /** Represents a transformation for a Pose2d. */
 public class Transform2d {
   private final Translation2d m_translation;
-  private final Rotation2d m_rotation;
+  private final ImprovedRotation2d m_rotation;
 
   /**
    * Constructs the transform that maps the initial pose to the final pose.
@@ -35,7 +35,7 @@ public class Transform2d {
    * @param translation Translational component of the transform.
    * @param rotation Rotational component of the transform.
    */
-  public Transform2d(Translation2d translation, Rotation2d rotation) {
+  public Transform2d(Translation2d translation, ImprovedRotation2d rotation) {
     m_translation = translation;
     m_rotation = rotation;
   }
@@ -43,7 +43,7 @@ public class Transform2d {
   /** Constructs the identity transform -- maps an initial pose to itself. */
   public Transform2d() {
     m_translation = new Translation2d();
-    m_rotation = new Rotation2d();
+    m_rotation = new ImprovedRotation2d();
   }
 
   /**
@@ -98,7 +98,7 @@ public class Transform2d {
    *
    * @return Reference to the rotational component of the transform.
    */
-  public Rotation2d getRotation() {
+  public ImprovedRotation2d getRotation() {
     return m_rotation;
   }
 

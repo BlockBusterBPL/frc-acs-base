@@ -1,6 +1,6 @@
 package frc.robot.lib.trajectory.timing;
 
-import frc.robot.lib.geometry.Rotation2d;
+import frc.robot.lib.geometry.ImprovedRotation2d;
 import frc.robot.lib.geometry.State;
 import frc.robot.lib.trajectory.DistanceView;
 import frc.robot.lib.trajectory.Trajectory;

@@ -18,14 +18,15 @@ public class HeadingLockedFieldRelativeController implements IDriveController {
     }
 
     @Override
-    public ChassisSpeeds transform(DriveInput driveInput, Pose2d robotPose) {
+    public ImprovedChassisSpeeds transform(DriveInput driveInput, Pose2d robotPose) {
         mRadiusController.setRadiusControllerState(RadiusController.RadiusControllerState.OFF);
         mSwerveHeadingController.setHeadingControllerState(SwerveHeadingController.HeadingControllerState.SNAP);
         mSwerveHeadingController.setGoal(driveInput.getDesiredCardinalHeading());
-        return ChassisSpeeds.fromFieldRelativeSpeeds(
+        return ImprovedChassisSpeeds.fromFieldRelativeSpeeds(
                 driveInput.getThrottle() * Constants.kMaxVelocityMetersPerSecond * Constants.kScaleTranslationInputs,
                 driveInput.getStrafe() * Constants.kMaxVelocityMetersPerSecond * Constants.kScaleTranslationInputs,
                 mSwerveHeadingController.update(robotPose.getRotation().getDegrees()) * Constants.kMaxAngularVelocityRadiansPerSecond,
-                robotPose.getRotation());
+                robotPose.getRotation().toOld()
+            );
     }
 }

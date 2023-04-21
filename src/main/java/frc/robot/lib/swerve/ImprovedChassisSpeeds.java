@@ -5,8 +5,9 @@
 
 package frc.robot.lib.swerve;
 
-import frc.robot.lib.geometry.Rotation2d;
-import frc.robot.lib.geometry.Twist2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import frc.robot.lib.geometry.ImprovedTwist2d;
 
 /**
  * Represents the speed of a robot chassis. Although this struct contains similar members compared
@@ -19,7 +20,7 @@ import frc.robot.lib.geometry.Twist2d;
  * will often have all three components.
  */
 @SuppressWarnings("MemberName")
-public class ChassisSpeeds {
+public class ImprovedChassisSpeeds {
     /** Represents forward velocity w.r.t the robot frame of reference. (Fwd is +) */
     public double vxMetersPerSecond;
 
@@ -30,7 +31,7 @@ public class ChassisSpeeds {
     public double omegaRadiansPerSecond;
 
     /** Constructs a ChassisSpeeds with zeros for dx, dy, and theta. */
-    public ChassisSpeeds() {}
+    public ImprovedChassisSpeeds() {}
 
     /**
      * Constructs a ChassisSpeeds object.
@@ -39,7 +40,7 @@ public class ChassisSpeeds {
      * @param vyMetersPerSecond Sideways velocity.
      * @param omegaRadiansPerSecond Angular velocity.
      */
-    public ChassisSpeeds(
+    public ImprovedChassisSpeeds(
             double vxMetersPerSecond, double vyMetersPerSecond, double omegaRadiansPerSecond) {
         this.vxMetersPerSecond = vxMetersPerSecond;
         this.vyMetersPerSecond = vyMetersPerSecond;
@@ -61,26 +62,26 @@ public class ChassisSpeeds {
      *     Remember that this should be CCW positive.
      * @return ChassisSpeeds object representing the speeds in the robot's frame of reference.
      */
-    public static ChassisSpeeds fromFieldRelativeSpeeds(
+    public static ImprovedChassisSpeeds fromFieldRelativeSpeeds(
             double vxMetersPerSecond,
             double vyMetersPerSecond,
             double omegaRadiansPerSecond,
             Rotation2d robotAngle) {
-        return new ChassisSpeeds(
-                vxMetersPerSecond * robotAngle.cos() + vyMetersPerSecond * robotAngle.sin(),
-                -vxMetersPerSecond * robotAngle.sin() + vyMetersPerSecond * robotAngle.cos(),
+        return new ImprovedChassisSpeeds(
+                vxMetersPerSecond * robotAngle.getCos() + vyMetersPerSecond * robotAngle.getSin(),
+                -vxMetersPerSecond * robotAngle.getSin() + vyMetersPerSecond * robotAngle.getCos(),
                 omegaRadiansPerSecond);
     }
 
-    public static ChassisSpeeds fromRobotRelativeSpeeds(
+    public static ImprovedChassisSpeeds fromRobotRelativeSpeeds(
             double vxMetersPerSecond,
             double vyMetersPerSecond,
             double omegaRadiansPerSecond) {
-        return new ChassisSpeeds(vxMetersPerSecond, vyMetersPerSecond, omegaRadiansPerSecond);
+        return new ImprovedChassisSpeeds(vxMetersPerSecond, vyMetersPerSecond, omegaRadiansPerSecond);
     }
 
-    public Twist2d toTwist2d() {
-        return new Twist2d(vxMetersPerSecond, vyMetersPerSecond, omegaRadiansPerSecond);
+    public ImprovedTwist2d toTwist2d() {
+        return new ImprovedTwist2d(vxMetersPerSecond, vyMetersPerSecond, omegaRadiansPerSecond);
     }
 
     @Override
@@ -88,6 +89,14 @@ public class ChassisSpeeds {
         return String.format(
                 "ChassisSpeeds(Vx: %.2f m/s, Vy: %.2f m/s, Omega: %.2f rad/s)",
                 vxMetersPerSecond, vyMetersPerSecond, omegaRadiansPerSecond);
+    }
+
+    public ChassisSpeeds toOld() {
+        return new ChassisSpeeds(vxMetersPerSecond, vyMetersPerSecond, omegaRadiansPerSecond);
+    }
+
+    public static ImprovedChassisSpeeds fromOld(ChassisSpeeds speeds) {
+        return new ImprovedChassisSpeeds(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
     }
 }
 

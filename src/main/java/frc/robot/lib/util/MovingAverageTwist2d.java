@@ -2,37 +2,37 @@ package frc.robot.lib.util;
 
 import java.util.ArrayList;
 
-import frc.robot.lib.geometry.Twist2d;
+import frc.robot.lib.geometry.ImprovedTwist2d;
 
 /**
  * Helper class for storing and calculating a moving average of the Twist2d class
  */
 public class MovingAverageTwist2d {
-    ArrayList<Twist2d> twists = new ArrayList<Twist2d>();
+    ArrayList<ImprovedTwist2d> twists = new ArrayList<ImprovedTwist2d>();
     private int maxSize;
 
     public MovingAverageTwist2d(int maxSize) {
         this.maxSize = maxSize;
     }
 
-    public synchronized void add(Twist2d twist) {
+    public synchronized void add(ImprovedTwist2d twist) {
         twists.add(twist);
         if (twists.size() > maxSize) {
             twists.remove(0);
         }
     }
 
-    public synchronized Twist2d getAverage() {
+    public synchronized ImprovedTwist2d getAverage() {
         double x = 0.0, y = 0.0, t = 0.0;
 
-        for (Twist2d twist : twists) {
+        for (ImprovedTwist2d twist : twists) {
             x += twist.dx;
             y += twist.dy;
             t += twist.dtheta;
         }
 
         double size = getSize();
-        return new Twist2d(x / size, y / size, t / size);
+        return new ImprovedTwist2d(x / size, y / size, t / size);
     }
 
     public int getSize() {

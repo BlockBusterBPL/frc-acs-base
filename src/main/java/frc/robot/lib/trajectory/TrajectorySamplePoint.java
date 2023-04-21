@@ -1,6 +1,6 @@
 package frc.robot.lib.trajectory;
 
-import frc.robot.lib.geometry.Rotation2d;
+import frc.robot.lib.geometry.ImprovedRotation2d;
 import frc.robot.lib.geometry.State;
 
 public class TrajectorySamplePoint<S extends State<S>, T extends State<T>> {
