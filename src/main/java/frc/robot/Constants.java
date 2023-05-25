@@ -7,7 +7,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.lib.Alert;
 import frc.robot.lib.Alert.AlertType;
-import frc.robot.lib.swerve.SwerveSetpointGenerator.KinematicLimits;
 
 import java.util.Map;
 
@@ -78,25 +77,6 @@ public final class Constants {
     public static final String kCANivoreCANBusName = "canivore";
     public static final double kCancoderBootAllowanceSeconds = 10.0;
     
-    // Swerve Config
-    public static final String kPracticeBotMACAddress = "00:80:2F:33:D1:5F";
-    // public static final boolean kPracticeBot = getMACAddress().equals(kPracticeBotMACAddress);
-    public static final boolean kPracticeBot = false;
-    public static final boolean kUseVelocityDrive = true;
-    
-    // Controls
-    public static final boolean kForceDriveGamepad = false;
-    public static final boolean kUseHeadingController = false;
-    public static final int kDriveGamepadPort = 0;
-    public static final int kMainThrottleJoystickPort = 0;
-    public static final int kMainTurnJoystickPort = 1;
-    public static final int kOperatorControllerPort = 2;
-    public static final double kDriveJoystickThreshold = 0.075;
-    public static final double kJoystickThreshold = 0.1;
-    public static final boolean kLimelightSnapshotMode = false;
-    
-    public static final int kPigeonIMUId = 20;
-    
     // Drive constants
     public static final double kDriveReduction = (14.0 / 50.0) * (28.0 / 16.0) * (15.0 / 45.0);
     public static final double kSteerReduction = (14.0 / 50.0) * (10.0 / 60.0);
@@ -104,12 +84,6 @@ public final class Constants {
     public static final double kDriveTrackwidthMeters = 0.61595; // DONE Measure and set trackwidth
     public static final double kDriveWheelbaseMeters = 0.61595; // DONE Measure and set wheelbase
     
-    public static final double kMaxDriveVoltage = 12.0;
-    
-    // Measure the drivetrain's maximum velocity or calculate the theoretical.
-    //  The formula for calculating the theoretical maximum velocity is:
-    //   <Motor free speed RPM> / 60 * <Drive reduction> * <Wheel diameter meters> * pi
-    // TODO measure this
     public static final double kMaxVelocityMetersPerSecond = 4.959668;
     
     // Robot constants
@@ -128,40 +102,40 @@ public final class Constants {
     public static final double kScaleTranslationInputs = 0.5;
     public static final double kScaleRotationInputs = 0.2;
     
-    public static final KinematicLimits kUncappedKinematicLimits = new KinematicLimits();
-    static {
-        kUncappedKinematicLimits.kMaxDriveVelocity = Constants.kMaxVelocityMetersPerSecond;
-        kUncappedKinematicLimits.kMaxDriveAcceleration = Double.MAX_VALUE;
-        kUncappedKinematicLimits.kMaxSteeringVelocity = Double.MAX_VALUE;
-    }
+    // public static final KinematicLimits kUncappedKinematicLimits = new KinematicLimits();
+    // static {
+    //     kUncappedKinematicLimits.kMaxDriveVelocity = Constants.kMaxVelocityMetersPerSecond;
+    //     kUncappedKinematicLimits.kMaxDriveAcceleration = Double.MAX_VALUE;
+    //     kUncappedKinematicLimits.kMaxSteeringVelocity = Double.MAX_VALUE;
+    // }
     
-    public static final KinematicLimits kAzimuthOnlyKinematicLimits = new KinematicLimits();
-    static {
-        kAzimuthOnlyKinematicLimits.kMaxDriveVelocity = Constants.kMaxVelocityMetersPerSecond;
-        kAzimuthOnlyKinematicLimits.kMaxDriveAcceleration = Double.MAX_VALUE;
-        kAzimuthOnlyKinematicLimits.kMaxSteeringVelocity = Units.degreesToRadians(1500.0);
-    }
+    // public static final KinematicLimits kAzimuthOnlyKinematicLimits = new KinematicLimits();
+    // static {
+    //     kAzimuthOnlyKinematicLimits.kMaxDriveVelocity = Constants.kMaxVelocityMetersPerSecond;
+    //     kAzimuthOnlyKinematicLimits.kMaxDriveAcceleration = Double.MAX_VALUE;
+    //     kAzimuthOnlyKinematicLimits.kMaxSteeringVelocity = Units.degreesToRadians(1500.0);
+    // }
     
-    public static final KinematicLimits kTeleopKinematicLimits = new KinematicLimits();
-    static {
-        kTeleopKinematicLimits.kMaxDriveVelocity = Constants.kMaxVelocityMetersPerSecond;
-        kTeleopKinematicLimits.kMaxDriveAcceleration = kTeleopKinematicLimits.kMaxDriveVelocity / 0.1;
-        kTeleopKinematicLimits.kMaxSteeringVelocity = Units.degreesToRadians(1500.0);
-    }
+    // public static final KinematicLimits kTeleopKinematicLimits = new KinematicLimits();
+    // static {
+    //     kTeleopKinematicLimits.kMaxDriveVelocity = Constants.kMaxVelocityMetersPerSecond;
+    //     kTeleopKinematicLimits.kMaxDriveAcceleration = kTeleopKinematicLimits.kMaxDriveVelocity / 0.1;
+    //     kTeleopKinematicLimits.kMaxSteeringVelocity = Units.degreesToRadians(1500.0);
+    // }
     
-    public static final KinematicLimits kFastKinematicLimits = new KinematicLimits();
-    static {
-        kFastKinematicLimits.kMaxDriveVelocity = Constants.kMaxVelocityMetersPerSecond;
-        kFastKinematicLimits.kMaxDriveAcceleration = kFastKinematicLimits.kMaxDriveVelocity / 0.2;
-        kFastKinematicLimits.kMaxSteeringVelocity = Units.degreesToRadians(1000.0);
-    }
+    // public static final KinematicLimits kFastKinematicLimits = new KinematicLimits();
+    // static {
+    //     kFastKinematicLimits.kMaxDriveVelocity = Constants.kMaxVelocityMetersPerSecond;
+    //     kFastKinematicLimits.kMaxDriveAcceleration = kFastKinematicLimits.kMaxDriveVelocity / 0.2;
+    //     kFastKinematicLimits.kMaxSteeringVelocity = Units.degreesToRadians(1000.0);
+    // }
     
-    public static final KinematicLimits kSmoothKinematicLimits = new KinematicLimits();
-    static {
-        kSmoothKinematicLimits.kMaxDriveVelocity = Constants.kMaxVelocityMetersPerSecond * .7;
-        kSmoothKinematicLimits.kMaxDriveAcceleration = kSmoothKinematicLimits.kMaxDriveVelocity / 1.0;
-        kSmoothKinematicLimits.kMaxSteeringVelocity = Units.degreesToRadians(750.0);
-    }
+    // public static final KinematicLimits kSmoothKinematicLimits = new KinematicLimits();
+    // static {
+    //     kSmoothKinematicLimits.kMaxDriveVelocity = Constants.kMaxVelocityMetersPerSecond * .7;
+    //     kSmoothKinematicLimits.kMaxDriveAcceleration = kSmoothKinematicLimits.kMaxDriveVelocity / 1.0;
+    //     kSmoothKinematicLimits.kMaxSteeringVelocity = Units.degreesToRadians(750.0);
+    // }
     
     public static final Translation2d[] kWheelPositions = {
         // Front left

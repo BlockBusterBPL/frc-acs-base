@@ -6,58 +6,64 @@ package frc.robot.subsystems.drive;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Twist2d;
+import edu.wpi.first.math.geometry.Twist3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.lib.geometry.ImprovedRotation2d;
-import frc.robot.lib.swerve.ImprovedChassisSpeeds;
-import frc.robot.lib.swerve.SwerveSetpoint;
-import frc.robot.lib.swerve.SwerveSetpointGenerator;
-import frc.robot.lib.swerve.SwerveSetpointGenerator.KinematicLimits;
-import frc.robot.planners.DriveMotionPlanner;
 
 /** Add your docs here. */
 public class Drive extends SubsystemBase {
+    private static final double coastThresholdMetersPerSec = 0.05; // Need to be under this to switch to coast when
+                                                                   // disabling
+    private static final double coastThresholdSecs = 6.0; // Need to be under the above speed for this length of time to
+                                                          // switch to coast
+
     private GyroIO gyroIO;
     private GyroIOInputsAutoLogged gyroInputs;
 
-    private final SwerveModule[] mModules;
+    private final SwerveModule[] modules;
     private final int kFrontLeftID = 0;
     private final int kFrontRightID = 1;
     private final int kRearLeftID = 2;
     private final int kRearRightID = 3;
 
-    private SwerveSetpointGenerator mSetpointGenerator;
-    private SwerveSetpoint mLastSetpoint;
+    SwerveDriveKinematics kinematics = new SwerveDriveKinematics(Constants.kWheelPositions);
 
-    private ImprovedRotation2d mYawOffset;
-
-    private final DriveMotionPlanner mMotionPlanner;
-    private boolean mOverrideTrajectory = false;
-    private DriveControlState mDriveControlState = DriveControlState.VELOCITY_CONTROL;
-    private KinematicLimits mKinematicLimits = Constants.kFastKinematicLimits;
+    private ChassisSpeeds setpoint = new ChassisSpeeds();
+    private SwerveModuleState[] lastSetpointStates = new SwerveModuleState[] {
+            new SwerveModuleState(),
+            new SwerveModuleState(),
+            new SwerveModuleState(),
+            new SwerveModuleState()
+    };
 
     private boolean isBrakeMode = false;
     private Timer lastMovementTimer = new Timer();
 
-    public enum DriveControlState {
-        OPEN_LOOP,
-        VELOCITY_CONTROL,
-        PATH_FOLLOWING
-    }
+    private double[] lastModulePositionsMeters = new double[] { 0.0, 0.0, 0.0, 0.0 };
+    private Rotation2d lastGyroYaw = new Rotation2d();
+    private Twist2d fieldVelocity = new Twist2d();
 
-    public Drive(GyroIO driveIO, SwerveModuleIO frontLeftIO, SwerveModuleIO frontRightIO, SwerveModuleIO rearLeftIO, SwerveModuleIO rearRightIO) {
-        mModules = new SwerveModule[4];
+    public Drive(GyroIO driveIO, SwerveModuleIO frontLeftIO, SwerveModuleIO frontRightIO, SwerveModuleIO rearLeftIO,
+            SwerveModuleIO rearRightIO) {
+        modules = new SwerveModule[4];
 
-        mModules[kFrontLeftID] = new SwerveModule(frontLeftIO, kFrontLeftID);
-        mModules[kFrontRightID] = new SwerveModule(frontRightIO, kFrontRightID);
-        mModules[kRearLeftID] = new SwerveModule(rearLeftIO, kRearLeftID);
-        mModules[kRearRightID] = new SwerveModule(rearRightIO, kRearRightID);
+        modules[kFrontLeftID] = new SwerveModule(frontLeftIO, kFrontLeftID);
+        modules[kFrontRightID] = new SwerveModule(frontRightIO, kFrontRightID);
+        modules[kRearLeftID] = new SwerveModule(rearLeftIO, kRearLeftID);
+        modules[kRearRightID] = new SwerveModule(rearRightIO, kRearRightID);
 
         lastMovementTimer.reset();
-
-        mMotionPlanner = new DriveMotionPlanner();
     }
 
     @Override
@@ -65,21 +71,152 @@ public class Drive extends SubsystemBase {
         gyroIO.updateInputs(gyroInputs);
         Logger.getInstance().processInputs("Drive/Gyro", gyroInputs);
 
-        for (SwerveModule swerveModule : mModules) {
+        for (SwerveModule swerveModule : modules) {
             swerveModule.periodic();
         }
 
+        if (DriverStation.isDisabled()) {
+            for (var module : modules) {
+                module.stop();
+            }
+            Logger.getInstance().recordOutput("SwerveStates/Setpoints", new double[] {});
+            Logger.getInstance().recordOutput("SwerveStates/SetpointsOptimized", new double[] {});
+        } else {
+
+            var setpointTwist = new Pose2d().log(
+                    new Pose2d(
+                            setpoint.vxMetersPerSecond * Constants.loopPeriodSecs,
+                            setpoint.vyMetersPerSecond * Constants.loopPeriodSecs,
+                            Rotation2d.fromRotations(setpoint.omegaRadiansPerSecond * Constants.loopPeriodSecs)));
+
+            var adjustedSpeeds = new ChassisSpeeds(
+                    setpointTwist.dx / Constants.loopPeriodSecs,
+                    setpointTwist.dy / Constants.loopPeriodSecs,
+                    setpointTwist.dtheta / Constants.loopPeriodSecs);
+            SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(adjustedSpeeds);
+            // TODO: SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, setpoint,
+            // kRearLeftID, kFrontRightID, kFrontLeftID);
+
+            // Set to previous angles if velocity is zero
+            if (adjustedSpeeds.vxMetersPerSecond == 0.0
+                    && adjustedSpeeds.vyMetersPerSecond == 0.0
+                    && adjustedSpeeds.omegaRadiansPerSecond == 0) {
+                for (int i = 0; i < 4; i++) {
+                    setpointStates[i] = new SwerveModuleState(0.0, lastSetpointStates[i].angle);
+                }
+            }
+            lastSetpointStates = setpointStates;
+
+            // Send setpoints to modules
+            SwerveModuleState[] optimizedStates = new SwerveModuleState[4];
+            for (int i = 0; i < 4; i++) {
+                optimizedStates[i] = modules[i].setState(setpointStates[i]);
+            }
+
+            // Log setpoint states
+            Logger.getInstance().recordOutput("SwerveStates/Setpoints", setpointStates);
+            Logger.getInstance().recordOutput("SwerveStates/SetpointsOptimized", optimizedStates);
+        }
+
+        // Log measured states
+        SwerveModuleState[] measuredStates = new SwerveModuleState[4];
+        for (int i = 0; i < 4; i++) {
+            measuredStates[i] = modules[i].getState();
+        }
+        Logger.getInstance().recordOutput("SwerveStates/Measured", measuredStates);
+
+        // Update odometry
+        SwerveModulePosition[] wheelDeltas = new SwerveModulePosition[4];
+        for (int i = 0; i < 4; i++) {
+            wheelDeltas[i] = new SwerveModulePosition(
+                    (modules[i].getDistance() - lastModulePositionsMeters[i]),
+                    modules[i].getAngle());
+            lastModulePositionsMeters[i] = modules[i].getDistance();
+        }
+        var twist = kinematics.toTwist2d(wheelDeltas);
+        var gyroYaw = new Rotation2d(gyroInputs.yawAngleRotations);
+        if (gyroInputs.connected) {
+            twist = new Twist2d(twist.dx, twist.dy, gyroYaw.minus(lastGyroYaw).getRadians());
+        }
+        lastGyroYaw = gyroYaw;
+        // poseEstimator.addDriveData(Timer.getFPGATimestamp(), twist);
+        Logger.getInstance().recordOutput("Odometry/Robot", getPose());
+
+        // Log 3D odometry pose
+        Pose3d robotPose3d = new Pose3d(getPose());
+        // robotPose3d =
+        // robotPose3d
+        // .exp(
+        // new Twist3d(
+        // 0.0,
+        // 0.0,
+        // Math.abs(gyroInputs.pitchAngleRotations) * trackWidthX.get() / 2.0,
+        // 0.0,
+        // gyroInputs.pitchPositionRad,
+        // 0.0))
+        // .exp(
+        // new Twist3d(
+        // 0.0,
+        // 0.0,
+        // Math.abs(gyroInputs.rollPositionRad) * trackWidthY.get() / 2.0,
+        // gyroInputs.rollPositionRad,
+        // 0.0,
+        // 0.0));
+        Logger.getInstance().recordOutput("Odometry/Robot3d", robotPose3d);
+
+        // Update field velocity
+        ChassisSpeeds chassisSpeeds = kinematics.toChassisSpeeds(measuredStates);
+        Translation2d linearFieldVelocity = new Translation2d(chassisSpeeds.vxMetersPerSecond,
+                chassisSpeeds.vyMetersPerSecond)
+                .rotateBy(getRotation());
+        fieldVelocity = new Twist2d(
+                linearFieldVelocity.getX(),
+                linearFieldVelocity.getY(),
+                gyroInputs.connected
+                        ? gyroInputs.yawVelocityRotationsPerSecond
+                        : chassisSpeeds.omegaRadiansPerSecond);
+
+        // Update brake mode
+        boolean stillMoving = false;
+        for (int i = 0; i < 4; i++) {
+            if (Math.abs(modules[i].getVelocity()) > coastThresholdMetersPerSec) {
+                stillMoving = true;
+            }
+        }
+        if (stillMoving)
+            lastMovementTimer.reset();
+        if (DriverStation.isEnabled()) {
+            if (!isBrakeMode) {
+                isBrakeMode = true;
+                for (var module : modules) {
+                    module.setDriveBrakeMode(true);
+                }
+            }
+        } else {
+            if (isBrakeMode && lastMovementTimer.hasElapsed(coastThresholdSecs)) {
+                isBrakeMode = false;
+                for (var module : modules) {
+                    module.setDriveBrakeMode(false);
+                }
+            }
+        }
     }
 
-    public void swerveDrive(ImprovedChassisSpeeds speeds) {
-        KinematicLimits limits = Constants.kTeleopKinematicLimits;
-        SwerveSetpoint newSetpoint = mSetpointGenerator.generateSetpoint(limits, mLastSetpoint, speeds, 0.02);
-        setModuleStates(newSetpoint.mModuleStates);
+    public void swerveDrive(ChassisSpeeds speeds) {
+        setpoint = speeds;
     }
 
     public void setModuleStates(SwerveModuleState[] moduleStates) {
         for (int i = 0; i < moduleStates.length; i++) {
-            mModules[i].setState(moduleStates[i]);
+            modules[i].setState(moduleStates[i]);
         }
+    }
+
+    public Pose2d getPose() {
+        return new Pose2d(); // TODO
+    }
+
+    public Rotation2d getRotation() {
+        return new Rotation2d(); // TODO
     }
 }

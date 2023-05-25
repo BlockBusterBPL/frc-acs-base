@@ -5,6 +5,7 @@
 package frc.robot.subsystems.drive;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -15,7 +16,7 @@ import static frc.robot.Constants.kDriveReduction;
 import static frc.robot.Constants.kSteerReduction;
 import static frc.robot.Constants.kDriveWheelDiameter;
 
-import frc.robot.lib.geometry.ImprovedRotation2d;
+import frc.robot.lib.util.LoggedTunableBoolean;
 import frc.robot.lib.util.LoggedTunableNumber;
 
 /** Add your docs here. */
@@ -32,6 +33,9 @@ public class SwerveModule {
     private static final LoggedTunableNumber steerKI = new LoggedTunableNumber("Drive/Module/SteerKI");
     private static final LoggedTunableNumber steerKD = new LoggedTunableNumber("Drive/Module/SteerKD");
     private static final LoggedTunableNumber steerKF = new LoggedTunableNumber("Drive/Module/SteerKF");
+
+    private static final LoggedDashboardBoolean steerNeutralMode = new LoggedDashboardBoolean("Drive/Module/SteerNeutral");
+    private static boolean steerIsNeutral = false;
 
     public SwerveModule(SwerveModuleIO io, int index) {
         this.io = io;
@@ -74,29 +78,20 @@ public class SwerveModule {
             io.setSteerKF(steerKF.get());
         }
 
+        if (steerNeutralMode.get() != steerIsNeutral) {
+            io.setSteerBrakeMode(!steerNeutralMode.get());
+            steerIsNeutral = steerNeutralMode.get();
+        }
+
         io.updateOutputs();
     }
 
     public double getVelocity() {
-        return convertRotationsToMeters(inputs.driveVelocityRotPerSec);
+        return inputs.driveVelocityMetersPerSec;
     }
 
     public double getDistance() {
-        return convertRotationsToMeters(inputs.driveRotations);
-    }
-
-    private double convertRotationsToMeters(double rotations) {
-        double wheelCircumference = kDriveWheelDiameter * Math.PI;
-        double metersPerMotorRotation = wheelCircumference / kDriveReduction;
-        
-        return rotations * metersPerMotorRotation;
-    }
-
-    private double convertMetersToRotations(double meters) {
-        double wheelCircumference = kDriveWheelDiameter * Math.PI;
-        double motorRotationsPerMeter = kDriveReduction / wheelCircumference;
-
-        return meters * motorRotationsPerMeter;
+        return inputs.driveMeters;
     }
 
     public Rotation2d getAngle() {
@@ -111,9 +106,22 @@ public class SwerveModule {
         return new SwerveModulePosition(getDistance(), getAngle());
     }
 
-    public void setState(SwerveModuleState state) {
-        io.setDriveSpeedTarget(convertMetersToRotations(state.speedMetersPerSecond));
-        io.setSteerPositionTarget(state.angle.getRotations());
+    public SwerveModuleState setState(SwerveModuleState state) {
+        var optimizedState = SwerveModuleState.optimize(state, getAngle());
+        io.setDriveSpeedTarget(optimizedState.speedMetersPerSecond);
+        io.setSteerPositionTarget(optimizedState.angle.getRotations());
+        return optimizedState;
     }
 
+    public void stop() {
+        setState(new SwerveModuleState());
+    }
+
+    public void setDriveBrakeMode(boolean brake) {
+        io.setDriveBrakeMode(brake);
+    }
+
+    public void setSteerBrakeMode(boolean brake) {
+        io.setSteerBrakeMode(brake);
+    }
 }

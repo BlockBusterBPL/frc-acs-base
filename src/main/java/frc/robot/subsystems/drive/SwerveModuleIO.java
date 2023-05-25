@@ -10,24 +10,24 @@ import org.littletonrobotics.junction.AutoLog;
 public interface SwerveModuleIO {
     @AutoLog
     public static class SwerveModuleIOInputs {
-        public double driveRotations = 0.0;
-        public double driveVelocityRotPerSec = 0.0;
-        public double driveAppliedCurrent = 0.0;
-        public double[] driveCurrentAmps = new double[] {};
-        public double[] driveTempCelsius = new double[] {};
+        public double driveMeters = 0.0;
+        public double driveVelocityMetersPerSec = 0.0;
+        public double driveAppliedCurrentAmps = 0.0;
+        public double driveSuppliedCurrentAmps = 0.0;
+        public double driveTempCelsius = 0.0;
 
         public double steerPositionRotations = 0.0;
-        public double steerVelocityRotPerSecond = 0.0;
-        public double steerAppliedCurrent = 0.0;
-        public double[] steerCurrentAmps = new double[] {};
-        public double[] steerTempCelsius = new double[] {};
+        public double steerVelocityRotPerSec = 0.0;
+        public double steerAppliedCurrentAmps = 0.0;
+        public double steerSuppliedCurrentAmps = 0.0;
+        public double steerTempCelsius = 0.0;
     }
 
     public default void updateInputs(SwerveModuleIOInputs inputs) {}
 
     public default void updateOutputs() {}
 
-    public default void setDriveSpeedTarget(double speedRotationsPerSecond) {}
+    public default void setDriveSpeedTarget(double speedMetersPerSecond) {}
 
     public default void setSteerPositionTarget(double steerAngleRotations) {}
 

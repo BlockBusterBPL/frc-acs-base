@@ -14,6 +14,10 @@ public interface GyroIO {
         public double pitchAngleRotations;
         public double rollAngleRotations;
 
+        public double yawVelocityRotationsPerSecond;
+        public double pitchVelocityRotationsPerSecond;
+        public double rollVelocityRotationsPerSecond;
+
         public boolean connected;
         public boolean calibrating;
 
