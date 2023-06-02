@@ -124,4 +124,8 @@ public class SwerveModule {
     public void setSteerBrakeMode(boolean brake) {
         io.setSteerBrakeMode(brake);
     }
+
+    public double getTotalCurrent() {
+        return inputs.driveSuppliedCurrentAmps + inputs.steerSuppliedCurrentAmps;
+    }
 }

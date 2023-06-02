@@ -8,7 +8,6 @@ import com.ctre.phoenixpro.BaseStatusSignalValue;
 import com.ctre.phoenixpro.StatusSignalValue;
 import com.ctre.phoenixpro.configs.CANcoderConfiguration;
 import com.ctre.phoenixpro.configs.TalonFXConfiguration;
-import com.ctre.phoenixpro.controls.Follower;
 import com.ctre.phoenixpro.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenixpro.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenixpro.hardware.CANcoder;
@@ -18,9 +17,9 @@ import com.ctre.phoenixpro.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenixpro.signals.NeutralModeValue;
 import com.ctre.phoenixpro.signals.SensorDirectionValue;
 
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import frc.robot.Constants;
 import frc.robot.lib.FalconFeedbackControlHelper;
 import frc.robot.lib.TalonFXLiveConfigHelper;
 
@@ -121,8 +120,8 @@ public class FalconSwerveIO implements SwerveModuleIO {
         double position_compensated = m_drivePosition.getValue() + (m_driveVelocity.getValue() * m_drivePosition.getTimestamp().getLatency());
         double angle_compensated = m_steerPosition.getValue() + (m_steerVelocity.getValue() * m_steerPosition.getTimestamp().getLatency());
 
-        inputs.driveMeters = wheelRotationsToMeters(position_compensated);
-        inputs.driveVelocityMetersPerSec = wheelRotationsToMeters(m_driveVelocity.getValue());
+        inputs.driveMeters = convertRotationsToMeters(position_compensated);
+        inputs.driveVelocityMetersPerSec = convertRotationsToMeters(m_driveVelocity.getValue());
         inputs.driveAppliedCurrentAmps = m_driveAppliedCurrent.getValue();
         inputs.driveSuppliedCurrentAmps = m_driveSuppliedCurrent.getValue();
         inputs.driveTempCelsius = m_driveTempCelsius.getValue();
@@ -134,12 +133,24 @@ public class FalconSwerveIO implements SwerveModuleIO {
         inputs.steerTempCelsius = m_steerTempCelsius.getValue();
     }
 
-    private double wheelRotationsToMeters(double rotations) {
-        return 0; //TODO: this
+    @Override
+    public void updateOutputs() {
+        m_drive.setControl(m_driveControl);
+        m_steer.setControl(m_steerControl);
     }
 
-    private double metersToWheelRotations(double meters) {
-        return 0; //TODO: this
+    private double convertRotationsToMeters(double rotations) {
+        double wheelCircumference = Constants.kDriveWheelDiameter * Math.PI;
+        double metersPerMotorRotation = wheelCircumference / Constants.kDriveReduction;
+
+        return rotations * metersPerMotorRotation;
+    }
+
+    private double convertMetersToRotations(double meters) {
+        double wheelCircumference = Constants.kDriveWheelDiameter * Math.PI;
+        double motorRotationsPerMeter = Constants.kDriveReduction / wheelCircumference;
+
+        return meters * motorRotationsPerMeter;
     }
 
     @Override

@@ -4,5 +4,15 @@
 
 package frc.robot.lib.leds;
 
+import java.util.Map.Entry;
+
 /** Add your docs here. */
-public class LEDGroup {}
+public class LEDGroup {
+    public final int start, end;
+    private LEDState state;
+
+    public LEDGroup(int start, int end) {
+        this.start = start;
+        this.end = end;
+    }
+}

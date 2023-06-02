@@ -22,8 +22,12 @@ import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.hal.AllianceStationID;
+import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
+import edu.wpi.first.wpilibj.simulation.PDPSim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.Mode;
@@ -39,6 +43,13 @@ public class Robot extends LoggedRobot {
     private double autoStart;
     private boolean autoMessagePrinted;
     private boolean batteryNameWritten = false;
+
+    private static final HashMap<String, Double> subsystemCurrents = new HashMap<>();
+    public static final double BATTERY_NOMINAL_RESISTANCE_OHMS = 0.020;
+    public static final double BATTERY_NOMINAL_VOLTAGE = 12.0;
+
+    private final PowerDistribution pdh = new PowerDistribution(1, ModuleType.kRev);
+    private final PDPSim simPDH = new PDPSim(pdh);
     
     private final Alert logNoFileAlert =
     new Alert("No log path set for current robot. Data will NOT be logged.", AlertType.WARNING);
@@ -171,6 +182,12 @@ public class Robot extends LoggedRobot {
     @Override
     public void robotPeriodic() {
         CommandScheduler.getInstance().run();
+
+        if (Constants.getMode() == Mode.SIM) {
+            RoboRioSim.setVInVoltage(getSimulatedVoltage());
+            simPDH.setVoltage(getSimulatedVoltage());
+            simPDH.setCurrent(0, getSimulatedCurrent());
+        }
     }
     
     @Override
@@ -214,4 +231,24 @@ public class Robot extends LoggedRobot {
     
     @Override
     public void testExit() {}
+
+    public static void updateSimCurrentDraw(String subsystem, double totalCurrent) {
+        if (subsystemCurrents.putIfAbsent(subsystem, totalCurrent) != null) {
+            subsystemCurrents.replace(subsystem, totalCurrent);
+        }
+    }
+
+    public static double getSimulatedCurrent() {
+        double current = 0.0;
+
+        for (double l : subsystemCurrents.values()) {
+            current += l;
+        }
+
+        return current;
+    }
+
+    public static double getSimulatedVoltage() {
+        return BatterySim.calculateLoadedBatteryVoltage(BATTERY_NOMINAL_VOLTAGE, BATTERY_NOMINAL_RESISTANCE_OHMS, getSimulatedCurrent());
+    }
 }

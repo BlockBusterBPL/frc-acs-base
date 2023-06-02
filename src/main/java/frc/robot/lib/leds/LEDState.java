@@ -4,5 +4,13 @@
 
 package frc.robot.lib.leds;
 
-/** Add your docs here. */
-public class LEDState {}
+/** Contains an LED Color and Animation that can be applied to an LED Group */
+public class LEDState {
+    public final LEDColor color;
+    public final LEDAnimation animation;
+
+    public LEDState(LEDColor color, LEDAnimation animation) {
+        this.color = color;
+        this.animation = animation;
+    }
+}

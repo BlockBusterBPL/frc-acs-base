@@ -20,6 +20,8 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Robot;
+import frc.robot.Constants.Mode;
 
 /** Add your docs here. */
 public class Drive extends SubsystemBase {
@@ -54,8 +56,10 @@ public class Drive extends SubsystemBase {
     private Rotation2d lastGyroYaw = new Rotation2d();
     private Twist2d fieldVelocity = new Twist2d();
 
-    public Drive(GyroIO driveIO, SwerveModuleIO frontLeftIO, SwerveModuleIO frontRightIO, SwerveModuleIO rearLeftIO,
+    public Drive(GyroIO gyroIO, SwerveModuleIO frontLeftIO, SwerveModuleIO frontRightIO, SwerveModuleIO rearLeftIO,
             SwerveModuleIO rearRightIO) {
+        this.gyroIO = gyroIO;
+        this.gyroInputs = new GyroIOInputsAutoLogged();
         modules = new SwerveModule[4];
 
         modules[kFrontLeftID] = new SwerveModule(frontLeftIO, kFrontLeftID);
@@ -73,6 +77,14 @@ public class Drive extends SubsystemBase {
 
         for (SwerveModule swerveModule : modules) {
             swerveModule.periodic();
+        }
+
+        if (Constants.getMode() == Mode.SIM) {
+            double simCurrent = 0.0;
+            for (SwerveModule module : modules) {
+                simCurrent += module.getTotalCurrent();
+            }
+            Robot.updateSimCurrentDraw(this.getClass().getName(), simCurrent);
         }
 
         if (DriverStation.isDisabled()) {
@@ -94,8 +106,8 @@ public class Drive extends SubsystemBase {
                     setpointTwist.dy / Constants.loopPeriodSecs,
                     setpointTwist.dtheta / Constants.loopPeriodSecs);
             SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(adjustedSpeeds);
-            // TODO: SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, setpoint,
-            // kRearLeftID, kFrontRightID, kFrontLeftID);
+            // TODO: try to get 254's swerve setpoint generator working
+            SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, 4.5); // TODO: replace with more detailed method
 
             // Set to previous angles if velocity is zero
             if (adjustedSpeeds.vxMetersPerSecond == 0.0

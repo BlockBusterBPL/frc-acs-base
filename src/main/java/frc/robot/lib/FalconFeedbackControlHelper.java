@@ -25,10 +25,31 @@ public class FalconFeedbackControlHelper {
         m_motor = motor;
         m_configurator = motor.getConfigurator();
 
+        m_pidConfigs = new Slot0Configs();
+        m_magicConfigs = new MotionMagicConfigs();
+
         refreshConfigs();
-        m_pidConfigs = defaultPID;
-        m_magicConfigs = defaultMagic;
-        applyConfigs();
+        ensureDefaultConfigsApplied(defaultPID, defaultMagic);
+    }
+
+    public FalconFeedbackControlHelper(TalonFX motor) {
+        m_motor = motor;
+        m_configurator = motor.getConfigurator();
+        
+        m_pidConfigs = new Slot0Configs();
+        m_magicConfigs = new MotionMagicConfigs();
+
+        refreshConfigs();
+    }
+
+    private void ensureDefaultConfigsApplied(Slot0Configs defaultPID, MotionMagicConfigs defaultMagic) {
+        ensureDefaultConfigsApplied(defaultPID, defaultMagic, kTimeout);
+    }
+
+    private void ensureDefaultConfigsApplied(Slot0Configs defaultPID, MotionMagicConfigs defaultMagic, double timeout) {
+        m_configurator.apply(defaultPID, timeout);
+        m_configurator.apply(defaultMagic, timeout);
+        refreshConfigs(timeout);
     }
 
     private void refreshConfigs() {
@@ -89,5 +110,40 @@ public class FalconFeedbackControlHelper {
         refreshConfigs();
         m_magicConfigs.MotionMagicJerk = magicJerk;
         applyConfigs();
+    }
+
+    public double getKP() {
+        refreshConfigs();
+        return m_pidConfigs.kP;
+    }
+
+    public double getKI() {
+        refreshConfigs();
+        return m_pidConfigs.kI;
+    }
+
+    public double getKD() {
+        refreshConfigs();
+        return m_pidConfigs.kD;
+    }
+
+    public double getKV() {
+        refreshConfigs();
+        return m_pidConfigs.kV;
+    }
+
+    public double getMagicVelocity() {
+        refreshConfigs();
+        return m_magicConfigs.MotionMagicCruiseVelocity;
+    }
+
+    public double getMagicAcceleration() {
+        refreshConfigs();
+        return m_magicConfigs.MotionMagicAcceleration;
+    }
+
+    public double getMagicJerk() {
+        refreshConfigs();
+        return m_magicConfigs.MotionMagicJerk;
     }
 }

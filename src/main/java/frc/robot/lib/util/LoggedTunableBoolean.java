@@ -12,7 +12,6 @@ import java.util.Map;
 import frc.robot.Constants;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
-import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
 
 /**
  * Class for a tunable boolean. Gets value from dashboard in tuning mode, returns default if not or
