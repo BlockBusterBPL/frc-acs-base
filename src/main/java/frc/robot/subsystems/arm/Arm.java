@@ -17,10 +17,39 @@ import frc.robot.Constants.Mode;
 public class Arm extends SubsystemBase {
 
     public static class ArmPosition {
-        double tilt = 0.0;
-        double extend = 0.0;
-        double wrist = 0.0;
+        public final double tilt;
+        public final double extend;
+        public final double wrist;
+
+        public ArmPosition(double tilt, double extend, double wrist) {
+            this.tilt = tilt;
+            this.extend = extend;
+            this.wrist = wrist;
+        }
     }
+
+    public static class PositionPresets {
+        public static final ArmPosition EMPTY_STOWED = new ArmPosition(0, 0, 0);
+
+        public static final ArmPosition CUBE_STOWED = new ArmPosition(0, 0, 0);
+        // CUBE_PICKUP_GROUND
+        // CUBE_PICKUP_RAMP
+        // CUBE_PICKUP_SHELF
+        // CUBE_SCORE_LOW
+        // CUBE_SCORE_MID
+        // CUBE_SCORE_HIGH
+        // CUBE_SCORE_BACK
+
+        public static final ArmPosition CONE_STOWED = new ArmPosition(0, 0, 0);
+        // CONE_PICKUP_GROUND
+        // CONE_PICKUP_RAMP
+        // CONE_PICKUP_SHELF
+        // CONE_SCORE_LOW
+        // CONE_SCORE_MID
+        // CONE_SCORE_HIGH
+    }
+
+    private ArmPosition activePreset = PositionPresets.EMPTY_STOWED;
 
     public static final double ARM_BASE_LENGTH = Units.inchesToMeters(19); // distance from arm pivot to vertical extension of wrist pivot
     public static final double ARM_MASS_OFFSET = 0.0; // FF Amps required to hold elevator horizontal at minimum extension
@@ -32,9 +61,9 @@ public class Arm extends SubsystemBase {
     private final Mechanism2d mech = new Mechanism2d(3, 3);
     private final MechanismRoot2d root = mech.getRoot("Main Pivot", 1, 1);
     private final MechanismLigament2d elevator = root
-            .append(new MechanismLigament2d("Elevator", 1, 0, 0.05, new Color8Bit(Color.kOrange)));
+            .append(new MechanismLigament2d("Elevator", ARM_BASE_LENGTH, 0, 0.05, new Color8Bit(Color.kOrange)));
     private final MechanismLigament2d offsetPlate = root
-            .append(new MechanismLigament2d("Offset Plate", 0.05, -90, 0.05, new Color8Bit(Color.kGray)));
+            .append(new MechanismLigament2d("Offset Plate", 0.08, -90, 0.05, new Color8Bit(Color.kGray)));
     private final MechanismLigament2d wrist = root
             .append(new MechanismLigament2d("Wrist", 0.375, -90, 0.05, new Color8Bit(Color.kPurple)));
 
@@ -65,18 +94,46 @@ public class Arm extends SubsystemBase {
             Robot.updateSimCurrentDraw(this.getClass().getName(), simCurrent);
         }
 
+        elevator.setAngle(Rotation2d.fromRotations(inputs.tiltRotations));
+        elevator.setLength(ARM_BASE_LENGTH + inputs.extendMeters);
+        wrist.setAngle(Rotation2d.fromRotations(inputs.wristRotations));
+
+        Logger.getInstance().recordOutput("Arm/RealOutputs/MeasuredPositions", mech);
+
+        final ArmPosition newTarget = activePreset; // Ensure that preset isn't changed while applying targets to motors
+
+        io.setTiltTarget(newTarget.tilt);
+        io.setTiltFeedForward(calcTiltFeedforward());
+
+        io.setExtendTarget(newTarget.extend);
+        io.setExtendFeedForward(calcExtendFeedForward());
+
+        io.setWristTarget(newTarget.wrist);
+        io.setWristFeedForward(calcWristFeedForward());
+
         io.updateOutputs();
+    }
+
+    private Rotation2d calcWristRefAngle() {
+        return Rotation2d.fromRotations(inputs.wristRotations).minus(Rotation2d.fromRotations(inputs.tiltRotations));
     }
 
     private double calcTiltFeedforward() {
         Rotation2d tiltAngle = Rotation2d.fromRotations(inputs.tiltRotations);
         double extendDistance = inputs.extendMeters;
-        Rotation2d wristAngleWorldRelative = Rotation2d.fromRotations(inputs.wristRotations).minus(tiltAngle);
 
-        double wristMass = wristAngleWorldRelative.getCos() * ARM_CONE_BOOST;
+        double wristMass = calcWristRefAngle().getCos() * ARM_CONE_BOOST;
         double tiltMass = ARM_MASS_OFFSET + (extendDistance * ARM_MASS_DISTANCE_FACTOR);
         double tiltFFCurrent = (wristMass + tiltMass) * tiltAngle.getCos();
 
         return tiltFFCurrent;
+    }
+
+    private double calcExtendFeedForward() {
+        return 0; // TODO: extend feedforward calculation
+    }
+
+    private double calcWristFeedForward() {
+        return calcWristRefAngle().getCos() * WRIST_MASS_FACTOR;
     }
 }

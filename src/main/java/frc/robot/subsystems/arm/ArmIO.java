@@ -53,6 +53,12 @@ public interface ArmIO {
 
     public default void setWristTarget(double rotations) {}
 
+    public default void setTiltFeedForward(double amps) {}
+
+    public default void setExtendFeedForward(double amps) {}
+
+    public default void setWristFeedForward(double amps) {}
+
     public default Optional<TunablePID> getTiltPID() {return Optional.empty();}
 
     public default Optional<TunablePID> getExtendPID() {return Optional.empty();}
