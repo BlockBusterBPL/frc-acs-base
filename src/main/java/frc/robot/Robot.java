@@ -187,6 +187,8 @@ public class Robot extends LoggedRobot {
             RoboRioSim.setVInVoltage(getSimulatedVoltage());
             simPDH.setVoltage(getSimulatedVoltage());
             simPDH.setCurrent(0, getSimulatedCurrent());
+            Logger.getInstance().recordOutput("SimData/EstimatedBatteryCurrent", getSimulatedCurrent());
+            Logger.getInstance().recordOutput("SimData/EstimatedBatteryVoltage", getSimulatedVoltage());
         }
     }
     

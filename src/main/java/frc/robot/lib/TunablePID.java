@@ -4,8 +4,8 @@
 
 package frc.robot.lib;
 
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.function.DoubleConsumer;
+import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenixpro.hardware.TalonFX;
 
@@ -15,26 +15,26 @@ import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 
 /** A generic wrapper for tuning feedback control constants */
-public class TunablePID {
+public class TunablePID{
     private final String sourceType;
 
-    private final Consumer<Double> setKP;
-    private final Consumer<Double> setKI;
-    private final Consumer<Double> setKD;
-    private final Consumer<Double> setKF;
+    private final DoubleConsumer setKP;
+    private final DoubleConsumer setKI;
+    private final DoubleConsumer setKD;
+    private final DoubleConsumer setKF;
 
-    private final Consumer<Double> setTV;
-    private final Consumer<Double> setTA;
-    private final Consumer<Double> setTJ;
+    private final DoubleConsumer setTV;
+    private final DoubleConsumer setTA;
+    private final DoubleConsumer setTJ;
 
-    private final Supplier<Double> getKP;
-    private final Supplier<Double> getKI;
-    private final Supplier<Double> getKD;
-    private final Supplier<Double> getKF;
+    private final DoubleSupplier getKP;
+    private final DoubleSupplier getKI;
+    private final DoubleSupplier getKD;
+    private final DoubleSupplier getKF;
 
-    private final Supplier<Double> getTV;
-    private final Supplier<Double> getTA;
-    private final Supplier<Double> getTJ;
+    private final DoubleSupplier getTV;
+    private final DoubleSupplier getTA;
+    private final DoubleSupplier getTJ;
 
     public TunablePID(ProfiledPIDController controller) {
         sourceType ="ProfiledPIDController (WPI)";
@@ -106,5 +106,5 @@ public class TunablePID {
 
     public void setKP(double kP) {
         setKP.accept(kP);
-    }   
+    }
 }

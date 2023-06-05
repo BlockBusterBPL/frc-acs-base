@@ -22,6 +22,8 @@ import frc.robot.lib.drive.DriveController;
 import frc.robot.lib.drive.FieldOrientedDriveController;
 import frc.robot.lib.drive.StandardDriveController;
 import frc.robot.subsystems.arm.Arm;
+import frc.robot.subsystems.arm.ArmIO;
+import frc.robot.subsystems.arm.ArmIOSimV1;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.FalconSwerveIO;
 import frc.robot.subsystems.drive.GyroIO;
@@ -80,6 +82,7 @@ public class RobotContainer {
                             new NewSimSwerveIO(),
                             new NewSimSwerveIO(),
                             new NewSimSwerveIO());
+                    arm = new Arm(new ArmIOSimV1());
                     break;
                 default:
                     throw new IllegalStateException("Selected robot is not valid.");
@@ -98,6 +101,12 @@ public class RobotContainer {
                     },
                     new SwerveModuleIO() {
                     });
+        }
+
+        if (arm == null) {
+            arm = new Arm(new ArmIO() {
+                
+            });
         }
 
         if (Constants.tuningMode) {
