@@ -6,9 +6,11 @@ package frc.robot.subsystems.drive;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.geometry.Twist3d;
@@ -53,8 +55,17 @@ public class Drive extends SubsystemBase {
     private Timer lastMovementTimer = new Timer();
 
     private double[] lastModulePositionsMeters = new double[] { 0.0, 0.0, 0.0, 0.0 };
+    private SwerveModulePosition[] lastSwervePositions = new SwerveModulePosition[] {
+        new SwerveModulePosition(),
+        new SwerveModulePosition(),
+        new SwerveModulePosition(),
+        new SwerveModulePosition()
+    };
     private Rotation2d lastGyroYaw = new Rotation2d();
     private Twist2d fieldVelocity = new Twist2d();
+    private Pose2d lastRobotPose = new Pose2d();
+
+    private SwerveDrivePoseEstimator odometry;
 
     public Drive(GyroIO gyroIO, SwerveModuleIO frontLeftIO, SwerveModuleIO frontRightIO, SwerveModuleIO rearLeftIO,
             SwerveModuleIO rearRightIO) {
@@ -66,6 +77,8 @@ public class Drive extends SubsystemBase {
         modules[kFrontRightID] = new SwerveModule(frontRightIO, kFrontRightID);
         modules[kRearLeftID] = new SwerveModule(rearLeftIO, kRearLeftID);
         modules[kRearRightID] = new SwerveModule(rearRightIO, kRearRightID);
+
+        odometry = new SwerveDrivePoseEstimator(kinematics, lastGyroYaw, lastSwervePositions, getPose());
 
         lastMovementTimer.reset();
     }
@@ -145,12 +158,22 @@ public class Drive extends SubsystemBase {
                     modules[i].getAngle());
             lastModulePositionsMeters[i] = modules[i].getDistance();
         }
-        var twist = kinematics.toTwist2d(wheelDeltas);
-        var gyroYaw = new Rotation2d(gyroInputs.yawAngleRotations);
-        if (gyroInputs.connected) {
-            twist = new Twist2d(twist.dx, twist.dy, gyroYaw.minus(lastGyroYaw).getRadians());
+        // var twist = kinematics.toTwist2d(wheelDeltas);
+        // var gyroYaw = new Rotation2d(gyroInputs.yawAngleRotations);
+        // if (gyroInputs.connected) {
+        //     twist = new Twist2d(twist.dx, twist.dy, gyroYaw.minus(lastGyroYaw).getRadians());
+        // }
+        // lastGyroYaw = gyroYaw;
+
+        for (int i = 0; i < modules.length; i++) {
+            lastSwervePositions[i] = modules[i].getPosition();
         }
-        lastGyroYaw = gyroYaw;
+
+        var inverseSpeeds = kinematics.toChassisSpeeds(measuredStates);
+        var yawDelta = new Rotation2d(inverseSpeeds.omegaRadiansPerSecond).times(Constants.loopPeriodSecs);
+        lastGyroYaw = lastGyroYaw.plus(yawDelta);
+        lastRobotPose = odometry.update(lastGyroYaw, lastSwervePositions);
+
         // poseEstimator.addDriveData(Timer.getFPGATimestamp(), twist);
         Logger.getInstance().recordOutput("Odometry/Robot", getPose());
 
@@ -225,10 +248,10 @@ public class Drive extends SubsystemBase {
     }
 
     public Pose2d getPose() {
-        return new Pose2d(); // TODO
+        return lastRobotPose; // TODO
     }
 
     public Rotation2d getRotation() {
-        return new Rotation2d(); // TODO
+        return Rotation2d.fromRotations(gyroInputs.yawAngleRotations); // TODO
     }
 }

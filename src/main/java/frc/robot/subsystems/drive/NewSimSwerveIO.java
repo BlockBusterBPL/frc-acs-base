@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import frc.robot.Constants;
 
 public class NewSimSwerveIO implements SwerveModuleIO {
-    private FlywheelSim driveSim = new FlywheelSim(DCMotor.getFalcon500(1), 6.75, 0.25);
+    private FlywheelSim driveSim = new FlywheelSim(DCMotor.getFalcon500(1), 6.75, 0.05);
     private FlywheelSim turnSim = new FlywheelSim(DCMotor.getFalcon500(1), 150.0 / 7.0, 0.04);
 
     private SimpleMotorFeedforward driveFF = new SimpleMotorFeedforward(0, 0.75);

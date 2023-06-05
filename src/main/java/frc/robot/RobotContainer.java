@@ -104,7 +104,7 @@ public class RobotContainer {
             new Alert("Tuning mode active! This should not be used in competition.", AlertType.INFO).set(true);
         }
 
-        DriveController testController = new StandardDriveController();
+        DriveController testController = new FieldOrientedDriveController();
         drive.setDefaultCommand(new DefaultDriveCommand(drive, this::getDriveInputs, () -> testController));
     }
 
@@ -127,6 +127,6 @@ public class RobotContainer {
     }
 
     private ControllerDriveInputs getDriveInputs() {
-        return new ControllerDriveInputs(-driver.getLeftY(), -driver.getLeftX(), -driver.getRightX());
+        return new ControllerDriveInputs(-driver.getLeftY(), -driver.getLeftX(), -driver.getRightX()).squareInputs().applyDeadZone(0.05, 0.05, 0.05, 0.08);
     }
 }
