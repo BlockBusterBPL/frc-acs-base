@@ -9,38 +9,38 @@ import frc.robot.lib.TunablePID;
 public interface ArmIO {
     @AutoLog
     public static class ArmIOInputs {
-        public double tiltRotations;
-        public double tiltVelocityRotPerSec;
-        public double tiltAccelRotPerSecSquared;
-        public double[] tiltAppliedCurrentAmps;
-        public double[] tiltSuppliedCurrentAmps;
-        public double[] tiltTempCelsius;
-        public boolean tiltReverseSoftLimit;
-        public boolean tiltForwardSoftLimit;
-        public boolean tiltReverseHardLimit;
-        public boolean tiltForwardHardLimit;
+        public double tiltRotations = 0.0;
+        public double tiltVelocityRotPerSec = 0.0;
+        public double tiltAccelRotPerSecSquared = 0.0;
+        public double[] tiltAppliedCurrentAmps = {};
+        public double[] tiltSuppliedCurrentAmps = {};
+        public double[] tiltTempCelsius = {};
+        public boolean tiltReverseSoftLimit = false;
+        public boolean tiltForwardSoftLimit = false;
+        public boolean tiltReverseHardLimit = false;
+        public boolean tiltForwardHardLimit = false;
 
-        public double extendMeters;
-        public double extendVelocityMetersPerSec;
-        public double extendAccelMetersPerSecSquared;
-        public double[] extendAppliedCurrentAmps;
-        public double[] extendSuppliedCurrentAmps;
-        public double[] extendTempCelsius;
-        public boolean extendReverseSoftLimit;
-        public boolean extendForwardSoftLimit;
-        public boolean extendReverseHardLimit;
-        public boolean extendForwardHardLimit;
+        public double extendMeters = 0.0;
+        public double extendVelocityMetersPerSec = 0.0;
+        public double extendAccelMetersPerSecSquared = 0.0;
+        public double[] extendAppliedCurrentAmps = {};
+        public double[] extendSuppliedCurrentAmps = {};
+        public double[] extendTempCelsius = {};
+        public boolean extendReverseSoftLimit = false;
+        public boolean extendForwardSoftLimit = false;
+        public boolean extendReverseHardLimit = false;
+        public boolean extendForwardHardLimit = false;
 
-        public double wristRotations;
-        public double wristVelocityRotPerSec;
-        public double wristAccelRotPerSecSquared;
-        public double[] wristAppliedCurrentAmps;
-        public double[] wristSuppliedCurrentAmps;
-        public double[] wristTempCelsius;
-        public boolean wristReverseSoftLimit;
-        public boolean wristForwardSoftLimit;
-        public boolean wristReverseHardLimit;
-        public boolean wristForwardHardLimit;
+        public double wristRotations = 0.0;
+        public double wristVelocityRotPerSec = 0.0;
+        public double wristAccelRotPerSecSquared = 0.0;
+        public double[] wristAppliedCurrentAmps = {};
+        public double[] wristSuppliedCurrentAmps = {};
+        public double[] wristTempCelsius = {};
+        public boolean wristReverseSoftLimit = false;
+        public boolean wristForwardSoftLimit = false;
+        public boolean wristReverseHardLimit = false;
+        public boolean wristForwardHardLimit = false;
     }
 
     public default void updateInputs(ArmIOInputs inputs) {}

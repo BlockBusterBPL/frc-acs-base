@@ -58,14 +58,14 @@ public class Arm extends SubsystemBase {
     public static final double ELEVATOR_MASS_FACTOR = 0.0; // FF Amps to hold elevator carriage in vertical position
     public static final double WRIST_MASS_FACTOR = 0.0; // FF Amps to hold wrist in horizontal position
 
-    private final Mechanism2d mech = new Mechanism2d(3, 3);
-    private final MechanismRoot2d root = mech.getRoot("Main Pivot", 1, 1);
+    private final Mechanism2d mech = new Mechanism2d(1.75, 1.75);
+    private final MechanismRoot2d root = mech.getRoot("Main Pivot", 0.25, 0.25);
     private final MechanismLigament2d elevator = root
-            .append(new MechanismLigament2d("Elevator", ARM_BASE_LENGTH, 0, 0.05, new Color8Bit(Color.kOrange)));
-    private final MechanismLigament2d offsetPlate = root
-            .append(new MechanismLigament2d("Offset Plate", 0.08, -90, 0.05, new Color8Bit(Color.kGray)));
-    private final MechanismLigament2d wrist = root
-            .append(new MechanismLigament2d("Wrist", 0.375, -90, 0.05, new Color8Bit(Color.kPurple)));
+            .append(new MechanismLigament2d("Elevator", ARM_BASE_LENGTH, 0, 5, new Color8Bit(Color.kOrange)));
+    private final MechanismLigament2d offsetPlate = elevator
+            .append(new MechanismLigament2d("Offset Plate", 0.08, 270, 5, new Color8Bit(Color.kGray)));
+    private final MechanismLigament2d wrist = offsetPlate
+            .append(new MechanismLigament2d("Wrist", Units.inchesToMeters(12), 100, 5, new Color8Bit(Color.kPurple)));
 
     private ArmIO io;
     private ArmIOInputsAutoLogged inputs; 
@@ -96,9 +96,9 @@ public class Arm extends SubsystemBase {
 
         elevator.setAngle(Rotation2d.fromRotations(inputs.tiltRotations));
         elevator.setLength(ARM_BASE_LENGTH + inputs.extendMeters);
-        wrist.setAngle(Rotation2d.fromRotations(inputs.wristRotations));
+        wrist.setAngle(Rotation2d.fromRotations(inputs.wristRotations).minus(Rotation2d.fromDegrees(90)));
 
-        Logger.getInstance().recordOutput("Arm/RealOutputs/MeasuredPositions", mech);
+        Logger.getInstance().recordOutput("Arm/MeasuredPositions", mech);
 
         final ArmPosition newTarget = activePreset; // Ensure that preset isn't changed while applying targets to motors
 
