@@ -10,10 +10,8 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.geometry.Twist3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -24,9 +22,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.Constants.Mode;
+import frc.robot.lib.Alert;
+import frc.robot.lib.Alert.AlertType;
 import frc.robot.lib.drive.SwerveSetpoint;
 import frc.robot.lib.drive.SwerveSetpointGenerator;
-import frc.robot.lib.drive.SwerveSetpointGenerator.KinematicLimits;
 
 /** Add your docs here. */
 public class Drive extends SubsystemBase {
@@ -38,6 +37,18 @@ public class Drive extends SubsystemBase {
     private GyroIO gyroIO;
     private GyroIOInputsAutoLogged gyroInputs;
 
+    private final Alert alertGyroNotConnected = new Alert(
+            "Gyro not connected! Reverting to wheel delta estimation of robot heading, please verify reference pose.",
+            AlertType.WARNING);
+
+    private final Alert alertCoastModeEnabled = new Alert(
+            "Swerve Drive Coast Mode Enabled! Robot may roll if not on level surface.",
+            AlertType.INFO);
+
+    private final Alert alertSteerNeutralMode = new Alert(
+            "Swerve Alignment Mode Enabled! Performance may be reduced, as driving in this mode is not intended.",
+            AlertType.WARNING);
+
     private final SwerveModule[] modules;
     private final int kFrontLeftID = 0;
     private final int kFrontRightID = 1;
@@ -47,29 +58,21 @@ public class Drive extends SubsystemBase {
     SwerveDriveKinematics kinematics = new SwerveDriveKinematics(Constants.kWheelPositions);
     SwerveSetpointGenerator generator = new SwerveSetpointGenerator(kinematics);
 
-    
     private ChassisSpeeds setpoint = new ChassisSpeeds();
-    private SwerveModuleState[] lastSetpointStates = new SwerveModuleState[] {
-        new SwerveModuleState(),
-        new SwerveModuleState(),
-        new SwerveModuleState(),
-        new SwerveModuleState()
-    };
 
-    private SwerveSetpoint lastSetpoint = new SwerveSetpoint(setpoint, lastSetpointStates);
+    private SwerveSetpoint lastSetpoint = SwerveSetpoint.FOUR_WHEEL_IDENTITY;
 
     private boolean isBrakeMode = false;
     private Timer lastMovementTimer = new Timer();
 
     private double[] lastModulePositionsMeters = new double[] { 0.0, 0.0, 0.0, 0.0 };
     private SwerveModulePosition[] lastSwervePositions = new SwerveModulePosition[] {
-        new SwerveModulePosition(),
-        new SwerveModulePosition(),
-        new SwerveModulePosition(),
-        new SwerveModulePosition()
+            new SwerveModulePosition(),
+            new SwerveModulePosition(),
+            new SwerveModulePosition(),
+            new SwerveModulePosition()
     };
     private Rotation2d lastGyroYaw = new Rotation2d();
-    private Twist2d fieldVelocity = new Twist2d();
     private Pose2d lastRobotPose = new Pose2d();
 
     private SwerveDrivePoseEstimator odometry;
@@ -92,6 +95,7 @@ public class Drive extends SubsystemBase {
 
     @Override
     public void periodic() {
+        // Update subsystem inputs - this should always be the first thing in periodic()
         gyroIO.updateInputs(gyroInputs);
         Logger.getInstance().processInputs("Drive/Gyro", gyroInputs);
 
@@ -99,6 +103,7 @@ public class Drive extends SubsystemBase {
             swerveModule.periodic();
         }
 
+        // Update battery simulation in sim mode
         if (Constants.getMode() == Mode.SIM) {
             double simCurrent = 0.0;
             for (SwerveModule module : modules) {
@@ -111,34 +116,16 @@ public class Drive extends SubsystemBase {
             for (var module : modules) {
                 module.stop();
             }
+            // Make sure to clear reported swerve setpoints
             Logger.getInstance().recordOutput("SwerveStates/Setpoints", new double[] {});
             Logger.getInstance().recordOutput("SwerveStates/SetpointsOptimized", new double[] {});
         } else {
+            // Generate swerve setpoint
+            // TODO: implement a way to change kinematic limits
+            var generatedSetpoint = generator.generateSetpoint(Constants.kTeleopKinematicLimits, lastSetpoint,
+                    setpoint, Constants.loopPeriodSecs);
 
-            var setpointTwist = new Pose2d().log(
-                    new Pose2d(
-                            setpoint.vxMetersPerSecond * Constants.loopPeriodSecs,
-                            setpoint.vyMetersPerSecond * Constants.loopPeriodSecs,
-                            Rotation2d.fromRotations(setpoint.omegaRadiansPerSecond * Constants.loopPeriodSecs)));
-
-            var adjustedSpeeds = new ChassisSpeeds(
-                    setpointTwist.dx / Constants.loopPeriodSecs,
-                    setpointTwist.dy / Constants.loopPeriodSecs,
-                    setpointTwist.dtheta / Constants.loopPeriodSecs);
-
-            var generatedSetpoint = generator.generateSetpoint(Constants.kTeleopKinematicLimits, lastSetpoint, adjustedSpeeds, Constants.loopPeriodSecs);
-            
             SwerveModuleState[] setpointStates = generatedSetpoint.mModuleStates;
-
-            // Set to previous angles if velocity is zero
-            // if (adjustedSpeeds.vxMetersPerSecond == 0.0
-            //         && adjustedSpeeds.vyMetersPerSecond == 0.0
-            //         && adjustedSpeeds.omegaRadiansPerSecond == 0) {
-            //     for (int i = 0; i < 4; i++) {
-            //         setpointStates[i] = new SwerveModuleState(0.0, lastSetpointStates[i].angle);
-            //     }
-            // }
-            lastSetpointStates = setpointStates;
 
             // Send setpoints to modules
             SwerveModuleState[] optimizedStates = new SwerveModuleState[4];
@@ -158,7 +145,6 @@ public class Drive extends SubsystemBase {
         }
         Logger.getInstance().recordOutput("SwerveStates/Measured", measuredStates);
 
-        // Update odometry
         SwerveModulePosition[] wheelDeltas = new SwerveModulePosition[4];
         for (int i = 0; i < 4; i++) {
             wheelDeltas[i] = new SwerveModulePosition(
@@ -166,58 +152,29 @@ public class Drive extends SubsystemBase {
                     modules[i].getAngle());
             lastModulePositionsMeters[i] = modules[i].getDistance();
         }
-        // var twist = kinematics.toTwist2d(wheelDeltas);
-        // var gyroYaw = new Rotation2d(gyroInputs.yawAngleRotations);
-        // if (gyroInputs.connected) {
-        //     twist = new Twist2d(twist.dx, twist.dy, gyroYaw.minus(lastGyroYaw).getRadians());
-        // }
-        // lastGyroYaw = gyroYaw;
+
+        // Update gyro angle
+        if (gyroInputs.connected) {
+            lastGyroYaw = Rotation2d.fromRotations(gyroInputs.yawAngleRotations);
+        } else {
+            // estimate rotation angle from wheel deltas when gyro is not connected
+            var twist = kinematics.toTwist2d(wheelDeltas);
+            lastGyroYaw = lastGyroYaw.plus(new Rotation2d(twist.dtheta).times(Constants.loopPeriodSecs));
+        }
 
         for (int i = 0; i < modules.length; i++) {
             lastSwervePositions[i] = modules[i].getPosition();
         }
 
-        var inverseSpeeds = kinematics.toChassisSpeeds(measuredStates);
-        var yawDelta = new Rotation2d(inverseSpeeds.omegaRadiansPerSecond).times(Constants.loopPeriodSecs);
-        lastGyroYaw = lastGyroYaw.plus(yawDelta);
+        // Update odometry
         lastRobotPose = odometry.update(lastGyroYaw, lastSwervePositions);
 
         // poseEstimator.addDriveData(Timer.getFPGATimestamp(), twist);
         Logger.getInstance().recordOutput("Odometry/Robot", getPose());
 
         // Log 3D odometry pose
-        Pose3d robotPose3d = new Pose3d(getPose());
-        // robotPose3d =
-        // robotPose3d
-        // .exp(
-        // new Twist3d(
-        // 0.0,
-        // 0.0,
-        // Math.abs(gyroInputs.pitchAngleRotations) * trackWidthX.get() / 2.0,
-        // 0.0,
-        // gyroInputs.pitchPositionRad,
-        // 0.0))
-        // .exp(
-        // new Twist3d(
-        // 0.0,
-        // 0.0,
-        // Math.abs(gyroInputs.rollPositionRad) * trackWidthY.get() / 2.0,
-        // gyroInputs.rollPositionRad,
-        // 0.0,
-        // 0.0));
+        var robotPose3d = new Pose3d(lastRobotPose);
         Logger.getInstance().recordOutput("Odometry/Robot3d", robotPose3d);
-
-        // Update field velocity
-        ChassisSpeeds chassisSpeeds = kinematics.toChassisSpeeds(measuredStates);
-        Translation2d linearFieldVelocity = new Translation2d(chassisSpeeds.vxMetersPerSecond,
-                chassisSpeeds.vyMetersPerSecond)
-                .rotateBy(getRotation());
-        fieldVelocity = new Twist2d(
-                linearFieldVelocity.getX(),
-                linearFieldVelocity.getY(),
-                gyroInputs.connected
-                        ? gyroInputs.yawVelocityRotationsPerSecond
-                        : chassisSpeeds.omegaRadiansPerSecond);
 
         // Update brake mode
         boolean stillMoving = false;
@@ -243,6 +200,11 @@ public class Drive extends SubsystemBase {
                 }
             }
         }
+
+        // Run alert checks
+        alertGyroNotConnected.set(gyroInputs.connected);
+        alertCoastModeEnabled.set(!isBrakeMode);
+        alertSteerNeutralMode.set(SwerveModule.getSteerNeutralMode());
     }
 
     public void swerveDrive(ChassisSpeeds speeds) {

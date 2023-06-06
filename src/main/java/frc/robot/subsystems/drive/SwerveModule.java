@@ -37,6 +37,10 @@ public class SwerveModule {
     private static final LoggedDashboardBoolean steerNeutralMode = new LoggedDashboardBoolean("Drive/Module/SteerNeutral");
     private static boolean steerIsNeutral = false;
 
+    public static boolean getSteerNeutralMode() {
+        return steerIsNeutral;
+    }
+
     public SwerveModule(SwerveModuleIO io, int index) {
         this.io = io;
         this.index = index;
@@ -107,6 +111,7 @@ public class SwerveModule {
     }
 
     public SwerveModuleState setState(SwerveModuleState state) {
+        // TODO: try removing optimization from module code, as 254 swerve controller should do that already.
         var optimizedState = SwerveModuleState.optimize(state, getAngle());
         io.setDriveSpeedTarget(optimizedState.speedMetersPerSecond);
         io.setSteerPositionTarget(optimizedState.angle.getRotations());
