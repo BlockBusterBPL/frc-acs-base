@@ -163,3 +163,5 @@ bin/
 
 # Build Constants File
 BuildConstants.java
+simgui.json
+simgui-ds.json
