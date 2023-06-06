@@ -24,6 +24,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.Constants.Mode;
+import frc.robot.lib.drive.SwerveSetpoint;
+import frc.robot.lib.drive.SwerveSetpointGenerator;
+import frc.robot.lib.drive.SwerveSetpointGenerator.KinematicLimits;
 
 /** Add your docs here. */
 public class Drive extends SubsystemBase {
@@ -42,14 +45,18 @@ public class Drive extends SubsystemBase {
     private final int kRearRightID = 3;
 
     SwerveDriveKinematics kinematics = new SwerveDriveKinematics(Constants.kWheelPositions);
+    SwerveSetpointGenerator generator = new SwerveSetpointGenerator(kinematics);
 
+    
     private ChassisSpeeds setpoint = new ChassisSpeeds();
     private SwerveModuleState[] lastSetpointStates = new SwerveModuleState[] {
-            new SwerveModuleState(),
-            new SwerveModuleState(),
-            new SwerveModuleState(),
-            new SwerveModuleState()
+        new SwerveModuleState(),
+        new SwerveModuleState(),
+        new SwerveModuleState(),
+        new SwerveModuleState()
     };
+
+    private SwerveSetpoint lastSetpoint = new SwerveSetpoint(setpoint, lastSetpointStates);
 
     private boolean isBrakeMode = false;
     private Timer lastMovementTimer = new Timer();
@@ -118,18 +125,19 @@ public class Drive extends SubsystemBase {
                     setpointTwist.dx / Constants.loopPeriodSecs,
                     setpointTwist.dy / Constants.loopPeriodSecs,
                     setpointTwist.dtheta / Constants.loopPeriodSecs);
-            SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(adjustedSpeeds);
-            // TODO: try to get 254's swerve setpoint generator working
-            SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, 4.5); // TODO: replace with more detailed method
+
+            var generatedSetpoint = generator.generateSetpoint(Constants.kTeleopKinematicLimits, lastSetpoint, adjustedSpeeds, Constants.loopPeriodSecs);
+            
+            SwerveModuleState[] setpointStates = generatedSetpoint.mModuleStates;
 
             // Set to previous angles if velocity is zero
-            if (adjustedSpeeds.vxMetersPerSecond == 0.0
-                    && adjustedSpeeds.vyMetersPerSecond == 0.0
-                    && adjustedSpeeds.omegaRadiansPerSecond == 0) {
-                for (int i = 0; i < 4; i++) {
-                    setpointStates[i] = new SwerveModuleState(0.0, lastSetpointStates[i].angle);
-                }
-            }
+            // if (adjustedSpeeds.vxMetersPerSecond == 0.0
+            //         && adjustedSpeeds.vyMetersPerSecond == 0.0
+            //         && adjustedSpeeds.omegaRadiansPerSecond == 0) {
+            //     for (int i = 0; i < 4; i++) {
+            //         setpointStates[i] = new SwerveModuleState(0.0, lastSetpointStates[i].angle);
+            //     }
+            // }
             lastSetpointStates = setpointStates;
 
             // Send setpoints to modules

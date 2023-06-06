@@ -3,6 +3,10 @@ package frc.robot.lib.util;
 
 import java.util.List;
 
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Twist2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+
 /**
  * Contains basic functions that are used often.
  */
@@ -64,6 +68,12 @@ public class Util {
         return (a - epsilon <= b) && (a + epsilon >= b);
     }
 
+    public static boolean epsilonEquals(final Twist2d first, final Twist2d other, double epsilon) {
+        return Util.epsilonEquals(first.dx, other.dx, epsilon) &&
+               Util.epsilonEquals(first.dy, other.dy, epsilon) &&
+               Util.epsilonEquals(first.dtheta, other.dtheta, epsilon);
+    }
+
     public static boolean allCloseTo(final List<Double> list, double value, double epsilon) {
         boolean result = true;
         for (Double value_in : list) {
@@ -79,5 +89,17 @@ public class Util {
         }
         double scaledValue = (value + (value < 0 ? deadband : -deadband)) / (1 - deadband);
         return (Math.abs(value) > Math.abs(deadband)) ? scaledValue : 0;
+    }
+
+    public static Rotation2d rotationFlip(Rotation2d rotation) {
+        return rotation.minus(Rotation2d.fromDegrees(180));
+    }
+
+    public static Rotation2d rotationInverse(Rotation2d rotation) {
+        return Rotation2d.fromRadians(-rotation.getRadians());
+    }
+
+    public static Twist2d toTwist2d(ChassisSpeeds s) {
+        return new Twist2d(s.vxMetersPerSecond, s.vyMetersPerSecond, s.omegaRadiansPerSecond);
     }
 }
