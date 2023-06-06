@@ -160,8 +160,9 @@ bin/
 
 # Simulation GUI and other tools window save file
 *-window.json
+simgui.json
+simgui-ds.json
+networktables.json
 
 # Build Constants File
 BuildConstants.java
-simgui.json
-simgui-ds.json
