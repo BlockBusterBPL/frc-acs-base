@@ -3,6 +3,7 @@ package frc.robot.lib.util;
 
 import java.util.List;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -92,7 +93,11 @@ public class Util {
     }
 
     public static Rotation2d rotationFlip(Rotation2d rotation) {
-        return rotation.minus(Rotation2d.fromDegrees(180));
+        return Rotation2d.fromRadians(rotation.getRadians() + Math.PI);
+    }
+
+    public static Rotation2d rotationClamp(Rotation2d rotation) {
+        return Rotation2d.fromRotations(MathUtil.clamp(rotation.getRotations(), 0, 1));
     }
 
     public static Rotation2d rotationInverse(Rotation2d rotation) {

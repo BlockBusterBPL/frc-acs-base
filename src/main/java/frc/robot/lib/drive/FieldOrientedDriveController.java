@@ -12,6 +12,6 @@ public class FieldOrientedDriveController implements DriveController {
 
     @Override
     public ChassisSpeeds transform(ControllerDriveInputs inputs, Pose3d robotPose) {
-        return ChassisSpeeds.fromFieldRelativeSpeeds(inputs.getVelocity(4, 2), robotPose.getRotation().toRotation2d());
+        return ChassisSpeeds.fromFieldRelativeSpeeds(inputs.getVelocity(5, 6), robotPose.getRotation().toRotation2d());
     }
 }

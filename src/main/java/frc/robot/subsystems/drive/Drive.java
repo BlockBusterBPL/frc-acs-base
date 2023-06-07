@@ -38,7 +38,7 @@ public class Drive extends SubsystemBase {
     private GyroIOInputsAutoLogged gyroInputs;
 
     private final Alert alertGyroNotConnected = new Alert(
-            "Gyro not connected! Reverting to wheel delta estimation of robot heading, please verify reference pose.",
+            "Gyro not connected! Reverting to wheel delta integration mode, please monitor robot pose.",
             AlertType.WARNING);
 
     private final Alert alertCoastModeEnabled = new Alert(
@@ -122,10 +122,15 @@ public class Drive extends SubsystemBase {
         } else {
             // Generate swerve setpoint
             // TODO: implement a way to change kinematic limits
+
             var generatedSetpoint = generator.generateSetpoint(Constants.kTeleopKinematicLimits, lastSetpoint,
                     setpoint, Constants.loopPeriodSecs);
 
+            lastSetpoint = generatedSetpoint;
+
             SwerveModuleState[] setpointStates = generatedSetpoint.mModuleStates;
+
+            // var setpointStates = kinematics.toSwerveModuleStates(setpoint);
 
             // Send setpoints to modules
             SwerveModuleState[] optimizedStates = new SwerveModuleState[4];
@@ -159,7 +164,9 @@ public class Drive extends SubsystemBase {
         } else {
             // estimate rotation angle from wheel deltas when gyro is not connected
             var twist = kinematics.toTwist2d(wheelDeltas);
-            lastGyroYaw = lastGyroYaw.plus(new Rotation2d(twist.dtheta).times(Constants.loopPeriodSecs));
+            var inverseSpeeds = kinematics.toChassisSpeeds(measuredStates);
+            // lastGyroYaw = lastGyroYaw.plus(new Rotation2d(twist.dtheta)/*.times(Constants.loopPeriodSecs)*/);
+            lastGyroYaw = lastGyroYaw.plus(new Rotation2d(inverseSpeeds.omegaRadiansPerSecond).times(Constants.loopPeriodSecs));
         }
 
         for (int i = 0; i < modules.length; i++) {
@@ -202,7 +209,7 @@ public class Drive extends SubsystemBase {
         }
 
         // Run alert checks
-        alertGyroNotConnected.set(gyroInputs.connected);
+        alertGyroNotConnected.set(!gyroInputs.connected);
         alertCoastModeEnabled.set(!isBrakeMode);
         alertSteerNeutralMode.set(SwerveModule.getSteerNeutralMode());
     }
