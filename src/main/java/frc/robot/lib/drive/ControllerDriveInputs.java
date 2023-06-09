@@ -144,6 +144,10 @@ public class ControllerDriveInputs {
         return this;
     }
 
+    public ControllerDriveInputs times(double factor) {
+        return new ControllerDriveInputs(x*factor, y*factor, rotation*factor);
+    }
+
     public Twist2d getVelocityVector() {
         return new Twist2d(x, y, rotation);
     }

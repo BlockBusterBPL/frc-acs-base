@@ -5,8 +5,8 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
-import frc.robot.lib.Alert;
-import frc.robot.lib.Alert.AlertType;
+import frc.robot.lib.dashboard.Alert;
+import frc.robot.lib.dashboard.Alert.AlertType;
 import frc.robot.lib.drive.SwerveSetpointGenerator.KinematicLimits;
 
 import java.util.Map;

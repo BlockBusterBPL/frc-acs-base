@@ -10,13 +10,15 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Mode;
-import frc.robot.commands.DefaultDriveCommand;
-import frc.robot.lib.Alert;
+import frc.robot.commands.DriveWithController;
+import frc.robot.commands.XModeDriveCommand;
 import frc.robot.lib.OverrideSwitches;
-import frc.robot.lib.Alert.AlertType;
+import frc.robot.lib.dashboard.Alert;
+import frc.robot.lib.dashboard.Alert.AlertType;
 import frc.robot.lib.drive.ControllerDriveInputs;
 import frc.robot.lib.drive.DriveController;
 import frc.robot.lib.drive.FieldOrientedDriveController;
@@ -28,7 +30,7 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.FalconSwerveIO;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroNavXIO;
-import frc.robot.subsystems.drive.NewSimSwerveIO;
+import frc.robot.subsystems.drive.SimSwerveIO;
 import frc.robot.subsystems.drive.SimSwerveIO;
 import frc.robot.subsystems.drive.SwerveModuleIO;
 
@@ -36,8 +38,29 @@ public class RobotContainer {
     private Drive drive;
     private Arm arm;
 
+    // DRIVER CONTROLS
     private final CommandXboxController driver = new CommandXboxController(0);
+
+    private final Trigger driverXMode = driver.x();
+    private final Trigger driverGyroReset = driver.back();
+    private final Trigger driverOrientShelf = driver.leftTrigger(0.2);
+    private final Trigger driverOrientGrid = driver.rightTrigger(0.2);
+
+    // OPERATOR CONTROLS
     private final CommandXboxController operator = new CommandXboxController(1);
+
+    private final Trigger operatorSwitchGamepiece = operator.b();
+    private final Trigger operatorStow = operator.x();
+    private final Trigger operatorExtend = operator.a();
+    private final Trigger operatorScore = operator.rightBumper();
+    private final Trigger operatorIntake = operator.leftBumper();
+    private final Trigger operatorSelectLow = operator.povDown();
+    private final Trigger operatorSelectMid = operator.povRight();
+    private final Trigger operatorSelectHigh = operator.povUp();
+    private final Trigger operatorSelectShelf = operator.povLeft();
+    private final Trigger operatorGround = operator.y();
+
+    // OVERRIDE SWITCHES
     private final OverrideSwitches overrides = new OverrideSwitches(5);
 
     private final Trigger gyroFail = overrides.driverSwitch(0); // bypass all gyro readings
@@ -60,8 +83,6 @@ public class RobotContainer {
     private final LoggedDashboardNumber endgameAlert2 = new LoggedDashboardNumber("Endgame Alert #2", 15.0);
 
     public RobotContainer() {
-        configureBindings();
-
         if (Constants.getMode() != Mode.REPLAY) {
             switch (Constants.getRobot()) {
                 case ROBOT_2023C:
@@ -78,10 +99,10 @@ public class RobotContainer {
                     drive = new Drive(
                             new GyroIO() {
                             }, // TODO: Gyro Sim
-                            new NewSimSwerveIO(),
-                            new NewSimSwerveIO(),
-                            new NewSimSwerveIO(),
-                            new NewSimSwerveIO());
+                            new SimSwerveIO(),
+                            new SimSwerveIO(),
+                            new SimSwerveIO(),
+                            new SimSwerveIO());
                     arm = new Arm(new ArmIOSimV1());
                     break;
                 default:
@@ -114,7 +135,9 @@ public class RobotContainer {
         }
 
         DriveController testController = new FieldOrientedDriveController();
-        drive.setDefaultCommand(new DefaultDriveCommand(drive, this::getDriveInputs, () -> testController));
+        drive.setDefaultCommand(new DriveWithController(drive, this::getDriveInputs, () -> testController));
+
+        configureBindings();
     }
 
     public void checkControllers() {
@@ -129,6 +152,10 @@ public class RobotContainer {
 
     private void configureBindings() {
         DriverStation.silenceJoystickConnectionWarning(true);
+
+        // Drive button bindings
+        driverXMode.whileTrue(new XModeDriveCommand(drive));
+        driverGyroReset.onTrue(new InstantCommand(drive::reseedRotation, drive));
     }
 
     public Command getAutonomousCommand() {

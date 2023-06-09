@@ -1,6 +1,9 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
+// Copyright (c) 2023 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
 
 package frc.robot.subsystems.drive;
 
@@ -11,63 +14,81 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import frc.robot.Constants;
 
-/** Add your docs here. */
 public class SimSwerveIO implements SwerveModuleIO {
-    private final FlywheelSim driveSim;
-    private final FlywheelSim steerSim;
+    private FlywheelSim driveSim = new FlywheelSim(DCMotor.getFalcon500(1), 6.75, 0.05);
+    private FlywheelSim turnSim = new FlywheelSim(DCMotor.getFalcon500(1), 150.0 / 7.0, 0.04);
 
-    private final SimpleMotorFeedforward driveFeedForward;
-    private final PIDController steerController;
+    private SimpleMotorFeedforward driveFF = new SimpleMotorFeedforward(0, 0.75);
+    private PIDController steerPID = new PIDController(48, 0, 0);
 
-    private double turnRelativePositionRad = 0.0;
-    private double turnAbsolutePositionRad = Math.random() * 2.0 * Math.PI;
+    private double turnRelativePosition = 0.0;
+    private double turnAbsolutePosition = Math.random();
+    private double driveAppliedVolts = 0.0;
+    private double turnAppliedVolts = 0.0;
 
     public SimSwerveIO() {
-        driveSim = new FlywheelSim(DCMotor.getFalcon500(1), 6.75, 0.025);
-        steerSim = new FlywheelSim(DCMotor.getFalcon500(1), 150.0 / 7.0, 0.004);
-
-        driveFeedForward = new SimpleMotorFeedforward(0, 0.01);
-        steerController = new PIDController(10, 0, 0);
+        System.out.println("[Init] Creating ModuleIOSim");
+        steerPID.enableContinuousInput(0, 1);
     }
 
-    @Override
     public void updateInputs(SwerveModuleIOInputs inputs) {
         driveSim.update(Constants.loopPeriodSecs);
-        steerSim.update(Constants.loopPeriodSecs);
+        turnSim.update(Constants.loopPeriodSecs);
 
-        double angleDiffRad = steerSim.getAngularVelocityRadPerSec() * Constants.loopPeriodSecs;
-        turnRelativePositionRad += angleDiffRad;
-        turnAbsolutePositionRad += angleDiffRad;
-        while (turnAbsolutePositionRad < 0) {
-            turnAbsolutePositionRad += 2.0 * Math.PI;
+        double angleDiff = turnSim.getAngularVelocityRPM() / 60.0 * Constants.loopPeriodSecs;
+        turnRelativePosition += angleDiff;
+        turnAbsolutePosition += angleDiff;
+        while (turnAbsolutePosition < 0.0) {
+            turnAbsolutePosition += 1.0;
         }
-        while (turnAbsolutePositionRad > 2.0 * Math.PI) {
-            turnAbsolutePositionRad -= 2.0 * Math.PI;
+        while (turnAbsolutePosition > 1.0) {
+            turnAbsolutePosition -= 1.0;
         }
 
-        double driveVelocityMetersPerSec = driveSim.getAngularVelocityRPM() / 60.0 * Constants.kDriveWheelDiameter;
-        double driveDistanceDelta = driveVelocityMetersPerSec * Constants.loopPeriodSecs;
-
-        inputs.driveMeters = inputs.driveMeters + driveDistanceDelta;
-        inputs.driveVelocityMetersPerSec = driveVelocityMetersPerSec;
-        inputs.driveAppliedCurrentAmps = driveSim.getCurrentDrawAmps();
+        inputs.driveMeters = inputs.driveMeters
+                + convertRotationsToMeters(driveSim.getAngularVelocityRPM() / 60.0 * Constants.loopPeriodSecs);
+        inputs.driveVelocityMetersPerSec = convertRotationsToMeters(driveSim.getAngularVelocityRPM() / 60.0);
         inputs.driveSuppliedCurrentAmps = Math.abs(driveSim.getCurrentDrawAmps());
-        inputs.driveTempCelsius = 0.0;
+        inputs.driveTempCelsius = -1.0;
 
-        inputs.steerPositionRotations = turnAbsolutePositionRad;
-        inputs.steerVelocityRotPerSec = steerSim.getAngularVelocityRPM() / 60.0;
-        inputs.steerAppliedCurrentAmps = steerSim.getCurrentDrawAmps();
-        inputs.steerSuppliedCurrentAmps = Math.abs(steerSim.getCurrentDrawAmps());
-        inputs.steerTempCelsius = 0.0;
+        inputs.steerPositionRotations = turnAbsolutePosition;
+        inputs.steerVelocityRotPerSec = turnSim.getAngularVelocityRPM() / 60.0;
+        inputs.steerSuppliedCurrentAmps = Math.abs(turnSim.getCurrentDrawAmps());
+        inputs.steerTempCelsius = -1.0;
+    }
+
+    public void setDriveVoltage(double volts) {
+        driveAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
+        driveSim.setInputVoltage(driveAppliedVolts);
     }
 
     @Override
     public void setDriveSpeedTarget(double speedMetersPerSecond) {
-        driveSim.setInputVoltage(driveFeedForward.calculate(speedMetersPerSecond / Constants.kDriveWheelDiameter));
+        double speedTargetRPS = convertMetersToRotations(speedMetersPerSecond);
+        setDriveVoltage(driveFF.calculate(speedTargetRPS));
     }
 
     @Override
     public void setSteerPositionTarget(double steerAngleRotations) {
-        steerSim.setInputVoltage(steerController.calculate(turnAbsolutePositionRad / (2.0 * Math.PI), steerAngleRotations));
+        setTurnVoltage(steerPID.calculate(turnAbsolutePosition, steerAngleRotations));
+    }
+
+    public void setTurnVoltage(double volts) {
+        turnAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
+        turnSim.setInputVoltage(turnAppliedVolts);
+    }
+
+    private double convertRotationsToMeters(double rotations) {
+        double wheelCircumference = Constants.kDriveWheelDiameter * Math.PI;
+        double metersPerMotorRotation = wheelCircumference / Constants.kDriveReduction;
+
+        return rotations * metersPerMotorRotation;
+    }
+
+    private double convertMetersToRotations(double meters) {
+        double wheelCircumference = Constants.kDriveWheelDiameter * Math.PI;
+        double motorRotationsPerMeter = Constants.kDriveReduction / wheelCircumference;
+
+        return meters * motorRotationsPerMeter;
     }
 }

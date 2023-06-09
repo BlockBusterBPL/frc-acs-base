@@ -111,11 +111,9 @@ public class SwerveModule {
     }
 
     public SwerveModuleState setState(SwerveModuleState state) {
-        // TODO: try removing optimization from module code, as 254 swerve controller should do that already.
-        var optimizedState = SwerveModuleState.optimize(state, getAngle());
-        io.setDriveSpeedTarget(optimizedState.speedMetersPerSecond);
-        io.setSteerPositionTarget(optimizedState.angle.getRotations());
-        return optimizedState;
+        io.setDriveSpeedTarget(state.speedMetersPerSecond);
+        io.setSteerPositionTarget(state.angle.getRotations());
+        return state;
     }
 
     public void stop() {
@@ -132,5 +130,13 @@ public class SwerveModule {
 
     public double getTotalCurrent() {
         return inputs.driveSuppliedCurrentAmps + inputs.steerSuppliedCurrentAmps;
+    }
+
+    public void updateEncoderOffset(double zeroRotations) {
+        io.updateEncoderOffset(zeroRotations);
+    }
+
+    public double getEncoderRawPosition() {
+        return io.getEncoderRawPosition();
     }
 }

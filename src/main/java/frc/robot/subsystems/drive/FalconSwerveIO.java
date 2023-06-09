@@ -20,6 +20,7 @@ import com.ctre.phoenixpro.signals.SensorDirectionValue;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import frc.robot.Constants;
+import frc.robot.lib.CANcoderLiveConfigHelper;
 import frc.robot.lib.FalconFeedbackControlHelper;
 import frc.robot.lib.TalonFXLiveConfigHelper;
 
@@ -77,13 +78,13 @@ public class FalconSwerveIO implements SwerveModuleIO {
         steerConfig.TorqueCurrent.PeakReverseTorqueCurrent = -20;
         steerConfig.Feedback.FeedbackRemoteSensorID = m_encoder.getDeviceID();
         steerConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
-        // steerConfig.Feedback.RotorToSensorRatio = TODO: steering ratio
+        steerConfig.Feedback.RotorToSensorRatio = Constants.kSteerReduction;
         m_steer.getConfigurator().apply(steerConfig);
         steerHelper = new FalconFeedbackControlHelper(m_steer, null, null);
 
+        m_encoder.getConfigurator().refresh(encoderConfig);
         encoderConfig.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Signed_PlusMinusHalf;
         encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
-        // encoderConfig.MagnetSensor.MagnetOffset = TODO: Offset value
         m_encoder.getConfigurator().apply(encoderConfig);
 
         m_drivePosition = m_drive.getPosition();
@@ -96,12 +97,6 @@ public class FalconSwerveIO implements SwerveModuleIO {
         m_steerAppliedCurrent = m_steer.getTorqueCurrent();
         m_steerSuppliedCurrent = m_steer.getSupplyCurrent();
         m_steerTempCelsius = m_steer.getDeviceTemp();
-
-        m_signals = new BaseStatusSignalValue[4];
-        m_signals[0] = m_drivePosition;
-        m_signals[1] = m_driveVelocity;
-        m_signals[2] = m_steerPosition;
-        m_signals[3] = m_steerVelocity;
     }
 
     @Override
@@ -207,5 +202,20 @@ public class FalconSwerveIO implements SwerveModuleIO {
     @Override
     public void setSteerKF(double steerKF) {
         steerHelper.setKV(steerKF);
+    }
+
+    @Override
+    public void updateEncoderOffset(double zeroRotations) {
+        CANcoderLiveConfigHelper.editConfig(m_encoder, (c) -> {
+            c.MagnetSensor.MagnetOffset = zeroRotations;
+            return c;
+        });
+    }
+
+    @Override
+    public double getEncoderRawPosition() {
+        m_encoder.getConfigurator().refresh(encoderConfig);
+        var currentOffset = encoderConfig.MagnetSensor.MagnetOffset;
+        return m_encoder.getAbsolutePosition().getValue() - currentOffset;
     }
 }

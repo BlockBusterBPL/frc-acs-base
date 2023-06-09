@@ -10,7 +10,9 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -22,8 +24,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.Constants.Mode;
-import frc.robot.lib.Alert;
-import frc.robot.lib.Alert.AlertType;
+import frc.robot.lib.dashboard.Alert;
+import frc.robot.lib.dashboard.Alert.AlertType;
 import frc.robot.lib.drive.SwerveSetpoint;
 import frc.robot.lib.drive.SwerveSetpointGenerator;
 
@@ -33,6 +35,13 @@ public class Drive extends SubsystemBase {
                                                                    // disabling
     private static final double coastThresholdSecs = 6.0; // Need to be under the above speed for this length of time to
                                                           // switch to coast
+
+    public static final SwerveModuleState[] X_MODE_STATES = {
+        new SwerveModuleState(0, Rotation2d.fromRotations(-0.125)),
+        new SwerveModuleState(0, Rotation2d.fromRotations(0.125)),
+        new SwerveModuleState(0, Rotation2d.fromRotations(0.125)),
+        new SwerveModuleState(0, Rotation2d.fromRotations(-0.125))
+    };
 
     private GyroIO gyroIO;
     private GyroIOInputsAutoLogged gyroInputs;
@@ -62,6 +71,8 @@ public class Drive extends SubsystemBase {
 
     private SwerveSetpoint lastSetpoint = SwerveSetpoint.FOUR_WHEEL_IDENTITY;
 
+    private boolean xMode = false;
+
     private boolean isBrakeMode = false;
     private Timer lastMovementTimer = new Timer();
 
@@ -74,8 +85,11 @@ public class Drive extends SubsystemBase {
     };
     private Rotation2d lastGyroYaw = new Rotation2d();
     private Pose2d lastRobotPose = new Pose2d();
+    private Rotation3d robotRotation3d = new Rotation3d();
 
     private SwerveDrivePoseEstimator odometry;
+
+    private Rotation2d autonTarget;
 
     public Drive(GyroIO gyroIO, SwerveModuleIO frontLeftIO, SwerveModuleIO frontRightIO, SwerveModuleIO rearLeftIO,
             SwerveModuleIO rearRightIO) {
@@ -89,6 +103,8 @@ public class Drive extends SubsystemBase {
         modules[kRearRightID] = new SwerveModule(rearRightIO, kRearRightID);
 
         odometry = new SwerveDrivePoseEstimator(kinematics, lastGyroYaw, lastSwervePositions, getPose());
+
+        autonTarget = new Rotation2d();
 
         lastMovementTimer.reset();
     }
@@ -123,12 +139,18 @@ public class Drive extends SubsystemBase {
             // Generate swerve setpoint
             // TODO: implement a way to change kinematic limits
 
-            var generatedSetpoint = generator.generateSetpoint(Constants.kTeleopKinematicLimits, lastSetpoint,
-                    setpoint, Constants.loopPeriodSecs);
+            SwerveModuleState[] setpointStates = new SwerveModuleState[4];
 
-            lastSetpoint = generatedSetpoint;
+            if (xMode) {
+                setpointStates = X_MODE_STATES;
+            } else {
+                var generatedSetpoint = generator.generateSetpoint(Constants.kTeleopKinematicLimits, lastSetpoint,
+                        setpoint, Constants.loopPeriodSecs);
 
-            SwerveModuleState[] setpointStates = generatedSetpoint.mModuleStates;
+                lastSetpoint = generatedSetpoint;
+
+                setpointStates = generatedSetpoint.mModuleStates;
+            }
 
             // var setpointStates = kinematics.toSwerveModuleStates(setpoint);
 
@@ -163,10 +185,9 @@ public class Drive extends SubsystemBase {
             lastGyroYaw = Rotation2d.fromRotations(gyroInputs.yawAngleRotations);
         } else {
             // estimate rotation angle from wheel deltas when gyro is not connected
-            var twist = kinematics.toTwist2d(wheelDeltas);
             var inverseSpeeds = kinematics.toChassisSpeeds(measuredStates);
-            // lastGyroYaw = lastGyroYaw.plus(new Rotation2d(twist.dtheta)/*.times(Constants.loopPeriodSecs)*/);
-            lastGyroYaw = lastGyroYaw.plus(new Rotation2d(inverseSpeeds.omegaRadiansPerSecond).times(Constants.loopPeriodSecs));
+            lastGyroYaw = lastGyroYaw
+                    .plus(new Rotation2d(inverseSpeeds.omegaRadiansPerSecond).times(Constants.loopPeriodSecs));
         }
 
         for (int i = 0; i < modules.length; i++) {
@@ -180,7 +201,18 @@ public class Drive extends SubsystemBase {
         Logger.getInstance().recordOutput("Odometry/Robot", getPose());
 
         // Log 3D odometry pose
-        var robotPose3d = new Pose3d(lastRobotPose);
+        var robotTranslation3d = new Translation3d(
+                lastRobotPose.getX(),
+                lastRobotPose.getY(),
+                0);
+
+        robotRotation3d = new Rotation3d(
+                gyroInputs.pitchAngleRotations * 2 * Math.PI,
+                gyroInputs.rollAngleRotations * 2 * Math.PI,
+                lastGyroYaw.getRadians());
+
+        var robotPose3d = new Pose3d(robotTranslation3d, robotRotation3d);
+
         Logger.getInstance().recordOutput("Odometry/Robot3d", robotPose3d);
 
         // Update brake mode
@@ -218,17 +250,35 @@ public class Drive extends SubsystemBase {
         setpoint = speeds;
     }
 
-    public void setModuleStates(SwerveModuleState[] moduleStates) {
-        for (int i = 0; i < moduleStates.length; i++) {
-            modules[i].setState(moduleStates[i]);
-        }
+    public void reseedRotation() {
+        odometry.resetPosition(lastGyroYaw, lastSwervePositions, new Pose2d(lastRobotPose.getTranslation(), new Rotation2d()));
+    }
+    
+    public void stop() {
+        swerveDrive(new ChassisSpeeds());
+    }
+
+    public void setXMode(boolean xMode) {
+        this.xMode = xMode;
     }
 
     public Pose2d getPose() {
         return lastRobotPose; // TODO
     }
 
-    public Rotation2d getRotation() {
-        return Rotation2d.fromRotations(gyroInputs.yawAngleRotations); // TODO
+    public Rotation3d getGyroAngle() {
+        return robotRotation3d;
+    }
+
+    public Rotation3d getFieldOrientation() {
+        return robotRotation3d.minus(new Rotation3d(0, 0, getGyroAngle().getZ()));
+    }
+
+    public Rotation2d getAutonTarget() {
+        return autonTarget;
+    }
+
+    public void setAutonTarget(Rotation2d autonTarget) {
+        this.autonTarget = autonTarget;
     }
 }

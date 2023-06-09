@@ -21,9 +21,9 @@ public class GyroNavXIO implements GyroIO {
         inputs.connected = gyro.isConnected();
         inputs.calibrating = gyro.isCalibrating();
 
-        inputs.yawAngleRotations = gyro.getYaw() / 360;
-        inputs.pitchAngleRotations = gyro.getPitch() / 360;
-        inputs.rollAngleRotations = gyro.getRoll() / 360;
+        inputs.yawAngleRotations = gyro.getYaw() / 360.0;
+        inputs.pitchAngleRotations = gyro.getPitch() / 360.0;
+        inputs.rollAngleRotations = gyro.getRoll() / 360.0;
 
         inputs.quaternionW = gyro.getQuaternionW();
         inputs.quaternionX = gyro.getQuaternionX();

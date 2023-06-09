@@ -21,6 +21,8 @@ public interface SwerveModuleIO {
         public double steerAppliedCurrentAmps = 0.0;
         public double steerSuppliedCurrentAmps = 0.0;
         public double steerTempCelsius = 0.0;
+
+        public double steerEncoderRaw = 0.0;
     }
 
     public default void updateInputs(SwerveModuleIOInputs inputs) {}
@@ -50,4 +52,8 @@ public interface SwerveModuleIO {
     public default void setSteerKD(double steerKD) {}
 
     public default void setSteerKF(double steerKF) {}
+
+    public default void updateEncoderOffset(double zeroRotations) {}
+
+    public default double getEncoderRawPosition() {return 0.0;}
 }

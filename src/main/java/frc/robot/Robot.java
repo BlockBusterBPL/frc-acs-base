@@ -32,9 +32,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.Mode;
 import frc.robot.Constants.RobotType;
-import frc.robot.lib.Alert;
 import frc.robot.lib.BatteryTracker;
-import frc.robot.lib.Alert.AlertType;
+import frc.robot.lib.dashboard.Alert;
+import frc.robot.lib.dashboard.SupplierWidget;
+import frc.robot.lib.dashboard.Alert.AlertType;
 
 public class Robot extends LoggedRobot {
     private static final String batteryNameFile = "/home/lvuser/battery-name.txt";
@@ -183,6 +184,8 @@ public class Robot extends LoggedRobot {
     public void robotPeriodic() {
         CommandScheduler.getInstance().run();
 
+        robotContainer.checkControllers();
+
         if (Constants.getMode() == Mode.SIM) {
             RoboRioSim.setVInVoltage(getSimulatedVoltage());
             simPDH.setVoltage(getSimulatedVoltage());
@@ -190,6 +193,8 @@ public class Robot extends LoggedRobot {
             Logger.getInstance().recordOutput("SimData/EstimatedBatteryCurrent", getSimulatedCurrent());
             Logger.getInstance().recordOutput("SimData/EstimatedBatteryVoltage", getSimulatedVoltage());
         }
+
+        SupplierWidget.updateAll();
     }
     
     @Override

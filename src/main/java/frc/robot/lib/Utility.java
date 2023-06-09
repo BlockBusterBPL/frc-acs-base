@@ -7,11 +7,26 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.Twist2d;
+import edu.wpi.first.math.geometry.Twist3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 public class Utility {
+    public static final Rotation2d R2D_IDENTITY = new Rotation2d();
+    public static final Translation2d TR2D_IDENTITY = new Translation2d();
+    public static final ChassisSpeeds CS_IDENTITY = new ChassisSpeeds();
+    public static final Twist2d TW2D_IDENTITY = new Twist2d();
+    public static final Rotation3d R3D_IDENTITY = new Rotation3d();
+    public static final Translation3d TR3D_IDENTITY = new Translation3d();
+    public static final Twist3d TW3D_IDENTITY = new Twist3d();
+    public static final Pose2d P2D_IDENTITY = new Pose2d();
+    public static final Pose3d P3D_IDENTITY = new Pose3d();
 
     /**
      * Extracts the double value from a string.

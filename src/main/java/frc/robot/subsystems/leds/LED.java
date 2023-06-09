@@ -4,8 +4,6 @@ import java.util.ArrayList;
 
 import org.littletonrobotics.junction.Logger;
 
-import com.ctre.phoenix.led.Animation;
-
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.lib.leds.AnimationBuilder;
@@ -47,7 +45,7 @@ public class LED extends SubsystemBase {
         LEDState candleState = new LEDState(LEDColor.kBlack);
         LEDState perimeterState = new LEDState(LEDColor.kBlack);
 
-        LEDColor gamepieceColor = new LEDColor(Color.kPurple);
+        LEDColor gamepieceColor = coneMode ? new LEDColor(Color.kYellow) : new LEDColor(Color.kPurple);
 
         // ALL LEDS
         if (drivePowerSave) {
