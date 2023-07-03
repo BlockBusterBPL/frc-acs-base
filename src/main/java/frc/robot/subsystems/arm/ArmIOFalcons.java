@@ -67,7 +67,7 @@ public class ArmIOFalcons implements ArmIO{
     private StatusSignalValue<ReverseLimitValue> wristReverseHardLimit = wrist.getReverseLimit();
     private StatusSignalValue<ForwardLimitValue> wristForwardHardLimit = wrist.getForwardLimit();
 
-    private Collection<BaseStatusSignalValue> m_signals = new ArrayList<BaseStatusSignalValue>();
+    private Collection<StatusSignalValue<?>> m_signals = new ArrayList<StatusSignalValue<?>>();
 
     public ArmIOFalcons() {
         m_signals.add(tiltMasterPosition);
@@ -123,7 +123,7 @@ public class ArmIOFalcons implements ArmIO{
 
     @Override
     public void updateInputs(ArmIOInputs inputs) {
-        BaseStatusSignalValue.waitForAll(0.01, (BaseStatusSignalValue[]) m_signals.toArray());
+        m_signals.forEach((s) -> s.refresh());
 
         inputs.tiltRotations = tiltMasterPosition.getValue();
         inputs.tiltVelocityRotPerSec = tiltMasterVelocity.getValue();
@@ -131,6 +131,43 @@ public class ArmIOFalcons implements ArmIO{
         inputs.tiltAppliedCurrentAmps[1] = tiltFollowerAppliedCurrent.getValue();
         inputs.tiltSuppliedCurrentAmps[0] = tiltMasterSuppliedCurrent.getValue();
         inputs.tiltSuppliedCurrentAmps[1] = tiltFollowerSuppliedCurrent.getValue();
+        inputs.tiltTempCelsius[0] = tiltMasterTempCelsius.getValue();
+        inputs.tiltTempCelsius[1] = tiltFollowerTempCelsius.getValue();
+        inputs.tiltReverseSoftLimit[0] = tiltMasterReverseSoftLimit.getValue();
+        inputs.tiltReverseSoftLimit[1] = tiltFollowerReverseSoftLimit.getValue();
+        inputs.tiltForwardSoftLimit[0] = tiltMasterForwardSoftLimit.getValue();
+        inputs.tiltForwardSoftLimit[1] = tiltFollowerForwardSoftLimit.getValue();
+        inputs.tiltReverseHardLimit[0] = tiltMasterReverseHardLimit.getValue() == ReverseLimitValue.ClosedToGround;
+        inputs.tiltReverseHardLimit[1] = tiltFollowerReverseHardLimit.getValue() == ReverseLimitValue.ClosedToGround;
+        inputs.tiltForwardHardLimit[0] = tiltMasterForwardHardLimit.getValue() == ForwardLimitValue.ClosedToGround;
+        inputs.tiltForwardHardLimit[0] = tiltFollowerForwardHardLimit.getValue() == ForwardLimitValue.ClosedToGround;
+
+        inputs.extendMeters = extendMasterPosition.getValue();
+        inputs.extendVelocityMetersPerSec = extendMasterVelocity.getValue();
+        inputs.extendAppliedCurrentAmps[0] = extendMasterAppliedCurrent.getValue();
+        inputs.extendAppliedCurrentAmps[1] = extendFollowerAppliedCurrent.getValue();
+        inputs.extendSuppliedCurrentAmps[0] = extendMasterSuppliedCurrent.getValue();
+        inputs.extendSuppliedCurrentAmps[1] = extendFollowerSuppliedCurrent.getValue();
+        inputs.extendTempCelsius[0] = extendMasterTempCelsius.getValue();
+        inputs.extendTempCelsius[1] = extendFollowerTempCelsius.getValue();
+        inputs.extendReverseSoftLimit[0] = extendMasterReverseSoftLimit.getValue();
+        inputs.extendReverseSoftLimit[1] = extendFollowerReverseSoftLimit.getValue();
+        inputs.extendForwardSoftLimit[0] = extendMasterForwardSoftLimit.getValue();
+        inputs.extendForwardSoftLimit[1] = extendFollowerForwardSoftLimit.getValue();
+        inputs.extendReverseHardLimit[0] = extendMasterReverseHardLimit.getValue() == ReverseLimitValue.ClosedToGround;
+        inputs.extendReverseHardLimit[1] = extendFollowerReverseHardLimit.getValue() == ReverseLimitValue.ClosedToGround;
+        inputs.extendForwardHardLimit[0] = extendMasterForwardHardLimit.getValue() == ForwardLimitValue.ClosedToGround;
+        inputs.extendForwardHardLimit[0] = extendFollowerForwardHardLimit.getValue() == ForwardLimitValue.ClosedToGround;
+
+        inputs.wristRotations = wristPosition.getValue();
+        inputs.wristVelocityRotPerSec = wristVelocity.getValue();
+        inputs.wristAppliedCurrentAmps = wristAppliedCurrent.getValue();
+        inputs.wristSuppliedCurrentAmps = wristSuppliedCurrent.getValue();
+        inputs.wristTempCelsius = wristTempCelsius.getValue();
+        inputs.wristReverseSoftLimit = wristReverseSoftLimit.getValue();
+        inputs.wristForwardSoftLimit = wristForwardSoftLimit.getValue();
+        inputs.wristReverseHardLimit = wristReverseHardLimit.getValue() == ReverseLimitValue.ClosedToGround;
+        inputs.wristForwardHardLimit = wristForwardHardLimit.getValue() == ForwardLimitValue.ClosedToGround;
     }
 
 
