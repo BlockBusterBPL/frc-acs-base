@@ -57,7 +57,9 @@ public class Robot extends LoggedRobot {
     private final Alert logReceiverQueueAlert =
     new Alert("Logging queue exceeded capacity, data will NOT be logged.", AlertType.ERROR);
     private final Alert sameBatteryAlert =
-    new Alert("The battery has not been changed since the last match.", AlertType.WARNING);
+    new Alert("The battery may not have been changed since the last match. If this message shows up following a systems check, it can be cleared from the battery tab", AlertType.WARNING);
+    private final Alert batteryCheckFailure = 
+    new Alert("Battery checking system failure! Check that the battery is new for this match", AlertType.WARNING);
     
     public Robot() {
         super(Constants.loopPeriodSecs);
@@ -131,6 +133,7 @@ public class Robot extends LoggedRobot {
                     new String(Files.readAllBytes(Paths.get(batteryNameFile)), StandardCharsets.UTF_8);
                 } catch (IOException e) {
                     e.printStackTrace();
+                    batteryCheckFailure.set(true);
                 }
                 
                 if (previousBatteryName.equals(BatteryTracker.getName())) {
@@ -141,6 +144,8 @@ public class Robot extends LoggedRobot {
                     // New battery, delete file
                     file.delete();
                 }
+            } else {
+                batteryCheckFailure.set(true);
             }
         }
         
@@ -172,7 +177,7 @@ public class Robot extends LoggedRobot {
             logCommandFunction.accept(command, false);
         });
         
-        // Default to blue alliance in sim
+        // Default to blue alliance in sim (for obvious reasons)
         if (Constants.getMode() == Mode.SIM) {
             DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
         }

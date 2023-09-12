@@ -50,6 +50,7 @@ public class Arm extends SubsystemBase {
     }
 
     private ArmPosition activePreset = PositionPresets.EMPTY_STOWED;
+    private static boolean isConeMode = false;
 
     public static final double ARM_BASE_LENGTH = Units.inchesToMeters(19); // distance from arm pivot to vertical
                                                                            // extension of wrist pivot
@@ -155,5 +156,9 @@ public class Arm extends SubsystemBase {
 
     private double calcWristFeedForward() {
         return calcWristRefAngle().getCos() * WRIST_MASS_FACTOR;
+    }
+
+    public static boolean isConeMode() {
+        return isConeMode;
     }
 }

@@ -320,4 +320,12 @@ public class Utility {
     public static Rotation2d rotationModulus(Rotation2d input) {
         return Rotation2d.fromRotations(MathUtil.inputModulus(input.getRotations(), 0, 1));
     }
+
+    public static double sum(double[] arr) {
+        double sum = 0;
+        for (double d : arr) {
+            sum += d;
+        }
+        return sum;
+    }
 }

@@ -44,6 +44,8 @@ public interface ArmIO {
 
     public default void updateOutputs() {}
 
+    public default void refreshFollowers() {}
+
     public default void setTiltTarget(double rotations) {}
 
     public default void setExtendTarget(double meters) {}

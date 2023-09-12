@@ -53,7 +53,6 @@ public class FalconSwerveIO implements SwerveModuleIO {
     private StatusSignalValue<Double> m_steerAppliedCurrent;
     private StatusSignalValue<Double> m_steerSuppliedCurrent;
     private StatusSignalValue<Double> m_steerTempCelsius;
-    private BaseStatusSignalValue[] m_signals;
 
     private SwerveModuleState m_state = new SwerveModuleState();
     private SwerveModulePosition m_position = new SwerveModulePosition();

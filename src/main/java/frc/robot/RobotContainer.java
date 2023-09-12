@@ -25,6 +25,7 @@ import frc.robot.lib.drive.FieldOrientedDriveController;
 import frc.robot.lib.drive.StandardDriveController;
 import frc.robot.subsystems.arm.Arm;
 import frc.robot.subsystems.arm.ArmIO;
+import frc.robot.subsystems.arm.ArmIOFalcons;
 import frc.robot.subsystems.arm.ArmIOSimV1;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.FalconSwerveIO;
@@ -33,10 +34,15 @@ import frc.robot.subsystems.drive.GyroNavXIO;
 import frc.robot.subsystems.drive.SimSwerveIO;
 import frc.robot.subsystems.drive.SimSwerveIO;
 import frc.robot.subsystems.drive.SwerveModuleIO;
+import frc.robot.subsystems.gripper.Gripper;
+import frc.robot.subsystems.gripper.GripperIO;
+import frc.robot.subsystems.gripper.GripperMiniNeoIO;
+import frc.robot.subsystems.gripper.GripperMiniNeoSimIO;
 
 public class RobotContainer {
     private Drive drive;
     private Arm arm;
+    private Gripper gripper;
 
     // DRIVER CONTROLS
     private final CommandXboxController driver = new CommandXboxController(0);
@@ -92,8 +98,20 @@ public class RobotContainer {
                             new FalconSwerveIO(1, "canivore"),
                             new FalconSwerveIO(2, "canivore"),
                             new FalconSwerveIO(3, "canivore"));
+                    arm = new Arm(new ArmIOFalcons());
+                    gripper = new Gripper(new GripperMiniNeoIO());
                     break;
                 case ROBOT_2023P:
+                    break;
+                case ROBOT_2023_CHASSIS:
+                    drive = new Drive(
+                            new GyroNavXIO(SPI.Port.kMXP), 
+                            new FalconSwerveIO(0, "canivore"), 
+                            new FalconSwerveIO(1, "canivore"), 
+                            new FalconSwerveIO(2, "canivore"), 
+                            new FalconSwerveIO(3, "canivore"));
+                    arm = new Arm(new ArmIOSimV1()); // simulate arm on chassis bot
+                    gripper = new Gripper(new GripperMiniNeoSimIO());
                     break;
                 case ROBOT_SIMBOT:
                     drive = new Drive(
@@ -104,6 +122,7 @@ public class RobotContainer {
                             new SimSwerveIO(),
                             new SimSwerveIO());
                     arm = new Arm(new ArmIOSimV1());
+                    gripper = new Gripper(new GripperMiniNeoSimIO());
                     break;
                 default:
                     throw new IllegalStateException("Selected robot is not valid.");
@@ -126,6 +145,12 @@ public class RobotContainer {
 
         if (arm == null) {
             arm = new Arm(new ArmIO() {
+                
+            });
+        }
+
+        if (gripper == null) {
+            gripper = new Gripper(new GripperIO() {
                 
             });
         }

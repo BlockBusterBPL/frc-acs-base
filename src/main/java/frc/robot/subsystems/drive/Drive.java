@@ -47,11 +47,11 @@ public class Drive extends SubsystemBase {
     private GyroIOInputsAutoLogged gyroInputs;
 
     private final Alert alertGyroNotConnected = new Alert(
-            "Gyro not connected! Reverting to wheel delta integration mode, please monitor robot pose.",
-            AlertType.WARNING);
+            "Gyro not connected! Reverting to wheel delta integration mode, please monitor robot pose. Using autonomous is NOT RECCOMENDED!",
+            AlertType.ERROR);
 
     private final Alert alertCoastModeEnabled = new Alert(
-            "Swerve Drive Coast Mode Enabled! Robot may roll if not on level surface.",
+            "Swerve Drive Coast Mode Enabled.",
             AlertType.INFO);
 
     private final Alert alertSteerNeutralMode = new Alert(

@@ -39,6 +39,7 @@ public final class Constants {
         switch (getRobot()) {
             case ROBOT_2023C:
             case ROBOT_2023P:
+            case ROBOT_2023_CHASSIS:
             return RobotBase.isReal() ? Mode.REAL : Mode.REPLAY;
             
             case ROBOT_SIMBOT:
@@ -55,6 +56,7 @@ public final class Constants {
     public static enum RobotType {
         ROBOT_2023C,
         ROBOT_2023P,
+        ROBOT_2023_CHASSIS,
         ROBOT_SIMBOT
     }
     
@@ -220,6 +222,60 @@ public final class Constants {
     public static final double kAdaptivePathMinLookaheadDistance = 6.0;
     public static final double kAdaptivePathMaxLookaheadDistance = 24.0;
     public static final double kAdaptiveErrorLookaheadCoefficient = 0.01;
+
+    public static final class ArmSubsystem {
+        public static final class Tilt {
+            public static final boolean invertMaster = false;
+            public static final boolean invertFollower = false;
+
+            public static final double kP = 0.0;
+            public static final double kI = 0.0;
+            public static final double kD = 0.0;
+            public static final double kV = 0.0;
+            
+            public static final double kMagicVel = 0.0;
+            public static final double kMagicAccel = 0.0;
+            public static final double kMagicJerk = 0.0;
+        }
+
+        public static final class Extend {
+            public static final boolean invertMaster = false;
+            public static final boolean invertFollower = false;
+
+            public static final double kP = 0.0;
+            public static final double kI = 0.0;
+            public static final double kD = 0.0;
+            public static final double kV = 0.0;
+            
+            public static final double kMagicVel = 0.0;
+            public static final double kMagicAccel = 0.0;
+            public static final double kMagicJerk = 0.0;
+        }
+
+        public static final class Wrist {
+            public static final boolean invertMaster = false;
+            public static final boolean invertFollower = false;
+
+            public static final double kP = 0.0;
+            public static final double kI = 0.0;
+            public static final double kD = 0.0;
+            public static final double kV = 0.0;
+
+            public static final double kMagicVel = 0.0;
+            public static final double kMagicAccel = 0.0;
+            public static final double kMagicJerk = 0.0;
+        }
+
+        public static final class Gripper {
+            public static final boolean kInvert = false;
+
+            public static final double kAutoIntakeConeThrottle = -1.0;
+            public static final double kAutoScoreConeThrottle = 1.0;
+
+            public static final double kAutoIntakeCubeThrottle = -1.0;
+            public static final double kAutoScoreCubeThrottle = 0.6; 
+        }
+    }
     
     /** Checks whether the robot the correct robot is selected when deploying. */
     public static void main(String... args) {
