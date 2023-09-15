@@ -45,7 +45,7 @@ public class LED extends SubsystemBase {
         LEDState candleState = new LEDState(LEDColor.kBlack);
         LEDState perimeterState = new LEDState(LEDColor.kBlack);
 
-        LEDColor gamepieceColor = coneMode ? new LEDColor(Color.kYellow) : new LEDColor(Color.kPurple);
+        LEDColor gamepieceColor = coneMode ? LEDColor.kYellow : LEDColor.kPurple;
 
         // ALL LEDS
         if (drivePowerSave) {
@@ -57,19 +57,19 @@ public class LED extends SubsystemBase {
             // keep gamepiece color, blink perimeter orange
             perimeterState = new LEDState(
                 gamepieceColor, 
-                AnimationBuilder.generate(ColorAnimationTypes.FLASH, new LEDColor(Color.kOrange), 0.8)
+                AnimationBuilder.generate(ColorAnimationTypes.FLASH, LEDColor.kOrange, 0.8)
             );
         } else if (teamIndicator1) {
             // keep gamepiece color, blink perimeter red
             perimeterState = new LEDState(
                 gamepieceColor, 
-                AnimationBuilder.generate(ColorAnimationTypes.FLASH, new LEDColor(Color.kRed), 0.8)
+                AnimationBuilder.generate(ColorAnimationTypes.FLASH, LEDColor.kRed, 0.8)
             );
         } else if (teamIndicator2) {
             // keep gamepiece color, blink perimeter blue
             perimeterState = new LEDState(
                 gamepieceColor, 
-                AnimationBuilder.generate(ColorAnimationTypes.FLASH, new LEDColor(Color.kBlue), 0.8)
+                AnimationBuilder.generate(ColorAnimationTypes.FLASH, LEDColor.kBlue, 0.8)
             );
         } else if (autoRotateAcquire && !autoRotateHold) {
             // clear gamepiece color, blink perimater gamepiece color
@@ -93,10 +93,13 @@ public class LED extends SubsystemBase {
         // CANDLE BLOCK LEDS
         if (fmsConnected) {
             // solid orange
+            candleState = new LEDState(LEDColor.kOrange);
         } else if (dsConnected) {
             // slow pulse orange with dim orange BG
+            candleState = new LEDState(LEDColor.kOrange.multiply(0.25), AnimationBuilder.generate(ColorAnimationTypes.PULSE, LEDColor.kOrange, 0.75));
         } else {
             // fast orange pulse with dim orange BG
+            candleState = new LEDState(LEDColor.kOrange.multiply(0.25), AnimationBuilder.generate(ColorAnimationTypes.PULSE, LEDColor.kOrange, 0.93));
         }
 
         candle.checkChanged(candleState).ifPresent(statesToUpdate::add);

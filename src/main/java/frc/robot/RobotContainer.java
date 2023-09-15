@@ -38,11 +38,15 @@ import frc.robot.subsystems.gripper.Gripper;
 import frc.robot.subsystems.gripper.GripperIO;
 import frc.robot.subsystems.gripper.GripperMiniNeoIO;
 import frc.robot.subsystems.gripper.GripperMiniNeoSimIO;
+import frc.robot.subsystems.leds.LED;
+import frc.robot.subsystems.leds.LEDIO;
+import frc.robot.subsystems.leds.LEDIOCANdle;
 
 public class RobotContainer {
     private Drive drive;
     private Arm arm;
     private Gripper gripper;
+    private LED leds;
 
     // DRIVER CONTROLS
     private final CommandXboxController driver = new CommandXboxController(0);
@@ -100,6 +104,7 @@ public class RobotContainer {
                             new FalconSwerveIO(3, "canivore"));
                     arm = new Arm(new ArmIOFalcons());
                     gripper = new Gripper(new GripperMiniNeoIO());
+                    leds = new LED(new LEDIOCANdle(8, "canivore"));
                     break;
                 case ROBOT_2023P:
                     break;
@@ -115,8 +120,7 @@ public class RobotContainer {
                     break;
                 case ROBOT_SIMBOT:
                     drive = new Drive(
-                            new GyroIO() {
-                            }, // TODO: Gyro Sim
+                            new GyroIO() {}, // Empty gyro object defaults to wheel delta integration
                             new SimSwerveIO(),
                             new SimSwerveIO(),
                             new SimSwerveIO(),
@@ -151,6 +155,12 @@ public class RobotContainer {
 
         if (gripper == null) {
             gripper = new Gripper(new GripperIO() {
+                
+            });
+        }
+
+        if (leds == null) {
+            leds = new LED(new LEDIO() {
                 
             });
         }

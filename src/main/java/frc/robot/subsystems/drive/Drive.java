@@ -47,7 +47,7 @@ public class Drive extends SubsystemBase {
     private GyroIOInputsAutoLogged gyroInputs;
 
     private final Alert alertGyroNotConnected = new Alert(
-            "Gyro not connected! Reverting to wheel delta integration mode, please monitor robot pose. Using autonomous is NOT RECCOMENDED!",
+            "Gyro not connected! Reverting to wheel delta integration mode, please monitor robot pose. Using autonomous is NOT RECCOMENDED! This warning is expected when using the SimBot.",
             AlertType.ERROR);
 
     private final Alert alertCoastModeEnabled = new Alert(

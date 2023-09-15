@@ -7,24 +7,38 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.*;
 import edu.wpi.first.wpilibj.Timer;
 
 public class ArmIOSimV1 implements ArmIO {
-    private final TrapezoidProfile.Constraints tiltConstraints = new Constraints(0.5, 1);
-    private final TrapezoidProfile.Constraints extendConstraints = new Constraints(0.5, 1);
-    private final TrapezoidProfile.Constraints wristConstraints = new Constraints(0.5, 1);
+    private final TrapezoidProfile.Constraints tiltConstraints;
+    private final TrapezoidProfile.Constraints extendConstraints;
+    private final TrapezoidProfile.Constraints wristConstraints;
 
-    private TrapezoidProfile.State lastTiltState = new State();
-    private TrapezoidProfile.State lastExtendState = new State();
-    private TrapezoidProfile.State lastWristState = new State();
+    private TrapezoidProfile.State lastTiltState;
+    private TrapezoidProfile.State lastExtendState;
+    private TrapezoidProfile.State lastWristState;
 
-    private Optional<TrapezoidProfile> tiltEstimator = Optional.empty();
-    private Optional<TrapezoidProfile> extendEstimator = Optional.empty();
-    private Optional<TrapezoidProfile> wristEstimator = Optional.empty();
+    private Optional<TrapezoidProfile> tiltEstimator;
+    private Optional<TrapezoidProfile> extendEstimator;
+    private Optional<TrapezoidProfile> wristEstimator;
 
-    private Timer tiltTimer = new Timer();
-    private Timer extendTimer = new Timer();
-    private Timer wristTimer = new Timer();
+    private Timer tiltTimer;
+    private Timer extendTimer;
+    private Timer wristTimer;
 
     public ArmIOSimV1() {
-        
+        tiltConstraints = new Constraints(0.5, 1);
+        extendConstraints = new Constraints(0.5, 1);
+        wristConstraints = new Constraints(0.5, 1);
+
+        lastTiltState = new State();
+        lastExtendState = new State();
+        lastWristState = new State();
+
+        tiltEstimator = Optional.empty();
+        extendEstimator = Optional.empty();
+        wristEstimator = Optional.empty();
+
+        tiltTimer = new Timer();
+        extendTimer = new Timer();
+        wristTimer = new Timer();
     }
 
     @Override
