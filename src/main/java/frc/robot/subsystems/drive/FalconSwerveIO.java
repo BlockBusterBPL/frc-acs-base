@@ -64,26 +64,30 @@ public class FalconSwerveIO implements SwerveModuleIO {
 
         m_driveControl = new VelocityTorqueCurrentFOC(0, 0, 0, false);
 
+        driveConfig.Slot0.kP = 5.0;
+        driveConfig.Slot0.kV = 2.0;
         driveConfig.TorqueCurrent.PeakForwardTorqueCurrent = 40;
         driveConfig.TorqueCurrent.PeakReverseTorqueCurrent = -40;
         m_drive.getConfigurator().apply(driveConfig);
-        driveHelper = new FalconFeedbackControlHelper(m_drive, null, null);
+        driveHelper = new FalconFeedbackControlHelper(m_drive, driveConfig.Slot0, null);
 
 
         m_steerControl = new PositionTorqueCurrentFOC(0, 0, 0, false);
 
         // steerConfig.Slot0 = TODO: PID gains
+        steerConfig.Slot0.kP = 0.0;
         steerConfig.TorqueCurrent.PeakForwardTorqueCurrent = 20;
         steerConfig.TorqueCurrent.PeakReverseTorqueCurrent = -20;
         steerConfig.Feedback.FeedbackRemoteSensorID = m_encoder.getDeviceID();
         steerConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
-        steerConfig.Feedback.RotorToSensorRatio = Constants.kSteerReduction;
+        steerConfig.Feedback.RotorToSensorRatio = 1/Constants.kSteerReduction;
+        steerConfig.ClosedLoopGeneral.ContinuousWrap = true;
         m_steer.getConfigurator().apply(steerConfig);
-        steerHelper = new FalconFeedbackControlHelper(m_steer, null, null);
+        steerHelper = new FalconFeedbackControlHelper(m_steer, steerConfig.Slot0, null);
 
         m_encoder.getConfigurator().refresh(encoderConfig);
         encoderConfig.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Signed_PlusMinusHalf;
-        encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
+        encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
         m_encoder.getConfigurator().apply(encoderConfig);
 
         m_drivePosition = m_drive.getPosition();
@@ -145,6 +149,16 @@ public class FalconSwerveIO implements SwerveModuleIO {
         double motorRotationsPerMeter = Constants.kDriveReduction / wheelCircumference;
 
         return meters * motorRotationsPerMeter;
+    }
+
+    @Override
+    public void setDriveSpeedTarget(double speedMetersPerSecond) {
+        m_driveControl.Velocity = convertMetersToRotations(speedMetersPerSecond);
+    }
+
+    @Override
+    public void setSteerPositionTarget(double steerAngleRotations) {
+        m_steerControl.Position = steerAngleRotations;
     }
 
     @Override

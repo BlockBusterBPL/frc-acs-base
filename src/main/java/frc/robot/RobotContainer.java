@@ -117,6 +117,7 @@ public class RobotContainer {
                             new FalconSwerveIO(3, "canivore"));
                     arm = new Arm(new ArmIOSimV1()); // simulate arm on chassis bot
                     gripper = new Gripper(new GripperMiniNeoSimIO());
+                    leds = new LED(new LEDIOCANdle(8, "canivore"));
                     break;
                 case ROBOT_SIMBOT:
                     drive = new Drive(

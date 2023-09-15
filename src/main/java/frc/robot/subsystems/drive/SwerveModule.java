@@ -25,11 +25,11 @@ public class SwerveModule {
     private final SwerveModuleIOInputsAutoLogged inputs = new SwerveModuleIOInputsAutoLogged();
     private final int index;
 
-    private static final LoggedTunableNumber driveKP = new LoggedTunableNumber("Drive/Module/DriveKP");
+    private static final LoggedTunableNumber driveKP = new LoggedTunableNumber("Drive/Module/DriveKP", 5.0);
     private static final LoggedTunableNumber driveKI = new LoggedTunableNumber("Drive/Module/DriveKI");
     private static final LoggedTunableNumber driveKD = new LoggedTunableNumber("Drive/Module/DriveKD");
-    private static final LoggedTunableNumber driveKF = new LoggedTunableNumber("Drive/Module/DriveKF");
-    private static final LoggedTunableNumber steerKP = new LoggedTunableNumber("Drive/Module/SteerKP");
+    private static final LoggedTunableNumber driveKF = new LoggedTunableNumber("Drive/Module/DriveKF", 2.0);
+    private static final LoggedTunableNumber steerKP = new LoggedTunableNumber("Drive/Module/SteerKP", 1.0);
     private static final LoggedTunableNumber steerKI = new LoggedTunableNumber("Drive/Module/SteerKI");
     private static final LoggedTunableNumber steerKD = new LoggedTunableNumber("Drive/Module/SteerKD");
     private static final LoggedTunableNumber steerKF = new LoggedTunableNumber("Drive/Module/SteerKF");

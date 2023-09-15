@@ -11,10 +11,13 @@ import frc.robot.lib.drive.SwerveSetpointGenerator.KinematicLimits;
 
 import java.util.Map;
 
+import com.ctre.phoenixpro.configs.MotionMagicConfigs;
+import com.ctre.phoenixpro.configs.Slot0Configs;
+
 public final class Constants {
-    private static final RobotType robot = RobotType.ROBOT_SIMBOT;
+    private static final RobotType robot = RobotType.ROBOT_2023_CHASSIS;
     public static final double loopPeriodSecs = 0.02;
-    public static final boolean tuningMode = false;
+    public static final boolean tuningMode = true;
     
     public static boolean invalidRobotAlertSent = false;
     
@@ -222,6 +225,16 @@ public final class Constants {
     public static final double kAdaptivePathMinLookaheadDistance = 6.0;
     public static final double kAdaptivePathMaxLookaheadDistance = 24.0;
     public static final double kAdaptiveErrorLookaheadCoefficient = 0.01;
+
+    public static final class DriveSubsystem {
+        public static final Slot0Configs kDrivePIDConfig = new Slot0Configs();
+        {
+            kDrivePIDConfig.kP = 5.0;
+            kDrivePIDConfig.kV = 2.0;
+        }
+
+
+    }
 
     public static final class ArmSubsystem {
         public static final class Tilt {

@@ -28,6 +28,14 @@ public class FalconFeedbackControlHelper {
         m_pidConfigs = new Slot0Configs();
         m_magicConfigs = new MotionMagicConfigs();
 
+        if (defaultPID == null) {
+            defaultPID = new Slot0Configs();
+        }
+
+        if (defaultMagic == null) {
+            defaultMagic = new MotionMagicConfigs();
+        }
+
         refreshConfigs();
         ensureDefaultConfigsApplied(defaultPID, defaultMagic);
     }
