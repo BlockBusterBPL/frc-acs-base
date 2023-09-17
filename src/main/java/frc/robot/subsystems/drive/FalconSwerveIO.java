@@ -8,6 +8,7 @@ import com.ctre.phoenixpro.BaseStatusSignalValue;
 import com.ctre.phoenixpro.StatusSignalValue;
 import com.ctre.phoenixpro.configs.CANcoderConfiguration;
 import com.ctre.phoenixpro.configs.TalonFXConfiguration;
+import com.ctre.phoenixpro.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenixpro.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenixpro.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenixpro.hardware.CANcoder;
@@ -74,8 +75,6 @@ public class FalconSwerveIO implements SwerveModuleIO {
 
         m_steerControl = new PositionTorqueCurrentFOC(0, 0, 0, false);
 
-        // steerConfig.Slot0 = TODO: PID gains
-        steerConfig.Slot0.kP = 0.0;
         steerConfig.TorqueCurrent.PeakForwardTorqueCurrent = 20;
         steerConfig.TorqueCurrent.PeakReverseTorqueCurrent = -20;
         steerConfig.Feedback.FeedbackRemoteSensorID = m_encoder.getDeviceID();
@@ -83,7 +82,7 @@ public class FalconSwerveIO implements SwerveModuleIO {
         steerConfig.Feedback.RotorToSensorRatio = 1/Constants.kSteerReduction;
         steerConfig.ClosedLoopGeneral.ContinuousWrap = true;
         m_steer.getConfigurator().apply(steerConfig);
-        steerHelper = new FalconFeedbackControlHelper(m_steer, steerConfig.Slot0, null);
+        steerHelper = new FalconFeedbackControlHelper(m_steer, steerConfig.Slot0, steerConfig.MotionMagic);
 
         m_encoder.getConfigurator().refresh(encoderConfig);
         encoderConfig.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Signed_PlusMinusHalf;
@@ -193,8 +192,13 @@ public class FalconSwerveIO implements SwerveModuleIO {
     }
 
     @Override
-    public void setDriveKF(double drivekF) {
+    public void setDriveKV(double drivekF) {
         driveHelper.setKV(drivekF);
+    }
+
+    @Override
+    public void setDriveKS(double driveKS) {
+        driveHelper.setKS(driveKS);
     }
 
     @Override
@@ -213,8 +217,12 @@ public class FalconSwerveIO implements SwerveModuleIO {
     }
 
     @Override
-    public void setSteerKF(double steerKF) {
+    public void setSteerKV(double steerKF) {
         steerHelper.setKV(steerKF);
+    }
+    @Override
+    public void setSteerKS(double steerKS) {
+        steerHelper.setKS(steerKS);
     }
 
     @Override

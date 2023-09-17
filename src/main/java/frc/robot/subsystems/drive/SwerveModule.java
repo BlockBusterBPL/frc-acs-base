@@ -16,6 +16,7 @@ import static frc.robot.Constants.kDriveReduction;
 import static frc.robot.Constants.kSteerReduction;
 import static frc.robot.Constants.kDriveWheelDiameter;
 
+import frc.robot.Constants;
 import frc.robot.lib.util.LoggedTunableBoolean;
 import frc.robot.lib.util.LoggedTunableNumber;
 
@@ -25,14 +26,19 @@ public class SwerveModule {
     private final SwerveModuleIOInputsAutoLogged inputs = new SwerveModuleIOInputsAutoLogged();
     private final int index;
 
-    private static final LoggedTunableNumber driveKP = new LoggedTunableNumber("Drive/Module/DriveKP", 5.0);
-    private static final LoggedTunableNumber driveKI = new LoggedTunableNumber("Drive/Module/DriveKI");
-    private static final LoggedTunableNumber driveKD = new LoggedTunableNumber("Drive/Module/DriveKD");
-    private static final LoggedTunableNumber driveKF = new LoggedTunableNumber("Drive/Module/DriveKF", 2.0);
-    private static final LoggedTunableNumber steerKP = new LoggedTunableNumber("Drive/Module/SteerKP", 1.0);
-    private static final LoggedTunableNumber steerKI = new LoggedTunableNumber("Drive/Module/SteerKI");
-    private static final LoggedTunableNumber steerKD = new LoggedTunableNumber("Drive/Module/SteerKD");
-    private static final LoggedTunableNumber steerKF = new LoggedTunableNumber("Drive/Module/SteerKF");
+    private static final LoggedTunableNumber driveKP = new LoggedTunableNumber("Drive/Module/Drive/KP", Constants.DriveSubsystem.kDrivePIDConfig.kP);
+    private static final LoggedTunableNumber driveKI = new LoggedTunableNumber("Drive/Module/Drive/KI", Constants.DriveSubsystem.kDrivePIDConfig.kI);
+    private static final LoggedTunableNumber driveKD = new LoggedTunableNumber("Drive/Module/Drive/KD", Constants.DriveSubsystem.kDrivePIDConfig.kD);
+    private static final LoggedTunableNumber driveKV = new LoggedTunableNumber("Drive/Module/Drive/KV", Constants.DriveSubsystem.kDrivePIDConfig.kV);
+    private static final LoggedTunableNumber drivekS = new LoggedTunableNumber("Drive/Module/Drive/KS", Constants.DriveSubsystem.kDrivePIDConfig.kS);
+    private static final LoggedTunableNumber steerKP = new LoggedTunableNumber("Drive/Module/Steer/KP", Constants.DriveSubsystem.kSteerPIDConfig.kP);
+    private static final LoggedTunableNumber steerKI = new LoggedTunableNumber("Drive/Module/Steer/KI", Constants.DriveSubsystem.kSteerPIDConfig.kI);
+    private static final LoggedTunableNumber steerKD = new LoggedTunableNumber("Drive/Module/Steer/KD", Constants.DriveSubsystem.kSteerPIDConfig.kD);
+    private static final LoggedTunableNumber steerKV = new LoggedTunableNumber("Drive/Module/Steer/KV", Constants.DriveSubsystem.kSteerPIDConfig.kV);
+    private static final LoggedTunableNumber steerKS = new LoggedTunableNumber("Drive/Module/Steer/KS", Constants.DriveSubsystem.kSteerPIDConfig.kS);
+    private static final LoggedTunableNumber steerVelocity = new LoggedTunableNumber("Drive/Module/Steer/Velocity", Constants.DriveSubsystem.kSteerMagicConfig.MotionMagicCruiseVelocity);
+    private static final LoggedTunableNumber steerAccel = new LoggedTunableNumber("Drive/Module/Steer/Accel", Constants.DriveSubsystem.kSteerMagicConfig.MotionMagicAcceleration);
+    private static final LoggedTunableNumber steerJerk = new LoggedTunableNumber("Drive/Module/Steer/Jerk", Constants.DriveSubsystem.kSteerMagicConfig.MotionMagicJerk);
 
     private static final LoggedDashboardBoolean steerNeutralMode = new LoggedDashboardBoolean("Drive/Module/SteerNeutral");
     private static boolean steerIsNeutral = false;
@@ -62,8 +68,12 @@ public class SwerveModule {
             io.setDriveKD(driveKD.get());
         }
 
-        if (driveKF.hasChanged(hashCode())) {
-            io.setDriveKF(driveKF.get());
+        if (driveKV.hasChanged(hashCode())) {
+            io.setDriveKV(driveKV.get());
+        }
+
+        if (drivekS.hasChanged(hashCode())) {
+            io.setDriveKS(drivekS.get());
         }
 
         if (steerKP.hasChanged(hashCode())) {
@@ -78,8 +88,24 @@ public class SwerveModule {
             io.setSteerKD(steerKD.get());
         }
 
-        if (steerKF.hasChanged(hashCode())) {
-            io.setSteerKF(steerKF.get());
+        if (steerKV.hasChanged(hashCode())) {
+            io.setSteerKV(steerKV.get());
+        }
+
+        if (steerKS.hasChanged(hashCode())) {
+            io.setSteerKS(steerKS.get());
+        }
+
+        if (steerVelocity.hasChanged(hashCode())) {
+            io.setSteerVelocity(steerVelocity.get());
+        }
+
+        if (steerAccel.hasChanged(hashCode())) {
+            io.setSteerAccel(steerAccel.get());
+        }
+
+        if (steerJerk.hasChanged(hashCode())) {
+            io.setSteerJerk(steerJerk.get());
         }
 
         if (steerNeutralMode.get() != steerIsNeutral) {

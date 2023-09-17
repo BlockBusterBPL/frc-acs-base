@@ -43,7 +43,9 @@ public interface SwerveModuleIO {
 
     public default void setDriveKD(double drivekD) {}
 
-    public default void setDriveKF(double drivekF) {}
+    public default void setDriveKV(double drivekV) {}
+
+    public default void setDriveKS(double driveKS) {}
 
     public default void setSteerKP(double steerKP) {}
 
@@ -51,7 +53,15 @@ public interface SwerveModuleIO {
 
     public default void setSteerKD(double steerKD) {}
 
-    public default void setSteerKF(double steerKF) {}
+    public default void setSteerKV(double steerKV) {}
+
+    public default void setSteerKS(double steerKS) {}
+
+    public default void setSteerVelocity(double steerVelocity) {}
+
+    public default void setSteerAccel(double steerVelocity) {}
+
+    public default void setSteerJerk(double steerJerk) {}
 
     public default void updateEncoderOffset(double zeroRotations) {}
 

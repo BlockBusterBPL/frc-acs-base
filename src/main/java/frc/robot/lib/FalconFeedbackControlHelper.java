@@ -102,6 +102,12 @@ public class FalconFeedbackControlHelper {
         applyConfigs();
     }
 
+    public void setKS(double kS) {
+        refreshConfigs();
+        m_pidConfigs.kS = kS;
+        applyConfigs();
+    }
+
     public void setMagicVelocity(double magicVelocity) {
         refreshConfigs();
         m_magicConfigs.MotionMagicCruiseVelocity = magicVelocity;

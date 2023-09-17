@@ -84,9 +84,11 @@ public final class Constants {
     public static final double kCancoderBootAllowanceSeconds = 10.0;
     
     // Drive constants
-    public static final double kDriveReduction = (14.0 / 50.0) * (28.0 / 16.0) * (15.0 / 45.0);
+    /** SDS Mk4 L2 Gear Ratio */
+    public static final double kSDS_L2 = 1 / ((14.0 / 50.0) * (27.0 / 17.0) * (15.0 / 45.0));
+    public static final double kDriveReduction = kSDS_L2;//(14.0 / 50.0) * (28.0 / 16.0) * (15.0 / 45.0);
     public static final double kSteerReduction = (14.0 / 50.0) * (10.0 / 60.0);
-    public static final double kDriveWheelDiameter = Units.inchesToMeters(4); /// meters, TODO measure
+    public static final double kDriveWheelDiameter = Units.inchesToMeters(4.0); /// meters, TODO measure
     public static final double kDriveTrackwidthMeters = 0.61595; // DONE Measure and set trackwidth
     public static final double kDriveWheelbaseMeters = 0.61595; // DONE Measure and set wheelbase
     
@@ -228,11 +230,29 @@ public final class Constants {
 
     public static final class DriveSubsystem {
         public static final Slot0Configs kDrivePIDConfig = new Slot0Configs();
-        {
+        static {
             kDrivePIDConfig.kP = 5.0;
+            kDrivePIDConfig.kI = 0.0;
+            kDrivePIDConfig.kD = 0.0;
             kDrivePIDConfig.kV = 2.0;
+            kDrivePIDConfig.kS = 0.0;
         }
 
+        public static final Slot0Configs kSteerPIDConfig = new Slot0Configs();
+        static {
+            kSteerPIDConfig.kP = 50.0;
+            kSteerPIDConfig.kI = 0.0;
+            kSteerPIDConfig.kD = 2.0;
+            kSteerPIDConfig.kV = 0.0;
+            kSteerPIDConfig.kS = 5.0;
+        }
+
+        public static final MotionMagicConfigs kSteerMagicConfig = new MotionMagicConfigs();
+        static {
+            kSteerMagicConfig.MotionMagicCruiseVelocity = 0.25;
+            kSteerMagicConfig.MotionMagicAcceleration = 1.0;
+            kSteerMagicConfig.MotionMagicJerk = 10;
+        }
 
     }
 
