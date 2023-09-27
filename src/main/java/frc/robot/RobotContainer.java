@@ -35,6 +35,7 @@ import frc.robot.subsystems.drive.SimSwerveIO;
 import frc.robot.subsystems.drive.SimSwerveIO;
 import frc.robot.subsystems.drive.SwerveModuleIO;
 import frc.robot.subsystems.gripper.Gripper;
+import frc.robot.subsystems.gripper.GripperFalconIO;
 import frc.robot.subsystems.gripper.GripperIO;
 import frc.robot.subsystems.gripper.GripperMiniNeoIO;
 import frc.robot.subsystems.gripper.GripperMiniNeoSimIO;
@@ -103,7 +104,7 @@ public class RobotContainer {
                             new FalconSwerveIO(2, "canivore"),
                             new FalconSwerveIO(3, "canivore"));
                     arm = new Arm(new ArmIOFalcons());
-                    gripper = new Gripper(new GripperMiniNeoIO());
+                    gripper = new Gripper(new GripperFalconIO());
                     leds = new LED(new LEDIOCANdle(8, "canivore"));
                     break;
                 case ROBOT_2023P:

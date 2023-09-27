@@ -32,14 +32,7 @@ public class Gripper extends SubsystemBase {
     public void set(double throttle) {
         boolean isConeMode = Arm.isConeMode();
 
-        io.setSingleMotor(throttle);
-
-        if (isConeMode) {
-            io.setCone(throttle);
-            io.setCube(0);
-        } else {
-            io.setCone(0);
-            io.setCube(throttle);
-        }
+        io.setConeMode(isConeMode);
+        io.setMotor(throttle);
     }
 }

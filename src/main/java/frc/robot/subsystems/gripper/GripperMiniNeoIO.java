@@ -20,6 +20,8 @@ public class GripperMiniNeoIO implements GripperIO {
     private final RelativeEncoder cubeEncoder;
     private final RelativeEncoder coneEncoder;
 
+    private boolean coneMode;
+
     public GripperMiniNeoIO() {
         ////////// CUBE MOTOR \\\\\\\\\\
         cube = new CANSparkMax(40, MotorType.kBrushless);
@@ -42,6 +44,8 @@ public class GripperMiniNeoIO implements GripperIO {
         cone.setSecondaryCurrentLimit(25);
 
         coneEncoder = cone.getEncoder();
+
+        coneMode = false;
     }
 
     @Override
@@ -57,12 +61,18 @@ public class GripperMiniNeoIO implements GripperIO {
     }
 
     @Override
-    public void setCube(double throttle) {
-        cube.set(throttle);
+    public void setMotor(double throttle) {
+        if (coneMode) {
+            cone.set(throttle);
+            cube.set(0);
+        } else {
+            cone.set(0);
+            cube.set(throttle);
+        }
     }
 
     @Override
-    public void setCone(double throttle) {
-        cone.set(throttle);
+    public void setConeMode(boolean coneMode) {
+        this.coneMode = coneMode;
     }
 }

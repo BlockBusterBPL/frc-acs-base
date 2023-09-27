@@ -17,20 +17,18 @@ public interface GripperIO {
     public default void updateOutputs() {}
     
     /**
-     * Set the throttle of a single motor intake.
+     * Set the throttle of the intake motor.
      * @param throttle
      */
-    public default void setSingleMotor(double throttle) {}
+    public default void setMotor(double throttle) {}
 
     /**
-     * Set the throttle of a cube intake on an independent intake.
-     * @param throttle
+     * Set the gripper to cone mode. 
+     * When intaking cones, the gripper may need to use an alternate motor, 
+     * or run the main motor in reverse. If it is required, the {@link GripperIO}
+     * class provides this method to inform the implementation which intake mode
+     * is selected.
+     * @param coneMode
      */
-    public default void setCube(double throttle) {}
-    
-    /**
-     * Set the throttle of a cone intake on an independent intake.
-     * @param throttle
-     */
-    public default void setCone(double throttle) {}
+    public default void setConeMode(boolean coneMode) {}
 }

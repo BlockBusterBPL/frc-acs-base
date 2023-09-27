@@ -21,9 +21,9 @@ import com.ctre.phoenixpro.signals.SensorDirectionValue;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import frc.robot.Constants;
-import frc.robot.lib.CANcoderLiveConfigHelper;
-import frc.robot.lib.FalconFeedbackControlHelper;
-import frc.robot.lib.TalonFXLiveConfigHelper;
+import frc.robot.lib.phoenixpro.CANcoderLiveConfigHelper;
+import frc.robot.lib.phoenixpro.FalconFeedbackControlHelper;
+import frc.robot.lib.phoenixpro.TalonFXLiveConfigHelper;
 
 /** Add your docs here. */
 public class FalconSwerveIO implements SwerveModuleIO {

@@ -23,14 +23,4 @@ public class GripperMiniNeoSimIO implements GripperIO {
     public void updateInputs(GripperIOInputs inputs) {
         //TODO gripper current sim
     }
-
-    @Override
-    public void setCube(double throttle) {
-        cubeThrottle = throttle;
-    }
-
-    @Override
-    public void setCone(double throttle) {
-        coneThrottle = throttle;
-    }
 }
