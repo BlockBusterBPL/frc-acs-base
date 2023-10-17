@@ -28,6 +28,8 @@ import frc.robot.lib.dashboard.Alert;
 import frc.robot.lib.dashboard.Alert.AlertType;
 import frc.robot.lib.drive.SwerveSetpoint;
 import frc.robot.lib.drive.SwerveSetpointGenerator;
+import frc.robot.subsystems.vision.Vision;
+import frc.robot.subsystems.vision.VisionPose;
 
 /** Add your docs here. */
 public class Drive extends SubsystemBase {
@@ -243,7 +245,7 @@ public class Drive extends SubsystemBase {
         // Run alert checks
         alertGyroNotConnected.set(!gyroInputs.connected);
         alertCoastModeEnabled.set(!isBrakeMode);
-        alertSteerNeutralMode.set(SwerveModule.getSteerNeutralMode());
+        alertSteerNeutralMode.set(modules[0].getSteerNeutralMode());
     }
 
     public void swerveDrive(ChassisSpeeds speeds) {
@@ -280,5 +282,9 @@ public class Drive extends SubsystemBase {
 
     public void setAutonTarget(Rotation2d autonTarget) {
         this.autonTarget = autonTarget;
+    }
+
+    public void addVisionPose(VisionPose pose) {
+        odometry.addVisionMeasurement(pose.pose.toPose2d(), pose.timestampSeconds, pose.stddevs);
     }
 }

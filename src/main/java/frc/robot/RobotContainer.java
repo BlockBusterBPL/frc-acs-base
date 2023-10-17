@@ -42,12 +42,15 @@ import frc.robot.subsystems.gripper.GripperMiniNeoSimIO;
 import frc.robot.subsystems.leds.LED;
 import frc.robot.subsystems.leds.LEDIO;
 import frc.robot.subsystems.leds.LEDIOCANdle;
+import frc.robot.subsystems.vision.AprilTagVision;
+import frc.robot.subsystems.vision.AprilTagVisionIO;
 
 public class RobotContainer {
     private Drive drive;
     private Arm arm;
     private Gripper gripper;
     private LED leds;
+    private AprilTagVision vision;
 
     // DRIVER CONTROLS
     private final CommandXboxController driver = new CommandXboxController(0);
@@ -165,6 +168,10 @@ public class RobotContainer {
             leds = new LED(new LEDIO() {
                 
             });
+        }
+
+        if (vision == null) {
+            vision = new AprilTagVision(new AprilTagVisionIO() {}, (v) -> {});
         }
 
         if (Constants.tuningMode) {

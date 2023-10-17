@@ -5,11 +5,14 @@
 package frc.robot;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
@@ -22,7 +25,12 @@ import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.hal.AllianceStationID;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Threads;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
@@ -36,14 +44,22 @@ import frc.robot.lib.BatteryTracker;
 import frc.robot.lib.dashboard.Alert;
 import frc.robot.lib.dashboard.SupplierWidget;
 import frc.robot.lib.dashboard.Alert.AlertType;
+import frc.robot.lib.util.VirtualSubsystem;
 
 public class Robot extends LoggedRobot {
     private static final String batteryNameFile = "/home/lvuser/battery-name.txt";
+    private static final double canErrorTimeThreshold = 0.5; // Seconds to disable alert
+    private static final double lowBatteryVoltage = 10.0;
+    private static final double lowBatteryDisabledTime = 1.5;
     
     private RobotContainer robotContainer;
+    private Command autoCommand;
     private double autoStart;
     private boolean autoMessagePrinted;
     private boolean batteryNameWritten = false;
+    private final Timer canErrorTimer = new Timer();
+    private final Timer canErrorTimerInitial = new Timer();
+    private final Timer disabledTimer = new Timer();
 
     private static final HashMap<String, Double> subsystemCurrents = new HashMap<>();
     public static final double BATTERY_NOMINAL_RESISTANCE_OHMS = 0.020;
@@ -60,6 +76,12 @@ public class Robot extends LoggedRobot {
     new Alert("The battery may not have been changed since the last match. If this message shows up following a systems check, it can be cleared from the battery tab", AlertType.WARNING);
     private final Alert batteryCheckFailure = 
     new Alert("Battery checking system failure! Check that the battery is new for this match", AlertType.WARNING);
+    private final Alert canErrorAlert =
+      new Alert("CAN errors detected, robot may not be controllable.", AlertType.ERROR);
+    private final Alert lowBatteryAlert =
+      new Alert(
+          "Battery voltage is very low, consider turning off the robot or replacing the battery.",
+          AlertType.WARNING);
     
     public Robot() {
         super(Constants.loopPeriodSecs);
@@ -187,9 +209,17 @@ public class Robot extends LoggedRobot {
     
     @Override
     public void robotPeriodic() {
+        Threads.setCurrentThreadPriority(true, 99);
+        VirtualSubsystem.periodicAll();
         CommandScheduler.getInstance().run();
 
+        // Check logging fault
+        logReceiverQueueAlert.set(Logger.getInstance().getReceiverQueueFault());
+
+        // Robot container periodic methods
+        // robotContainer.updateDemoControls();
         robotContainer.checkControllers();
+        // robotContainer.updateHPModeLeds();
 
         if (Constants.getMode() == Mode.SIM) {
             RoboRioSim.setVInVoltage(getSimulatedVoltage());
@@ -199,7 +229,73 @@ public class Robot extends LoggedRobot {
             Logger.getInstance().recordOutput("SimData/EstimatedBatteryVoltage", getSimulatedVoltage());
         }
 
+        // Update CAN error alert
+        var canStatus = RobotController.getCANStatus();
+        if (canStatus.receiveErrorCount > 0 || canStatus.transmitErrorCount > 0) {
+        canErrorTimer.reset();
+        }
+        canErrorAlert.set(
+            !canErrorTimer.hasElapsed(canErrorTimeThreshold)
+                && canErrorTimerInitial.hasElapsed(canErrorTimeThreshold));
+
+        // Update low battery alert
+        if (DriverStation.isEnabled()) {
+        disabledTimer.reset();
+        }
+        if (RobotController.getBatteryVoltage() < lowBatteryVoltage
+            && disabledTimer.hasElapsed(lowBatteryDisabledTime)) {
+            //TODO: Leds.getInstance().lowBatteryAlert = true;
+            lowBatteryAlert.set(true);
+        }
+
+        // Log list of NT clients
+        List<String> clientNames = new ArrayList<>();
+        List<String> clientAddresses = new ArrayList<>();
+        for (var client : NetworkTableInstance.getDefault().getConnections()) {
+            clientNames.add(client.remote_id);
+            clientAddresses.add(client.remote_ip);
+        }
+        Logger.getInstance()
+            .recordOutput("NTClients/Names", clientNames.toArray(new String[clientNames.size()]));
+        Logger.getInstance()
+            .recordOutput(
+                "NTClients/Addresses", clientAddresses.toArray(new String[clientAddresses.size()]));
+
+        // Print auto duration
+        if (autoCommand != null) {
+            if (!autoCommand.isScheduled() && !autoMessagePrinted) {
+                if (DriverStation.isAutonomousEnabled()) {
+                    System.out.println(
+                        String.format(
+                            "*** Auto finished in %.2f secs ***", Timer.getFPGATimestamp() - autoStart));
+                } else {
+                    System.out.println(
+                        String.format(
+                            "*** Auto cancelled in %.2f secs ***", Timer.getFPGATimestamp() - autoStart));
+                }
+                autoMessagePrinted = true;
+                // Leds.getInstance().autoFinished = true;
+                // Leds.getInstance().autoFinishedTime = Timer.getFPGATimestamp();
+            }
+        }
+
+        // Write battery name if connected to field
+        if (Constants.getMode() == Mode.REAL
+            && !batteryNameWritten
+            && !BatteryTracker.getName().equals(BatteryTracker.defaultName)
+            && DriverStation.isFMSAttached()) {
+                batteryNameWritten = true;
+                try {
+                    FileWriter fileWriter = new FileWriter(batteryNameFile);
+                    fileWriter.write(BatteryTracker.getName());
+                    fileWriter.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+        }
+
         SupplierWidget.updateAll();
+        Threads.setCurrentThreadPriority(true, 10);
     }
     
     @Override
@@ -213,7 +309,12 @@ public class Robot extends LoggedRobot {
     
     @Override
     public void autonomousInit() {
-        
+        autoStart = Timer.getFPGATimestamp();
+        autoMessagePrinted = false;
+        autoCommand = robotContainer.getAutonomousCommand();
+        if (autoCommand != null) {
+            autoCommand.schedule();
+        }
     }
     
     @Override
@@ -224,7 +325,9 @@ public class Robot extends LoggedRobot {
     
     @Override
     public void teleopInit() {
-        
+        if (autoCommand != null) {
+            autoCommand.cancel();
+        }
     }
     
     @Override

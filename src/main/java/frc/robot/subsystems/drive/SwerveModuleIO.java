@@ -33,6 +33,10 @@ public interface SwerveModuleIO {
 
     public default void setSteerPositionTarget(double steerAngleRotations) {}
 
+    public default void setSteerVoltageManual(double steerVoltage) {}
+    
+    public default void setSteerVoltageEnabled(boolean enableManualVoltage) {}
+
     public default void setDriveBrakeMode(boolean driveBrakeMode) {}
 
     public default void setSteerBrakeMode(boolean steerBrakeMode) {}
@@ -57,11 +61,7 @@ public interface SwerveModuleIO {
 
     public default void setSteerKS(double steerKS) {}
 
-    public default void setSteerVelocity(double steerVelocity) {}
-
-    public default void setSteerAccel(double steerVelocity) {}
-
-    public default void setSteerJerk(double steerJerk) {}
+    public default void setSteerKA(double steerKA) {}
 
     public default void updateEncoderOffset(double zeroRotations) {}
 
