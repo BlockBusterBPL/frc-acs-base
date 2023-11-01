@@ -29,7 +29,9 @@ public interface SwerveModuleIO {
 
     public default void updateOutputs() {}
 
-    public default void setDriveSpeedTarget(double speedMetersPerSecond) {}
+    public default void setDriveSpeedClosedLoop(double speedMetersPerSecond) {}
+    
+    public default void setDriveSpeedOpenLoop(double speedMetersPerSecond) {}
 
     public default void setSteerPositionTarget(double steerAngleRotations) {}
 
@@ -64,6 +66,8 @@ public interface SwerveModuleIO {
     public default void setSteerKA(double steerKA) {}
 
     public default void updateEncoderOffset(double zeroRotations) {}
+    
+    public default double getEncoderOffset() {return 0.0;};
 
     public default double getEncoderRawPosition() {return 0.0;}
 }

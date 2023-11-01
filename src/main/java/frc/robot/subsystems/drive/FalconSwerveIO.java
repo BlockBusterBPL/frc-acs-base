@@ -165,7 +165,7 @@ public class FalconSwerveIO implements SwerveModuleIO {
     }
 
     @Override
-    public void setDriveSpeedTarget(double speedMetersPerSecond) {
+    public void setDriveSpeedClosedLoop(double speedMetersPerSecond) {
         m_driveControl.Velocity = convertMetersToRotations(speedMetersPerSecond);
     }
 
@@ -272,6 +272,13 @@ public class FalconSwerveIO implements SwerveModuleIO {
         CANcoderLiveConfigHelper.editConfig(m_encoder, (c) -> {
             c.MagnetSensor.MagnetOffset = zeroRotations;
             return c;
+        });
+    }
+
+    @Override
+    public double getEncoderOffset() {
+        return CANcoderLiveConfigHelper.getValueFromConfig(m_encoder, (c) -> {
+            return c.MagnetSensor.MagnetOffset;
         });
     }
 

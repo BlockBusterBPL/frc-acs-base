@@ -10,34 +10,29 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.Constants;
 import frc.robot.lib.drive.ControllerDriveInputs;
-import frc.robot.lib.drive.DriveController;
 import frc.robot.subsystems.drive.Drive;
 
 public class DriveWithController extends CommandBase {
     private final Drive drive;
     private final Supplier<ControllerDriveInputs> driveInputSupplier;
-    private final Supplier<DriveController> driveControllerSupplier;
-
-    // private final Supplier<ControllerDriveInputs> driveInputSupplier;
-    // private final Supplier<DriveController> driveControllerSupplier;
-    // private final Supplier<Boolean> slowModeSupplier;
+    private final Supplier<Boolean> slowModeSupplier;
 
     private ChassisSpeeds lastSpeeds = new ChassisSpeeds();
 
-    private static final LoggedDashboardChooser<Double> linearSpeedLimitChooser = new LoggedDashboardChooser<>(
-            "Linear Speed Limit");
+    public static final SendableChooser<Double> linearSpeedLimitChooser = new SendableChooser<>();
 
-    private static final LoggedDashboardChooser<Double> angularSpeedLimitChooser = new LoggedDashboardChooser<>(
-            "Angular Speed Limit");
+    public static final SendableChooser<Double> angularSpeedLimitChooser = new SendableChooser<>();
 
     static {
-        linearSpeedLimitChooser.addDefaultOption("--Competition Mode--", 1.0);
+        linearSpeedLimitChooser.setDefaultOption("--Competition Mode--", 1.0);
         linearSpeedLimitChooser.addOption("Fast Speed (70%)", 0.7);
         linearSpeedLimitChooser.addOption("Medium Speed (30%)", 0.3);
         linearSpeedLimitChooser.addOption("Slow Speed (15%)", 0.15);
-        angularSpeedLimitChooser.addDefaultOption("--Competition Mode--", 1.0);
+        angularSpeedLimitChooser.setDefaultOption("--Competition Mode--", 1.0);
         angularSpeedLimitChooser.addOption("Fast Speed (70%)", 0.7);
         angularSpeedLimitChooser.addOption("Medium Speed (30%)", 0.3);
         angularSpeedLimitChooser.addOption("Slow Speed (15%)", 0.15);
@@ -47,12 +42,12 @@ public class DriveWithController extends CommandBase {
     public DriveWithController(
             Drive drive,
             Supplier<ControllerDriveInputs> driveInputSupplier,
-            Supplier<DriveController> driveControllerSupplier) {
+            Supplier<Boolean> slowModeSupplier) {
         addRequirements(drive);
 
         this.drive = drive;
         this.driveInputSupplier = driveInputSupplier;
-        this.driveControllerSupplier = driveControllerSupplier;
+        this.slowModeSupplier = slowModeSupplier;
     }
 
     // Called when the command is initially scheduled.
@@ -63,11 +58,16 @@ public class DriveWithController extends CommandBase {
     // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
-        var linearSpeedFactor = linearSpeedLimitChooser.get();
-        var angularSpeedFactor = angularSpeedLimitChooser.get();
-        var inputs = driveInputSupplier.get().applyMaxVelocity(linearSpeedFactor).applyMaxAngularVelocity(angularSpeedFactor);
-        var controller = driveControllerSupplier.get();
-        var output = controller.transform(inputs, new Pose3d(drive.getPose()));
+        var linearSpeedFactor = linearSpeedLimitChooser.getSelected();
+        var angularSpeedFactor = angularSpeedLimitChooser.getSelected();
+        if (slowModeSupplier.get()) {
+            linearSpeedFactor *= 0.25;
+            angularSpeedFactor *= 0.25;
+        }
+
+        var output = driveInputSupplier.get()
+        .times(linearSpeedFactor, angularSpeedFactor)
+        .getVelocity(Constants.kMaxVelocityMetersPerSecond, Constants.kMaxAngularVelocityRadiansPerSecond);
         drive.swerveDrive(output);
     }
 

@@ -23,12 +23,12 @@ import edu.wpi.first.math.numbers.N3;
 import frc.robot.Robot;
 
 /** Add your docs here. */
-public class AprilTagVisionIOPhoton implements AprilTagVisionIO {
+public class LocalizerIOPhoton implements LocalizerIO {
     private final PhotonCamera camera;
     private final PhotonPoseEstimator poseEstimator;
     private double lastEstTimestamp = 0.0;
 
-    public AprilTagVisionIOPhoton() {
+    public LocalizerIOPhoton() {
         camera = new PhotonCamera(kCameraName);
 
         poseEstimator = new PhotonPoseEstimator(kTagLayout, PoseStrategy.MULTI_TAG_PNP, camera, kRobotToCam);
@@ -36,7 +36,7 @@ public class AprilTagVisionIOPhoton implements AprilTagVisionIO {
     }
 
     @Override
-    public void updateInputs(AprilTagVisionIOInputs inputs) {
+    public void updateInputs(LocalizerIOInputs inputs) {
         inputs.visionConnected = camera.isConnected();
 
         Optional<EstimatedRobotPose> est = getEstimatedGlobalPose();

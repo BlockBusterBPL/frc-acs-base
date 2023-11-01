@@ -20,9 +20,6 @@ import frc.robot.lib.OverrideSwitches;
 import frc.robot.lib.dashboard.Alert;
 import frc.robot.lib.dashboard.Alert.AlertType;
 import frc.robot.lib.drive.ControllerDriveInputs;
-import frc.robot.lib.drive.DriveController;
-import frc.robot.lib.drive.FieldOrientedDriveController;
-import frc.robot.lib.drive.StandardDriveController;
 import frc.robot.subsystems.arm.Arm;
 import frc.robot.subsystems.arm.ArmIO;
 import frc.robot.subsystems.arm.ArmIOFalcons;
@@ -42,19 +39,23 @@ import frc.robot.subsystems.gripper.GripperMiniNeoSimIO;
 import frc.robot.subsystems.leds.LED;
 import frc.robot.subsystems.leds.LEDIO;
 import frc.robot.subsystems.leds.LEDIOCANdle;
-import frc.robot.subsystems.vision.AprilTagVision;
-import frc.robot.subsystems.vision.AprilTagVisionIO;
+import frc.robot.subsystems.vision.Localizer;
+import frc.robot.subsystems.vision.LocalizerIO;
+import frc.robot.subsystems.vision.LocalizerIOLL3;
+import frc.robot.subsystems.vision.LocalizerIOPhoton;
 
 public class RobotContainer {
     private Drive drive;
     private Arm arm;
     private Gripper gripper;
     private LED leds;
-    private AprilTagVision vision;
+    private Localizer vision;
+    private Dashboard dashboard;
 
     // DRIVER CONTROLS
     private final CommandXboxController driver = new CommandXboxController(0);
 
+    private final Trigger driverSlowMode = driver.leftBumper();
     private final Trigger driverXMode = driver.x();
     private final Trigger driverGyroReset = driver.back();
     private final Trigger driverOrientShelf = driver.leftTrigger(0.2);
@@ -77,12 +78,12 @@ public class RobotContainer {
     // OVERRIDE SWITCHES
     private final OverrideSwitches overrides = new OverrideSwitches(5);
 
-    private final Trigger gyroFail = overrides.driverSwitch(0); // bypass all gyro readings
-    private final Trigger derateOverride = overrides.driverSwitch(1); // cancel any drive de-rate states
-    private final Trigger pathGenOverride = overrides.driverSwitch(2); // bypass path following
+    private final Trigger localizerReset = overrides.driverSwitch(1); // Reset gyro angle
+    private final Trigger gyroFail = overrides.driverSwitch(1); // Ingore sensor readings from gyro
+    private final Trigger powerStateOverride = overrides.driverSwitch(2); // drive subsystem ignore power states
+    private final Trigger pathGenOverride = overrides.driverSwitch(3); // bypass path following
 
-    private final Trigger armForceEnable = overrides.operatorSwitch(0); // bypass arm sanity checks and force manual
-                                                                        // control
+    private final Trigger armForceEnable = overrides.operatorSwitch(0); // bypass arm sanity checks and force manual control
     private final Trigger armCalibrateStart = overrides.operatorSwitch(1); // begin the arm calibration sequence
     private final Trigger overrideArmSafety = overrides.operatorSwitch(2); // run arm at full speed even off FMS
     private final Trigger overrideLedBrightness = overrides.operatorSwitch(3); // full led brightness when off FMS
@@ -96,7 +97,7 @@ public class RobotContainer {
     private final LoggedDashboardNumber endgameAlert1 = new LoggedDashboardNumber("Endgame Alert #1", 30.0);
     private final LoggedDashboardNumber endgameAlert2 = new LoggedDashboardNumber("Endgame Alert #2", 15.0);
 
-    public RobotContainer() {
+    public RobotContainer(Robot robot) {
         if (Constants.getMode() != Mode.REPLAY) {
             switch (Constants.getRobot()) {
                 case ROBOT_2023C:
@@ -122,6 +123,7 @@ public class RobotContainer {
                     arm = new Arm(new ArmIOSimV1()); // simulate arm on chassis bot
                     gripper = new Gripper(new GripperMiniNeoSimIO());
                     leds = new LED(new LEDIOCANdle(8, "canivore"));
+                    vision = new Localizer(new LocalizerIOLL3(), drive::addVisionPose);
                     break;
                 case ROBOT_SIMBOT:
                     drive = new Drive(
@@ -154,34 +156,31 @@ public class RobotContainer {
 
         if (arm == null) {
             arm = new Arm(new ArmIO() {
-                
             });
         }
 
         if (gripper == null) {
             gripper = new Gripper(new GripperIO() {
-                
             });
         }
 
         if (leds == null) {
             leds = new LED(new LEDIO() {
-                
             });
         }
 
         if (vision == null) {
-            vision = new AprilTagVision(new AprilTagVisionIO() {}, (v) -> {});
+            vision = new Localizer(new LocalizerIO() {}, (v) -> {});
         }
+
+        dashboard = new Dashboard(robot, drive, arm, gripper, leds, vision);
 
         if (Constants.tuningMode) {
             new Alert("Tuning mode active! This should not be used in competition.", AlertType.INFO).set(true);
         }
 
-        DriveController testController = new FieldOrientedDriveController();
-        drive.setDefaultCommand(new DriveWithController(drive, this::getDriveInputs, () -> testController));
-
         configureBindings();
+        setDefaultCommands();
     }
 
     public void checkControllers() {
@@ -192,6 +191,10 @@ public class RobotContainer {
                 !DriverStation.isJoystickConnected(operator.getHID().getPort())
                         || !DriverStation.getJoystickIsXbox(operator.getHID().getPort()));
         overrideDisconnected.set(!overrides.isConnected());
+    }
+
+    private void setDefaultCommands() {
+        drive.setDefaultCommand(new DriveWithController(drive, this::getDriveInputs, driverSlowMode::getAsBoolean));
     }
 
     private void configureBindings() {

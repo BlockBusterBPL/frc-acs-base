@@ -204,7 +204,7 @@ public class Robot extends LoggedRobot {
             DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
         }
         
-        robotContainer = new RobotContainer();
+        robotContainer = new RobotContainer(this);
     }
     
     @Override

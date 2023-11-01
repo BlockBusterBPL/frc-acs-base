@@ -25,7 +25,7 @@ import com.ctre.phoenixpro.configs.MotionMagicConfigs;
 import com.ctre.phoenixpro.configs.Slot0Configs;
 
 public final class Constants {
-    private static final RobotType robot = RobotType.ROBOT_2023_CHASSIS;
+    private static final RobotType robot = RobotType.ROBOT_SIMBOT;
     public static final double loopPeriodSecs = 0.02;
     public static final boolean tuningMode = true;
     

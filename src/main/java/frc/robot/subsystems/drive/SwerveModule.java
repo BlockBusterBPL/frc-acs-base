@@ -11,6 +11,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 
 import static frc.robot.Constants.kDriveReduction;
 import static frc.robot.Constants.kSteerReduction;
@@ -42,7 +43,7 @@ public class SwerveModule {
     private boolean overrideSteerVoltage = false;
     private static final LoggedTunableNumber steerMotorVoltage = new LoggedTunableNumber("Drive/Module/Steer/ManualVoltage", 0);
 
-    private static final LoggedDashboardBoolean steerNeutralMode = new LoggedDashboardBoolean("Drive/Module/SteerNeutral");
+    public static final SendableChooser<Boolean> steerNeutralMode = new SendableChooser<Boolean>();
     private boolean steerIsNeutral = false;
 
     public boolean getSteerNeutralMode() {
@@ -52,6 +53,9 @@ public class SwerveModule {
     public SwerveModule(SwerveModuleIO io, int index) {
         this.io = io;
         this.index = index;
+
+        steerNeutralMode.setDefaultOption("Brake", false);
+        steerNeutralMode.addOption("Coast", true);
     }
 
     public void periodic() {
@@ -102,9 +106,9 @@ public class SwerveModule {
             io.setSteerKA(steerKA.get());
         }
 
-        if (steerNeutralMode.get() != steerIsNeutral) {
-            io.setSteerBrakeMode(!steerNeutralMode.get());
-            steerIsNeutral = steerNeutralMode.get();
+        if (steerNeutralMode.getSelected() != steerIsNeutral) {
+            io.setSteerBrakeMode(!steerNeutralMode.getSelected());
+            steerIsNeutral = steerNeutralMode.getSelected();
         }
 
         if (steerVoltageOverride.get() != overrideSteerVoltage) {
@@ -134,18 +138,28 @@ public class SwerveModule {
         return new SwerveModulePosition(getDistance(), getAngle());
     }
 
-    public SwerveModuleState setState(SwerveModuleState state) {
-        io.setDriveSpeedTarget(state.speedMetersPerSecond);
-        if (overrideSteerVoltage) {
-            io.setSteerVoltageManual(steerMotorVoltage.get());
-        } else {
-            io.setSteerPositionTarget(state.angle.getRotations());
-        }
+    public SwerveModuleState setStateClosedLoop(SwerveModuleState state) {
+        io.setDriveSpeedClosedLoop(state.speedMetersPerSecond);
+        setSteerTarget(state.angle);
         return state;
     }
 
+    public SwerveModuleState setStateOpenLoop(SwerveModuleState state) {
+        io.setDriveSpeedOpenLoop(state.speedMetersPerSecond);
+        setSteerTarget(state.angle);
+        return state;
+    }
+
+    private void setSteerTarget(Rotation2d angle) {
+        if (overrideSteerVoltage) {
+            io.setSteerVoltageManual(steerMotorVoltage.get());
+        } else {
+            io.setSteerPositionTarget(angle.getRotations());
+        }
+    }
+
     public void stop() {
-        setState(new SwerveModuleState());
+        setStateClosedLoop(new SwerveModuleState());
     }
 
     public void setDriveBrakeMode(boolean brake) {
@@ -162,6 +176,10 @@ public class SwerveModule {
 
     public void updateEncoderOffset(double zeroRotations) {
         io.updateEncoderOffset(zeroRotations);
+    }
+
+    public double getEncoderOffset() {
+        return io.getEncoderOffset();
     }
 
     public double getEncoderRawPosition() {

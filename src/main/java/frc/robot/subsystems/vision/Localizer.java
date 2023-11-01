@@ -18,26 +18,32 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import frc.robot.lib.dashboard.Alert;
 import frc.robot.lib.dashboard.Alert.AlertType;
 import frc.robot.lib.util.VirtualSubsystem;
 import frc.robot.subsystems.drive.Drive;
 
 /** Add your docs here. */
-public class AprilTagVision extends VirtualSubsystem {
-    private final AprilTagVisionIO io;
-    private final AprilTagVisionIOInputsAutoLogged inputs;
+public class Localizer extends VirtualSubsystem {
+    private final LocalizerIO io;
+    private final LocalizerIOInputsAutoLogged inputs;
 
     private final Consumer<VisionPose> consumer;
 
+    public final SendableChooser<Boolean> visionEnableChooser = new SendableChooser<>();
+
     private boolean enableVisionUpdates = true;
     private Alert enableVisionUpdatesAlert =
-      new Alert("Vision updates are temporarily disabled.", AlertType.WARNING);
+      new Alert("Vision updates are manually disabled.", AlertType.WARNING);
 
-    public AprilTagVision(AprilTagVisionIO io, Consumer<VisionPose> consumer) {
+    public Localizer(LocalizerIO io, Consumer<VisionPose> consumer) {
         this.io = io;
-        this.inputs = new AprilTagVisionIOInputsAutoLogged();
+        this.inputs = new LocalizerIOInputsAutoLogged();
         this.consumer = consumer;
+
+        visionEnableChooser.setDefaultOption("Enabled", true);
+        visionEnableChooser.addOption("Disabled", false);
     }
 
     @Override

@@ -117,17 +117,6 @@ public class ControllerDriveInputs {
         return this;
     }
 
-    public ControllerDriveInputs applyMaxVelocity(double maxVelocity) {
-        x *= maxVelocity;
-        y *= maxVelocity;
-        return this;
-    }
-
-    public ControllerDriveInputs applyMaxAngularVelocity(double maxAngularVelocity) {
-        rotation *= maxAngularVelocity;
-        return this;
-    }
-
     public ChassisSpeeds getVelocity(double maxVelocity, double maxAngularVelocity) {
         return new ChassisSpeeds(
             x * maxVelocity,
@@ -146,6 +135,10 @@ public class ControllerDriveInputs {
 
     public ControllerDriveInputs times(double factor) {
         return new ControllerDriveInputs(x*factor, y*factor, rotation*factor);
+    }
+
+    public ControllerDriveInputs times(double linearFactor, double angularFactor) {
+        return new ControllerDriveInputs(x*linearFactor, y*linearFactor, rotation*angularFactor);
     }
 
     public Twist2d getVelocityVector() {

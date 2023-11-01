@@ -10,9 +10,9 @@ import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 
 /** Add your docs here. */
-public interface AprilTagVisionIO {
+public interface LocalizerIO {
     @AutoLog
-    public static class AprilTagVisionIOInputs {
+    public static class LocalizerIOInputs {
         public double[] position = new double[6];
         public double[] stddevs = new double[3];
         public long targetsVisible = 0;
@@ -22,5 +22,5 @@ public interface AprilTagVisionIO {
         public boolean poseValid = false;
     }
 
-    public default void updateInputs(AprilTagVisionIOInputs inputs) {}
+    public default void updateInputs(LocalizerIOInputs inputs) {}
 }

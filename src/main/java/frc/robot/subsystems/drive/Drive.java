@@ -19,7 +19,9 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Robot;
@@ -28,7 +30,7 @@ import frc.robot.lib.dashboard.Alert;
 import frc.robot.lib.dashboard.Alert.AlertType;
 import frc.robot.lib.drive.SwerveSetpoint;
 import frc.robot.lib.drive.SwerveSetpointGenerator;
-import frc.robot.subsystems.vision.Vision;
+import frc.robot.lib.drive.SwerveSetpointGenerator.KinematicLimits;
 import frc.robot.subsystems.vision.VisionPose;
 
 /** Add your docs here. */
@@ -37,6 +39,19 @@ public class Drive extends SubsystemBase {
                                                                    // disabling
     private static final double coastThresholdSecs = 6.0; // Need to be under the above speed for this length of time to
                                                           // switch to coast
+
+    public enum DriveControlState {
+        OPEN_LOOP,
+        VELOCITY_CONTROL,
+        PATH_FOLLOWING,
+        AUTO_ALIGN,
+        AUTO_ALIGN_Y_THETA,
+        X_MODE
+    }
+
+    private DriveControlState mControlState = DriveControlState.VELOCITY_CONTROL;
+    private boolean mUseHeadingController = false;
+    private KinematicLimits mKinematicLimits = Constants.kUncappedKinematicLimits;
 
     public static final SwerveModuleState[] X_MODE_STATES = {
         new SwerveModuleState(0, Rotation2d.fromRotations(-0.125)),
@@ -58,6 +73,10 @@ public class Drive extends SubsystemBase {
 
     private final Alert alertSteerNeutralMode = new Alert(
             "Swerve Alignment Mode Enabled! Performance may be reduced, as driving in this mode is not intended.",
+            AlertType.WARNING);
+    
+    private final Alert alertOffsetsNotSafe = new Alert(
+            "Swerve offset safety not enabled! Module offsets could be updated by accident", 
             AlertType.WARNING);
 
     private final SwerveModule[] modules;
@@ -93,6 +112,11 @@ public class Drive extends SubsystemBase {
 
     private Rotation2d autonTarget;
 
+    private boolean allowUpdateEncoders = false;
+
+    public SendableChooser<Boolean> encoderUpdateChooser = new SendableChooser<>();
+    private double[] encoderOffsetCache;
+
     public Drive(GyroIO gyroIO, SwerveModuleIO frontLeftIO, SwerveModuleIO frontRightIO, SwerveModuleIO rearLeftIO,
             SwerveModuleIO rearRightIO) {
         this.gyroIO = gyroIO;
@@ -107,6 +131,10 @@ public class Drive extends SubsystemBase {
         odometry = new SwerveDrivePoseEstimator(kinematics, lastGyroYaw, lastSwervePositions, getPose());
 
         autonTarget = new Rotation2d();
+
+        encoderUpdateChooser.setDefaultOption("Disabled (Safe)", false);
+        encoderUpdateChooser.addOption("ENABLED (UNSAFE)", true);
+        encoderOffsetCache = new double[4];
 
         lastMovementTimer.reset();
     }
@@ -143,23 +171,51 @@ public class Drive extends SubsystemBase {
 
             SwerveModuleState[] setpointStates = new SwerveModuleState[4];
 
-            if (xMode) {
-                setpointStates = X_MODE_STATES;
-            } else {
-                var generatedSetpoint = generator.generateSetpoint(Constants.kTeleopKinematicLimits, lastSetpoint,
-                        setpoint, Constants.loopPeriodSecs);
-
-                lastSetpoint = generatedSetpoint;
-
-                setpointStates = generatedSetpoint.mModuleStates;
+            if (mControlState != DriveControlState.OPEN_LOOP && mControlState != DriveControlState.VELOCITY_CONTROL) {
+                mUseHeadingController = false;
+            }
+            if (!mUseHeadingController) {
+                // TODO: Reset heading controller
             }
 
-            // var setpointStates = kinematics.toSwerveModuleStates(setpoint);
+            switch (mControlState) {
+                case PATH_FOLLOWING:
+                    setKinematicLimits(Constants.kFastKinematicLimits);
+                    // TODO: Update path follower
+                    break;
+                case OPEN_LOOP:
+                case VELOCITY_CONTROL:
+                    setKinematicLimits(Constants.kUncappedKinematicLimits);
+                    // TODO: (?) Update heading controller
+                    break;
+                case AUTO_ALIGN:
+                case AUTO_ALIGN_Y_THETA:
+                    setKinematicLimits(Constants.kUncappedKinematicLimits);
+                    // TODO: Update auto align
+                    break;
+                case X_MODE:
+                    setKinematicLimits(Constants.kUncappedKinematicLimits);
+                    // TODO: set x mode states
+                default:
+                    break;
+            }
+
+            if (xMode) {
+                SwerveSetpoint generatedSetpoint = generator.generateSetpointForXMode(mKinematicLimits, lastSetpoint, Constants.loopPeriodSecs);
+                lastSetpoint = generatedSetpoint;
+                setpointStates = generatedSetpoint.mModuleStates;
+            } else {
+                SwerveSetpoint generatedSetpoint = generator.generateSetpoint(mKinematicLimits, lastSetpoint,
+                    setpoint, Constants.loopPeriodSecs);
+                lastSetpoint = generatedSetpoint;
+                setpointStates = generatedSetpoint.mModuleStates;
+            }
+            
 
             // Send setpoints to modules
             SwerveModuleState[] optimizedStates = new SwerveModuleState[4];
             for (int i = 0; i < 4; i++) {
-                optimizedStates[i] = modules[i].setState(setpointStates[i]);
+                optimizedStates[i] = modules[i].setStateClosedLoop(setpointStates[i]);
             }
 
             // Log setpoint states
@@ -242,10 +298,13 @@ public class Drive extends SubsystemBase {
             }
         }
 
+        allowUpdateEncoders = encoderUpdateChooser.getSelected();
+
         // Run alert checks
         alertGyroNotConnected.set(!gyroInputs.connected);
         alertCoastModeEnabled.set(!isBrakeMode);
         alertSteerNeutralMode.set(modules[0].getSteerNeutralMode());
+        alertOffsetsNotSafe.set(allowUpdateEncoders);
     }
 
     public void swerveDrive(ChassisSpeeds speeds) {
@@ -286,5 +345,76 @@ public class Drive extends SubsystemBase {
 
     public void addVisionPose(VisionPose pose) {
         odometry.addVisionMeasurement(pose.pose.toPose2d(), pose.timestampSeconds, pose.stddevs);
+    }
+
+    public boolean updateEncoderOffset(int module, double newOffset) {
+        if (allowUpdateEncoders) {
+            modules[module].updateEncoderOffset(newOffset);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean zeroEncoder(int module) {
+        return updateEncoderOffset(module, modules[module].getEncoderRawPosition());
+    }
+
+    public boolean updateAllEncoderOffsets(double[] offsets) {
+        if (allowUpdateEncoders) {
+            for (int i = 0; i < modules.length; i++) {
+                modules[i].updateEncoderOffset(offsets[i]);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public boolean updateEncoderOffsetsFromPersist() {
+        if (allowUpdateEncoders) {
+            boolean allValuesPresent = Preferences.containsKey("drive/offsets/0")
+                && Preferences.containsKey("drive/offsets/1")
+                && Preferences.containsKey("drive/offsets/2")
+                && Preferences.containsKey("drive/offsets/3");
+            if (allValuesPresent) {
+                double[] offsets = new double[4];
+                for (int i = 0; i < modules.length; i++) {
+                    offsets[i] = Preferences.getDouble("drive/offsets/"+i, 0);
+                }
+                updateAllEncoderOffsets(offsets);
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
+
+    public boolean saveEncoderOffsetsToPersist() {
+        if (allowUpdateEncoders) {
+            for (int i = 0; i < modules.length; i++) {
+                Preferences.setDouble("drive/offsets/"+i, modules[i].getEncoderOffset());
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public void refreshEncoderOffsets() {
+        for (int i = 0; i < modules.length; i++) {
+            encoderOffsetCache[i] = modules[i].getEncoderOffset();
+        }
+    }
+
+    public double getCachedEncoderOffsets(int module) {
+        return encoderOffsetCache[module];
+    }
+
+    public double getLastEncoderPosition(int module) {
+        return lastSwervePositions[module].angle.getRotations();
+    }
+
+    public void setKinematicLimits(KinematicLimits limits) {
+        if (limits != mKinematicLimits) {
+            mKinematicLimits = limits;
+        }
     }
 }

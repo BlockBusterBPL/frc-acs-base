@@ -63,7 +63,7 @@ public class SimSwerveIO implements SwerveModuleIO {
     }
 
     @Override
-    public void setDriveSpeedTarget(double speedMetersPerSecond) {
+    public void setDriveSpeedClosedLoop(double speedMetersPerSecond) {
         double speedTargetRPS = convertMetersToRotations(speedMetersPerSecond);
         setDriveVoltage(driveFF.calculate(speedTargetRPS));
     }
