@@ -31,7 +31,7 @@ import frc.robot.lib.dashboard.Alert.AlertType;
 import frc.robot.lib.drive.SwerveSetpoint;
 import frc.robot.lib.drive.SwerveSetpointGenerator;
 import frc.robot.lib.drive.SwerveSetpointGenerator.KinematicLimits;
-import frc.robot.subsystems.vision.VisionPose;
+import frc.robot.subsystems.localizer.VisionPose;
 
 /** Add your docs here. */
 public class Drive extends SubsystemBase {

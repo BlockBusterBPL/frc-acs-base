@@ -67,7 +67,11 @@ public class DriveWithController extends CommandBase {
 
         var output = driveInputSupplier.get()
         .times(linearSpeedFactor, angularSpeedFactor)
-        .getVelocity(Constants.kMaxVelocityMetersPerSecond, Constants.kMaxAngularVelocityRadiansPerSecond);
+        .getVelocityFieldOriented(
+            Constants.kMaxVelocityMetersPerSecond, 
+            Constants.kMaxAngularVelocityRadiansPerSecond, 
+            drive.getPose().getRotation()
+        );
         drive.swerveDrive(output);
     }
 

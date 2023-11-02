@@ -39,10 +39,10 @@ import frc.robot.subsystems.gripper.GripperMiniNeoSimIO;
 import frc.robot.subsystems.leds.LED;
 import frc.robot.subsystems.leds.LEDIO;
 import frc.robot.subsystems.leds.LEDIOCANdle;
-import frc.robot.subsystems.vision.Localizer;
-import frc.robot.subsystems.vision.LocalizerIO;
-import frc.robot.subsystems.vision.LocalizerIOLL3;
-import frc.robot.subsystems.vision.LocalizerIOPhoton;
+import frc.robot.subsystems.localizer.Localizer;
+import frc.robot.subsystems.localizer.LocalizerIO;
+import frc.robot.subsystems.localizer.LocalizerIOLL3;
+import frc.robot.subsystems.localizer.LocalizerIOPhoton;
 
 public class RobotContainer {
     private Drive drive;

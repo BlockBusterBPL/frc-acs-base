@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems.vision;
+package frc.robot.subsystems.localizer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +23,7 @@ import frc.robot.lib.dashboard.Alert;
 import frc.robot.lib.dashboard.Alert.AlertType;
 import frc.robot.lib.util.VirtualSubsystem;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.localizer.LocalizerIOInputsAutoLogged;
 
 /** Add your docs here. */
 public class Localizer extends VirtualSubsystem {

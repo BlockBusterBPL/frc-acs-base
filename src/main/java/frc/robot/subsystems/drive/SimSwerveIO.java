@@ -58,12 +58,17 @@ public class SimSwerveIO implements SwerveModuleIO {
     }
 
     public void setDriveVoltage(double volts) {
-        driveAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
-        driveSim.setInputVoltage(driveAppliedVolts);
+        // volts = MathUtil.clamp(volts, -12.0, 12.0);
+        driveSim.setInputVoltage(volts);
     }
 
     @Override
     public void setDriveSpeedClosedLoop(double speedMetersPerSecond) {
+        setDriveSpeedOpenLoop(speedMetersPerSecond);
+    }
+
+    @Override
+    public void setDriveSpeedOpenLoop(double speedMetersPerSecond) {
         double speedTargetRPS = convertMetersToRotations(speedMetersPerSecond);
         setDriveVoltage(driveFF.calculate(speedTargetRPS));
     }

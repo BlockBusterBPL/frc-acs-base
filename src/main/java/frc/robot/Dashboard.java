@@ -11,7 +11,7 @@ import frc.robot.subsystems.arm.Arm;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.SwerveModule;
 import frc.robot.subsystems.leds.LED;
-import frc.robot.subsystems.vision.Localizer;
+import frc.robot.subsystems.localizer.Localizer;
 
 public class Dashboard {
     // Drive Tab
