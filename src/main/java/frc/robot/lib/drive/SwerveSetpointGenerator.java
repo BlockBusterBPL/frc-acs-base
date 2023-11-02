@@ -311,14 +311,13 @@ public class SwerveSetpointGenerator {
     }
 
     /**
-     * Generate a new setpoint.
+     * Generate a new setpoint for x mode only.
      *
      * @param limits The kinematic limits to respect for this setpoint.
      * @param prevSetpoint The previous setpoint motion. Normally, you'd pass in the previous iteration setpoint instead of the actual
      *                     measured/estimated kinematic state.
-     * @param desiredState The desired state of motion, such as from the driver sticks or a path following algorithm.
      * @param dt The loop time.
-     * @return A Setpoint object that satisfies all of the KinematicLimits while converging to desiredState quickly.
+     * @return A Setpoint object that satisfies all of the KinematicLimits while converging to xmode quickly.
      */
     public SwerveSetpoint generateSetpointForXMode(final KinematicLimits limits, final SwerveSetpoint prevSetpoint, double dt) {
         final Translation2d[] modules = Constants.kWheelPositions;
@@ -400,7 +399,8 @@ public class SwerveSetpointGenerator {
                 // purely on rotation in place.
                 if (Util.epsilonEquals(desiredModuleState[i].speedMetersPerSecond, 0.0)) {
                     // Goal angle doesn't matter. Just leave module at its current angle.
-                    overrideSteering.set(i, Optional.of(prevSetpoint.mModuleStates[i].angle));
+                    // overrideSteering.set(i, Optional.of(prevSetpoint.mModuleStates[i].angle));
+                    overrideSteering.set(i, Optional.of(desiredModuleState[i].angle));
                     continue;
                 }
 

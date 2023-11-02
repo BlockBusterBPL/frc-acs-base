@@ -13,44 +13,36 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.Constants.Mode;
+import frc.robot.lib.util.TimeDelayedBoolean;
+import frc.robot.subsystems.arm.ArmState.Action;
+import frc.robot.subsystems.arm.ArmState.ArmSend;
 
 public class Arm extends SubsystemBase {
 
-    public static class ArmPosition {
-        public final double tilt;
-        public final double extend;
-        public final double wrist;
+    public enum GameObjectType {
+        CUBE, CONE
+    }
 
-        public ArmPosition(double tilt, double extend, double wrist) {
-            this.tilt = tilt;
-            this.extend = extend;
-            this.wrist = wrist;
+    public enum GoalState {
+        STOW(new ArmState(0, 0, 0, 0, 0, 0, Action.NEUTRAL, ArmSend.MEDIUM));
+        
+        public ArmState state;
+
+        GoalState(ArmState goalState) {
+            this.state = goalState;
         }
     }
 
-    public static class PositionPresets {
-        public static final ArmPosition EMPTY_STOWED = new ArmPosition(0, 0, 0);
+    private ArmMotionPlanner mMotionPlanner;
 
-        public static final ArmPosition CUBE_STOWED = new ArmPosition(0, 0, 0);
-        // CUBE_PICKUP_GROUND
-        // CUBE_PICKUP_RAMP
-        // CUBE_PICKUP_SHELF
-        // CUBE_SCORE_LOW
-        // CUBE_SCORE_MID
-        // CUBE_SCORE_HIGH
-        // CUBE_SCORE_BACK
-
-        public static final ArmPosition CONE_STOWED = new ArmPosition(0, 0, 0);
-        // CONE_PICKUP_GROUND
-        // CONE_PICKUP_RAMP
-        // CONE_PICKUP_SHELF
-        // CONE_SCORE_LOW
-        // CONE_SCORE_MID
-        // CONE_SCORE_HIGH
-    }
-
-    private ArmPosition activePreset = PositionPresets.EMPTY_STOWED;
+    private ArmState measuredState;
+    private ArmState expectedState;
+    private ArmState commandedState;
+    private GoalState goalState;
+    private GoalState lastGoalState;
     private static boolean isConeMode = false;
+    private boolean hasBeenHomed = false;
+    private TimeDelayedBoolean notHasGamepiece = new TimeDelayedBoolean();
 
     public static final double ARM_BASE_LENGTH = Units.inchesToMeters(19); // distance from arm pivot to vertical
                                                                            // extension of wrist pivot
@@ -80,62 +72,101 @@ public class Arm extends SubsystemBase {
     private final MechanismLigament2d targetWrist = targetOffsetPlate
             .append(new MechanismLigament2d("Wrist", Units.inchesToMeters(12), 100, 5, new Color8Bit(Color.kPurple)));
 
-    private ArmIO io;
-    private ArmIOInputsAutoLogged inputs;
+    private ArmIO armIO;
+    private ArmIOInputsAutoLogged armInputs;
 
-    public Arm(ArmIO io) {
-        this.io = io;
-        inputs = new ArmIOInputsAutoLogged();
+    private GripperIO gripperIO;
+    private GripperIOInputsAutoLogged gripperInputs;
+
+    public Arm(ArmIO armIO, GripperIO gripperIO) {
+        mMotionPlanner = new ArmMotionPlanner();
+
+        this.armIO = armIO;
+        armInputs = new ArmIOInputsAutoLogged();
+
+        this.gripperIO = gripperIO;
+        gripperInputs = new GripperIOInputsAutoLogged();
     }
 
     @Override
     public void periodic() {
-        io.updateInputs(inputs);
-        Logger.getInstance().processInputs("Arm", inputs);
+        armIO.updateInputs(armInputs);
+        Logger.getInstance().processInputs("Arm", armInputs);
 
         if (Constants.getMode() == Mode.SIM) {
             double simCurrent = 0.0;
-            for (Double l : inputs.tiltSuppliedCurrentAmps) {
+            for (Double l : armInputs.tiltSuppliedCurrentAmps) {
                 simCurrent += l;
             }
-            for (Double l : inputs.extendSuppliedCurrentAmps) {
+            for (Double l : armInputs.extendSuppliedCurrentAmps) {
                 simCurrent += l;
             }
-            simCurrent += inputs.wristSuppliedCurrentAmps;
+            simCurrent += armInputs.wristSuppliedCurrentAmps;
 
             Robot.updateSimCurrentDraw(this.getClass().getName(), simCurrent);
         }
 
-        sensorElevator.setAngle(Rotation2d.fromRotations(inputs.tiltRotations));
-        sensorElevator.setLength(ARM_BASE_LENGTH + inputs.extendMeters);
-        sensorWrist.setAngle(Rotation2d.fromRotations(inputs.wristRotations).minus(Rotation2d.fromDegrees(90)));
+        sensorElevator.setAngle(Rotation2d.fromRotations(armInputs.tiltRotations));
+        sensorElevator.setLength(ARM_BASE_LENGTH + armInputs.extendMeters);
+        sensorWrist.setAngle(Rotation2d.fromRotations(armInputs.wristRotations).minus(Rotation2d.fromDegrees(90)));
 
-        targetElevator.setAngle(Rotation2d.fromRotations(activePreset.tilt));
-        targetElevator.setLength(ARM_BASE_LENGTH + activePreset.extend);
-        targetWrist.setAngle(Rotation2d.fromRotations(activePreset.wrist).minus(Rotation2d.fromDegrees(90)));
+        // calculate next ArmState from current ArmState planner:update(currentstate)
+        ArmState nextArmState = mMotionPlanner.update(measuredState);
+        commandedState = nextArmState;
+
+        // interpret and execute action from next arm state
+        switch (commandedState.action) {
+            case INTAKING:
+                break;
+            case NEUTRAL:
+                break;
+            case SCORING:
+                break;
+            default:
+                break;
+        }
+
+        targetElevator.setAngle(Rotation2d.fromRotations(commandedState.tilt));
+        targetElevator.setLength(ARM_BASE_LENGTH + commandedState.extend);
+        targetWrist.setAngle(Rotation2d.fromRotations(commandedState.wrist).minus(Rotation2d.fromDegrees(90)));
 
         Logger.getInstance().recordOutput("Arm/MeasuredPositions", sensorMech);
         Logger.getInstance().recordOutput("Arm/TargetPositions", targetMech);
 
-        io.setTiltTarget(activePreset.tilt);
-        io.setTiltFeedForward(calcTiltFeedforward());
+        armIO.setTiltTarget(commandedState.tilt);
+        armIO.setTiltFeedForward(calcTiltFeedforward());
 
-        io.setExtendTarget(activePreset.extend);
-        io.setExtendFeedForward(calcExtendFeedForward());
+        armIO.setExtendTarget(commandedState.extend);
+        armIO.setExtendFeedForward(calcExtendFeedForward());
 
-        io.setWristTarget(activePreset.wrist);
-        io.setWristFeedForward(calcWristFeedForward());
+        armIO.setWristTarget(commandedState.wrist);
+        armIO.setWristFeedForward(calcWristFeedForward());
 
-        io.updateOutputs();
+        armIO.updateOutputs();
+    }
+
+    public GoalState getGoalState() {
+        return goalState;
+    }
+
+    public GoalState getLastGoalState() {
+        return lastGoalState;
+    }
+
+    public void setGoalState(GoalState goalState) {
+        lastGoalState = this.goalState;
+        this.goalState = goalState;
+
+        mMotionPlanner.setDesiredState(this.goalState.state, measuredState);
     }
 
     private Rotation2d calcWristRefAngle() {
-        return Rotation2d.fromRotations(inputs.wristRotations).minus(Rotation2d.fromRotations(inputs.tiltRotations));
+        return Rotation2d.fromRotations(armInputs.wristRotations).minus(Rotation2d.fromRotations(armInputs.tiltRotations));
     }
 
     private double calcTiltFeedforward() {
-        Rotation2d tiltAngle = Rotation2d.fromRotations(inputs.tiltRotations);
-        double extendDistance = inputs.extendMeters;
+        Rotation2d tiltAngle = Rotation2d.fromRotations(armInputs.tiltRotations);
+        double extendDistance = armInputs.extendMeters;
 
         // estimates a value proportional to the torque on each tilt gearbox
         double wristMass = calcWristRefAngle().getCos() * ARM_CONE_BOOST;
@@ -146,7 +177,7 @@ public class Arm extends SubsystemBase {
     }
 
     private double calcExtendFeedForward() {
-        Rotation2d tiltAngle = Rotation2d.fromRotations(inputs.tiltRotations);
+        Rotation2d tiltAngle = Rotation2d.fromRotations(armInputs.tiltRotations);
         
         // estimates a value proportional to the torque on each extend gearbox
         double extendFeedForward = ELEVATOR_MASS_FACTOR * tiltAngle.getSin();

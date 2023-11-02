@@ -307,6 +307,11 @@ public final class Constants {
             public static final double kMagicVel = 0.0;
             public static final double kMagicAccel = 0.0;
             public static final double kMagicJerk = 0.0;
+
+            public static final double kLiberalAllowableError = 0.1;
+            public static final double kConservativeAllowableError = 0.05;
+            
+            public static final double kHomePosition = 0.0;
         }
 
         public static final class Extend {
@@ -321,6 +326,11 @@ public final class Constants {
             public static final double kMagicVel = 0.0;
             public static final double kMagicAccel = 0.0;
             public static final double kMagicJerk = 0.0;
+
+            public static final double kLiberalAllowableError = 0.1;
+            public static final double kConservativeAllowableError = 0.02;
+
+            public static final double kHomePosition = 0.0;
         }
 
         public static final class Wrist {
@@ -335,6 +345,11 @@ public final class Constants {
             public static final double kMagicVel = 0.0;
             public static final double kMagicAccel = 0.0;
             public static final double kMagicJerk = 0.0;
+
+            public static final double kLiberalAllowableError = 0.1;
+            public static final double kConservativeAllowableError = 0.05;
+
+            public static final double kHomePosition = 0.0;
         }
 
         public static final class Gripper {

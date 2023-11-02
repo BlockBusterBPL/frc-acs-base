@@ -50,7 +50,7 @@ public class Localizer extends VirtualSubsystem {
     @Override
     public void periodic() {
         io.updateInputs(inputs);
-        Logger.getInstance().processInputs("AprilTags", inputs);
+        Logger.getInstance().processInputs("Localizer", inputs);
 
         if (inputs.visionConnected && inputs.poseValid && enableVisionUpdates) {
             Pose3d pose = new Pose3d(
