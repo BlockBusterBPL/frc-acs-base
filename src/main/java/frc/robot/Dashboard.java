@@ -43,7 +43,7 @@ public class Dashboard {
     public final SupplierWidget<Double> drive_mod2_position;
     public final SupplierWidget<Double> drive_mod3_position;
 
-    public Dashboard(Robot robot, Drive drive, Arm arm, frc.robot.subsystems.gripper.Gripper gripper, LED led, Localizer vision) {
+    public Dashboard(Robot robot, Drive drive, Arm arm, LED led, Localizer vision) {
         // Drive Tab
         drive_linearSpeedChooser = new WidgetSendable<SendableChooser<Double>>(driveTabName, "Linear Speed Limit",
                 DriveWithController.linearSpeedLimitChooser,

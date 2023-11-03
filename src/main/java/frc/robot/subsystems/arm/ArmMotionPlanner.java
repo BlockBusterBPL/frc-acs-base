@@ -80,7 +80,7 @@ public class ArmMotionPlanner {
             mIntermediateStateQueue.add(new ArmState(currentState.tilt, 0, 0));
             mIntermediateStateQueue.add(new ArmState(desiredState.tilt, 0, 0));
             mIntermediateStateQueue.add(desiredState);
-        }
+        } else
 
         // all other conditions, go straight to position
         mIntermediateStateQueue.add(desiredState);
