@@ -5,6 +5,7 @@ import com.ctre.phoenixpro.controls.DutyCycleOut;
 import com.ctre.phoenixpro.hardware.TalonFX;
 
 import frc.robot.lib.phoenixpro.TalonConfigHelper;
+import frc.robot.subsystems.arm.Arm.GameObjectType;
 
 public class GripperIOFalcon implements GripperIO {
     private final TalonFX gripperMotor;
@@ -34,8 +35,8 @@ public class GripperIOFalcon implements GripperIO {
     }
 
     @Override
-    public void setConeMode(boolean coneMode) {
-        this.coneMode = coneMode;
+    public void setGameObject(GameObjectType object) {
+        this.coneMode = (object == GameObjectType.CONE);
     }
 
     @Override

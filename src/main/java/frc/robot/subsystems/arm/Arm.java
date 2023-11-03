@@ -24,7 +24,20 @@ public class Arm extends SubsystemBase {
     }
 
     public enum GoalState {
-        STOW(new ArmState(0, 0, 0, 0, 0, 0, Action.NEUTRAL, ArmSend.MEDIUM));
+        STOW(new ArmState(0, 0, 0, 0, 0, 0, Action.NEUTRAL, ArmSend.LOW)),
+        TRANSPORT(new ArmState(0, 0, 0, 0, 0, 0, Action.NEUTRAL, ArmSend.MEDIUM)),
+        INTAKE_CUBE_GROUND(new ArmState(0, 0, 0, 0, 0, 0, Action.INTAKING, ArmSend.LOW)),
+        INTAKE_CUBE_SHELF(new ArmState(0, 0, 0, 0, 0, 0, Action.INTAKING, ArmSend.MEDIUM)),
+        INTAKE_CONE_GROUND(new ArmState(0, 0, 0, 0, 0, 0, Action.INTAKING, ArmSend.MEDIUM)),
+        INTAKE_CONE_SHELF(new ArmState(0, 0, 0, 0, 0, 0, Action.INTAKING, ArmSend.MEDIUM)),
+        INTAKE_WAIT_SHELF(new ArmState(0, 0, 0, 0, 0, 0, Action.NEUTRAL, ArmSend.FULL)),
+        SCORE_CUBE_LOW(new ArmState(0, 0, 0, 0, 0, 0, Action.SCORING, ArmSend.FULL)),
+        SCORE_CUBE_MID(new ArmState(0, 0, 0, 0, 0, 0, Action.SCORING, ArmSend.FULL)),
+        SCORE_CUBE_HIGH(new ArmState(0, 0, 0, 0, 0, 0, Action.SCORING, ArmSend.MEDIUM)),
+        SCORE_CONE_LOW(new ArmState(0, 0, 0, 0, 0, 0, Action.SCORING, ArmSend.FULL)),
+        SCORE_CONE_MID(new ArmState(0, 0, 0, 0, 0, 0, Action.SCORING, ArmSend.FULL)),
+        SCORE_CONE_HIGH(new ArmState(0, 0, 0, 0, 0, 0, Action.SCORING, ArmSend.MEDIUM)),
+        DUMMY_POSITION(new ArmState(0, 0, 0, 0, 0, 0, Action.NEUTRAL, ArmSend.MEDIUM));
         
         public ArmState state;
 
@@ -40,9 +53,10 @@ public class Arm extends SubsystemBase {
     private ArmState commandedState;
     private GoalState goalState;
     private GoalState lastGoalState;
-    private static boolean isConeMode = false;
+    private GameObjectType gameObject = GameObjectType.CUBE;
     private boolean hasBeenHomed = false;
     private TimeDelayedBoolean notHasGamepiece = new TimeDelayedBoolean();
+    private boolean resetMotionPlanner = false;
 
     public static final double ARM_BASE_LENGTH = Units.inchesToMeters(19); // distance from arm pivot to vertical
                                                                            // extension of wrist pivot
@@ -91,7 +105,9 @@ public class Arm extends SubsystemBase {
     @Override
     public void periodic() {
         armIO.updateInputs(armInputs);
+        gripperIO.updateInputs(gripperInputs);
         Logger.getInstance().processInputs("Arm", armInputs);
+        Logger.getInstance().processInputs("Gripper", gripperInputs);
 
         if (Constants.getMode() == Mode.SIM) {
             double simCurrent = 0.0;
@@ -102,27 +118,45 @@ public class Arm extends SubsystemBase {
                 simCurrent += l;
             }
             simCurrent += armInputs.wristSuppliedCurrentAmps;
+            for (Double l : gripperInputs.motorCurrentAmps) {
+                simCurrent += l;
+            }
 
             Robot.updateSimCurrentDraw(this.getClass().getName(), simCurrent);
         }
 
-        sensorElevator.setAngle(Rotation2d.fromRotations(armInputs.tiltRotations));
+        Rotation2d tiltAngle = Rotation2d.fromRotations(armInputs.tiltRotations);
+        Rotation2d wristAngle = Rotation2d.fromRotations(armInputs.wristRotations);
+
+        sensorElevator.setAngle(tiltAngle);
         sensorElevator.setLength(ARM_BASE_LENGTH + armInputs.extendMeters);
-        sensorWrist.setAngle(Rotation2d.fromRotations(armInputs.wristRotations).minus(Rotation2d.fromDegrees(90)));
+        sensorWrist.setAngle(wristAngle.minus(Rotation2d.fromDegrees(90)));
+
+        measuredState = new ArmState(tiltAngle.getRadians(), armInputs.extendMeters, tiltAngle.getRadians(), commandedState.action, commandedState.send);
 
         // calculate next ArmState from current ArmState planner:update(currentstate)
         ArmState nextArmState = mMotionPlanner.update(measuredState);
         commandedState = nextArmState;
+        expectedState = commandedState;
+
+        // set correct game object type
+        gripperIO.setGameObject(gameObject);
 
         // interpret and execute action from next arm state
         switch (commandedState.action) {
             case INTAKING:
-                break;
-            case NEUTRAL:
+                gripperIO.setMotor(1);
                 break;
             case SCORING:
+                if (atGoal()) {
+                    gripperIO.setMotor(-1);
+                } else {
+                    gripperIO.setMotor(0);
+                }
                 break;
+            case NEUTRAL:
             default:
+                gripperIO.setMotor(0);
                 break;
         }
 
@@ -143,6 +177,14 @@ public class Arm extends SubsystemBase {
         armIO.setWristFeedForward(calcWristFeedForward());
 
         armIO.updateOutputs();
+    }
+
+    public boolean getResetMotionPlanner() {
+        return resetMotionPlanner;
+    }
+
+    public boolean atGoal() {
+        return mMotionPlanner.isFinished();
     }
 
     public GoalState getGoalState() {
@@ -189,7 +231,15 @@ public class Arm extends SubsystemBase {
         return calcWristRefAngle().getCos() * WRIST_MASS_FACTOR;
     }
 
-    public static boolean isConeMode() {
-        return isConeMode;
+    public GameObjectType getGameObject() {
+        return gameObject;
+    }
+
+    public boolean gripperHasGamepiece() {
+        return false; // TODO: this
+    }
+
+    public boolean gameObjectIsCone() {
+        return false; // TODO: this
     }
 }

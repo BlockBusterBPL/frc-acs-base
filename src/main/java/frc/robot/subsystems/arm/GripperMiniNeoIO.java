@@ -9,6 +9,8 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import frc.robot.subsystems.arm.Arm.GameObjectType;
+
 /** Add your docs here. */
 public class GripperMiniNeoIO implements GripperIO {
     private final CANSparkMax cube;
@@ -69,7 +71,7 @@ public class GripperMiniNeoIO implements GripperIO {
     }
 
     @Override
-    public void setConeMode(boolean coneMode) {
-        this.coneMode = coneMode;
+    public void setGameObject(GameObjectType object) {
+        this.coneMode = (object == GameObjectType.CONE);
     }
 }

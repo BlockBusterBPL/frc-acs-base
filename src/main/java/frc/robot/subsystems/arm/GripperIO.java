@@ -2,6 +2,8 @@ package frc.robot.subsystems.arm;
 
 import org.littletonrobotics.junction.AutoLog;
 
+import frc.robot.subsystems.arm.Arm.GameObjectType;
+
 public interface GripperIO {
     @AutoLog
     public static class GripperIOInputs {
@@ -30,5 +32,5 @@ public interface GripperIO {
      * is selected.
      * @param coneMode
      */
-    public default void setConeMode(boolean coneMode) {}
+    public default void setGameObject(GameObjectType object) {}
 }
