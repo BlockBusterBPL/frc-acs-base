@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -70,7 +71,8 @@ public class DriveWithController extends CommandBase {
         .getVelocityFieldOriented(
             Constants.kMaxVelocityMetersPerSecond, 
             Constants.kMaxAngularVelocityRadiansPerSecond, 
-            drive.getPose().getRotation()
+            // drive.getPose().getRotation()
+            new Rotation2d()
         );
         drive.swerveDrive(output);
     }

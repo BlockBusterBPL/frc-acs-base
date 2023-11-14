@@ -25,7 +25,7 @@ import com.ctre.phoenixpro.configs.MotionMagicConfigs;
 import com.ctre.phoenixpro.configs.Slot0Configs;
 
 public final class Constants {
-    private static final RobotType robot = RobotType.ROBOT_SIMBOT;
+    private static final RobotType robot = RobotType.ROBOT_2023_CHASSIS;
     public static final double loopPeriodSecs = 0.02;
     public static final boolean tuningMode = true;
     
@@ -157,13 +157,13 @@ public final class Constants {
     
     public static final Translation2d[] kWheelPositions = {
         // Front left
-        new Translation2d(Constants.kDriveTrackwidthMeters / 2.0, Constants.kDriveWheelbaseMeters / 2.0),
-        // Front right
         new Translation2d(Constants.kDriveTrackwidthMeters / 2.0, -Constants.kDriveWheelbaseMeters / 2.0),
+        // Front right
+        new Translation2d(Constants.kDriveTrackwidthMeters / 2.0, Constants.kDriveWheelbaseMeters / 2.0),
         // Back left
-        new Translation2d(-Constants.kDriveTrackwidthMeters / 2.0, Constants.kDriveWheelbaseMeters / 2.0),
+        new Translation2d(-Constants.kDriveTrackwidthMeters / 2.0, -Constants.kDriveWheelbaseMeters / 2.0),
         // Back right
-        new Translation2d(-Constants.kDriveTrackwidthMeters / 2.0, -Constants.kDriveWheelbaseMeters / 2.0)
+        new Translation2d(-Constants.kDriveTrackwidthMeters / 2.0, Constants.kDriveWheelbaseMeters / 2.0)
     };
     
     public static final SwerveDriveKinematics kKinematics = new SwerveDriveKinematics(
@@ -250,11 +250,11 @@ public final class Constants {
 
         public static final Slot0Configs kSteerPIDConfig = new Slot0Configs();
         static {
-            kSteerPIDConfig.kP = 0.75;
+            kSteerPIDConfig.kP = 60;
             kSteerPIDConfig.kI = 0.0;
-            kSteerPIDConfig.kD = 15.0;
+            kSteerPIDConfig.kD = 1.0;
             kSteerPIDConfig.kV = 0.0;
-            kSteerPIDConfig.kS = 5.0;
+            kSteerPIDConfig.kS = 0.0;
         }
 
         public static final double kSteerKS = 0.0;

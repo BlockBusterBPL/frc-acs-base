@@ -185,7 +185,7 @@ public class Drive extends SubsystemBase {
                     break;
                 case OPEN_LOOP:
                 case VELOCITY_CONTROL:
-                    setKinematicLimits(Constants.kUncappedKinematicLimits);
+                    setKinematicLimits(Constants.kSmoothKinematicLimits);
                     // TODO: (?) Update heading controller
                     break;
                 case AUTO_ALIGN:

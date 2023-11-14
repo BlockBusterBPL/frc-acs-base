@@ -11,8 +11,8 @@ public class ArmState {
     public double tiltTolerance = Tilt.kLiberalAllowableError;
     public double extendTolerance = Extend.kLiberalAllowableError;
     public double wristTolerance = Wrist.kLiberalAllowableError;
-    public Action action;
-    public ArmSend send;
+    public Action action = Action.NEUTRAL;
+    public ArmSend send = ArmSend.MEDIUM;
 
     /**  */
     public enum Action {

@@ -72,8 +72,8 @@ public class FalconSwerveIO implements SwerveModuleIO {
 
         m_driveControl = new VelocityTorqueCurrentFOC(0, 0, 0, false);
 
-        driveConfig.Slot0.kP = 5.0;
-        driveConfig.Slot0.kV = 2.0;
+        driveConfig.Slot0.kP = 0.0;
+        driveConfig.Slot0.kV = 0.0;
         driveConfig.TorqueCurrent.PeakForwardTorqueCurrent = 40;
         driveConfig.TorqueCurrent.PeakReverseTorqueCurrent = -40;
         m_drive.getConfigurator().apply(driveConfig);

@@ -48,11 +48,11 @@ public class Arm extends SubsystemBase {
 
     private ArmMotionPlanner mMotionPlanner;
 
-    private ArmState measuredState;
-    private ArmState expectedState;
-    private ArmState commandedState;
-    private GoalState goalState;
-    private GoalState lastGoalState;
+    private ArmState measuredState = new ArmState();
+    private ArmState expectedState = new ArmState();
+    private ArmState commandedState = new ArmState();
+    private GoalState goalState = GoalState.STOW;
+    private GoalState lastGoalState = GoalState.STOW;
     private GameObjectType gameObject = GameObjectType.CUBE;
     private boolean hasBeenHomed = false;
     private TimeDelayedBoolean notHasGamepiece = new TimeDelayedBoolean();

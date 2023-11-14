@@ -117,9 +117,9 @@ public class RobotContainer {
                             new FalconSwerveIO(1, "canivore"), 
                             new FalconSwerveIO(2, "canivore"), 
                             new FalconSwerveIO(3, "canivore"));
-                    arm = new Arm(new ArmIOSimV1(), new GripperMiniNeoSimIO()); // simulate arm on chassis bot
+                    // arm = new Arm(new ArmIOSimV1(), new GripperMiniNeoSimIO()); // simulate arm on chassis bot
                     leds = new LED(new LEDIOCANdle(8, "canivore"));
-                    vision = new Localizer(new LocalizerIOLL3(), drive::addVisionPose);
+                    // vision = new Localizer(new LocalizerIOLL3(), drive::addVisionPose);
                     break;
                 case ROBOT_SIMBOT:
                     drive = new Drive(
@@ -204,6 +204,6 @@ public class RobotContainer {
     }
 
     private ControllerDriveInputs getDriveInputs() {
-        return new ControllerDriveInputs(-driver.getLeftY(), -driver.getLeftX(), -driver.getRightX()).squareInputs().applyDeadZone(0.05, 0.05, 0.05, 0.08);
+        return new ControllerDriveInputs(-driver.getLeftY(), driver.getLeftX(), driver.getRightX()).squareInputs().applyDeadZone(0.05, 0.05, 0.05, 0.08);
     }
 }
