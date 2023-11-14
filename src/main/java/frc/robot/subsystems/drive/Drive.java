@@ -41,12 +41,18 @@ public class Drive extends SubsystemBase {
                                                           // switch to coast
 
     public enum DriveControlState {
-        OPEN_LOOP,
-        VELOCITY_CONTROL,
-        PATH_FOLLOWING,
-        AUTO_ALIGN,
-        AUTO_ALIGN_Y_THETA,
-        X_MODE
+        OPEN_LOOP("OL Velocity"),
+        VELOCITY_CONTROL("CL Velocity"),
+        PATH_FOLLOWING("CL Pathfinding"),
+        AUTO_ALIGN("CL Auto Align"),
+        AUTO_ALIGN_Y_THETA("CL Auto Align 2"),
+        X_MODE("OL X Mode");
+
+        public String title;
+
+        DriveControlState(String title) {
+            this.title = title;
+        }
     }
 
     private DriveControlState mControlState = DriveControlState.VELOCITY_CONTROL;
@@ -89,6 +95,7 @@ public class Drive extends SubsystemBase {
     SwerveSetpointGenerator generator = new SwerveSetpointGenerator(kinematics);
 
     private ChassisSpeeds setpoint = new ChassisSpeeds();
+    private ChassisSpeeds measuredSpeeds = new ChassisSpeeds();
 
     private SwerveSetpoint lastSetpoint = SwerveSetpoint.FOUR_WHEEL_IDENTITY;
 
@@ -238,12 +245,15 @@ public class Drive extends SubsystemBase {
             lastModulePositionsMeters[i] = modules[i].getDistance();
         }
 
+        // Calculate robot velocity from measured chassis speeds
+        var inverseSpeeds = kinematics.toChassisSpeeds(measuredStates);
+        measuredSpeeds = inverseSpeeds;
+
         // Update gyro angle
         if (gyroInputs.connected) {
             lastGyroYaw = Rotation2d.fromRotations(gyroInputs.yawAngleRotations);
         } else {
             // estimate rotation angle from wheel deltas when gyro is not connected
-            var inverseSpeeds = kinematics.toChassisSpeeds(measuredStates);
             lastGyroYaw = lastGyroYaw
                     .plus(new Rotation2d(inverseSpeeds.omegaRadiansPerSecond).times(Constants.loopPeriodSecs));
         }
@@ -416,5 +426,29 @@ public class Drive extends SubsystemBase {
         if (limits != mKinematicLimits) {
             mKinematicLimits = limits;
         }
+    }
+
+    public DriveControlState getControlState() {
+        return mControlState;
+    }
+
+    public String getKinematicLimitsTitle() {
+        if (mKinematicLimits == Constants.kUncappedKinematicLimits) {
+            return "Uncapped";
+        } else if (mKinematicLimits == Constants.kTeleopKinematicLimits) {
+            return "Teleop";
+        } else if (mKinematicLimits == Constants.kAzimuthOnlyKinematicLimits) {
+            return "Azimuth Only";
+        } else if (mKinematicLimits == Constants.kFastKinematicLimits) {
+            return "Fast";
+        } else if (mKinematicLimits == Constants.kSmoothKinematicLimits) {
+            return "Smooth";
+        } else {
+            return "Unknown";
+        }
+    }
+
+    public ChassisSpeeds getMeasuredSpeeds() {
+        return measuredSpeeds;
     }
 }

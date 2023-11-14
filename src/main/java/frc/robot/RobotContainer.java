@@ -6,6 +6,7 @@ package frc.robot;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
 
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -14,6 +15,8 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Mode;
+import frc.robot.commands.ArmCommandFactory;
+import frc.robot.commands.DriveResetGyroCommand;
 import frc.robot.commands.DriveWithController;
 import frc.robot.commands.XModeDriveCommand;
 import frc.robot.lib.OverrideSwitches;
@@ -55,34 +58,32 @@ public class RobotContainer {
 
     private final Trigger driverSlowMode = driver.leftBumper();
     private final Trigger driverXMode = driver.x();
-    private final Trigger driverGyroReset = driver.back();
-    private final Trigger driverOrientShelf = driver.leftTrigger(0.2);
-    private final Trigger driverOrientGrid = driver.rightTrigger(0.2);
+    private final Trigger driverGyroReset = driver.back().debounce(1, DebounceType.kRising); // delay gyro reset for 1 second
+    private final Trigger driverAutoAlign = driver.leftTrigger(0.2);
 
     // OPERATOR CONTROLS
     private final CommandXboxController operator = new CommandXboxController(1);
 
-    private final Trigger operatorSwitchGamepiece = operator.b();
-    private final Trigger operatorStow = operator.x();
-    private final Trigger operatorExtend = operator.a();
-    private final Trigger operatorScore = operator.rightBumper();
-    private final Trigger operatorIntake = operator.leftBumper();
+    private final Trigger operatorSwitchGamepiece = operator.a();
+    private final Trigger operatorManualStow = operator.x();
+    private final Trigger operatorAutoScore = operator.rightBumper();
     private final Trigger operatorSelectLow = operator.povDown();
     private final Trigger operatorSelectMid = operator.povRight();
     private final Trigger operatorSelectHigh = operator.povUp();
-    private final Trigger operatorSelectShelf = operator.povLeft();
-    private final Trigger operatorGround = operator.y();
+    private final Trigger operatorIntakeGround = operator.leftTrigger(0.2);
+    private final Trigger operatorIntakeShelf = operator.leftBumper();
 
     // OVERRIDE SWITCHES
     private final OverrideSwitches overrides = new OverrideSwitches(5);
 
-    private final Trigger localizerReset = overrides.driverSwitch(1); // Reset gyro angle
+    private final Trigger reseedAngle = overrides.driverSwitch(0); // Reset gyro angle
     private final Trigger gyroFail = overrides.driverSwitch(1); // Ingore sensor readings from gyro
-    private final Trigger powerStateOverride = overrides.driverSwitch(2); // drive subsystem ignore power states
-    private final Trigger pathGenOverride = overrides.driverSwitch(3); // bypass path following
+    private final Trigger reseedPosition = overrides.driverSwitch(2); // 
+    // private final Trigger powerStateOverride = overrides.driverSwitch(2); // drive subsystem ignore power states
+    private final Trigger driveAssistFail = overrides.driverSwitch(3); // 
 
     private final Trigger armForceEnable = overrides.operatorSwitch(0); // bypass arm sanity checks and force manual control
-    private final Trigger armCalibrateStart = overrides.operatorSwitch(1); // begin the arm calibration sequence
+    private final Trigger armCalibrateStart = overrides.operatorSwitch(1); // run the arm calibration sequence
     private final Trigger overrideArmSafety = overrides.operatorSwitch(2); // run arm at full speed even off FMS
     private final Trigger overrideLedBrightness = overrides.operatorSwitch(3); // full led brightness when off FMS
     private final Trigger ledsIndicateFailed = overrides.operatorSwitch(4); // indicate arm failed on LEDS
@@ -196,7 +197,25 @@ public class RobotContainer {
 
         // Drive button bindings
         driverXMode.whileTrue(new XModeDriveCommand(drive));
-        driverGyroReset.onTrue(new InstantCommand(drive::reseedRotation, drive));
+        driverGyroReset.onTrue(new DriveResetGyroCommand(drive));
+
+        //Operator button bindings
+        operatorSwitchGamepiece.onTrue(ArmCommandFactory.toggleGamepiece(arm));
+        operatorManualStow.onTrue(ArmCommandFactory.intakeRetract(arm));
+        // operatorAutoScore.onTrue();
+        // operatorSelectLow.onTrue();
+        // operatorSelectMid.onTrue();
+        // operatorSelectHigh.onTrue();
+        operatorIntakeGround.onTrue(
+            ArmCommandFactory.groundIntakeOpen(arm)
+            .andThen(ArmCommandFactory.waitForGamepieceThenRetract(arm))
+        );
+        operatorIntakeGround.onFalse(ArmCommandFactory.intakeRetract(arm));
+
+        operatorIntakeShelf.onTrue(
+            ArmCommandFactory.shelfIntakeOpen(arm)
+            .andThen(ArmCommandFactory.waitForGamepieceThenRetract(arm))
+        );
     }
 
     public Command getAutonomousCommand() {

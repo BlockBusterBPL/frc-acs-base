@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.lib.dashboard.Alert;
 import frc.robot.lib.dashboard.Alert.AlertType;
 import frc.robot.lib.drive.SwerveSetpointGenerator.KinematicLimits;
+import frc.robot.lib.motion.MotionProfileConstraints;
 
 import java.io.IOException;
 import java.util.Map;
@@ -102,7 +103,8 @@ public final class Constants {
     public static final double kDriveTrackwidthMeters = 0.61595; // DONE Measure and set trackwidth
     public static final double kDriveWheelbaseMeters = 0.61595; // DONE Measure and set wheelbase
     
-    public static final double kMaxVelocityMetersPerSecond = 4.959668;
+    public static final double kMaxVelocityMetersPerSecond = 5.05; //Calibrated 3/12 on Comp Bot
+    public static final double kMaxAccelerationMetersPerSecondSquared = 4.4;
     
     // Robot constants
     public static final double kMaxDriveAcceleration = 1867 * 0.8;   // m/s^2 tuned 2/18 practice bot
@@ -202,31 +204,52 @@ public final class Constants {
     public static final double kMk4DriveVelocityKf = 1023 / (kMaxVelocityMetersPerSecond / (Math.PI * Constants.kDriveWheelDiameter * Constants.kDriveReduction / 2048.0 * 10));
     
     public static final double kMaxAngularSpeedRadiansPerSecond = kMaxVelocityMetersPerSecond /
-    Math.hypot(kDriveTrackwidthMeters / 2.0, kDriveWheelbaseMeters / 2.0);
-    public static final double kMaxAngularSpeedRadiansPerSecondSquared = kMaxVelocityMetersPerSecond /
-    Math.hypot(kDriveTrackwidthMeters / 2.0, kDriveWheelbaseMeters / 2.0);
+            Math.hypot(kDriveTrackwidthMeters / 2.0, kDriveWheelbaseMeters / 2.0);
+    public static final double kMaxAngularAccelerationRadiansPerSecondSquared = kMaxAccelerationMetersPerSecondSquared /
+            Math.hypot(kDriveTrackwidthMeters / 2.0, kDriveWheelbaseMeters / 2.0);
     public static final TrapezoidProfile.Constraints kThetaControllerConstraints =
-    new TrapezoidProfile.Constraints(kMaxAngularSpeedRadiansPerSecond, kMaxAngularSpeedRadiansPerSecondSquared);
+            new TrapezoidProfile.Constraints(kMaxAngularSpeedRadiansPerSecond, kMaxAngularAccelerationRadiansPerSecondSquared);
+    public static final TrapezoidProfile.Constraints kPositionControllerConstraints =
+            new TrapezoidProfile.Constraints(kMaxVelocityMetersPerSecond, kMaxVelocityMetersPerSecond);
+
+    public static final MotionProfileConstraints kPositionMotionProfileConstraints = new MotionProfileConstraints(
+            0.8 * Constants.kMaxVelocityMetersPerSecond,
+            0.8 * -Constants.kMaxVelocityMetersPerSecond,
+            0.6 * Constants.kMaxAccelerationMetersPerSecondSquared);
+    public static final MotionProfileConstraints kHeadingMotionProfileConstraints = new MotionProfileConstraints(
+            0.5 * Constants.kMaxAngularSpeedRadiansPerSecond,
+            0.5 * -Constants.kMaxAngularSpeedRadiansPerSecond,
+            1.0 * Constants.kMaxAngularAccelerationRadiansPerSecondSquared);
+
+
     
     // Swerve Heading Controller
     public static final double kSwerveHeadingControllerErrorTolerance = 1.5; // degree error
-    
-    //TODO tune heading controller snap PID
+
     public static final double kSnapSwerveHeadingKp = 0.05;
     public static final double kSnapSwerveHeadingKi = 0.0;
     public static final double kSnapSwerveHeadingKd = 0.0075;
-    
-    //TODO tune heading controller maintain PID
-    public static final double kMaintainSwerveHeadingKp = 0.01;
-    public static final double kMaintainSwerveHeadingKi = 0.0;
-    public static final double kMaintainSwerveHeadingKd = 0.0;
-    
-    //TODO tune radius controller snap PID
+
+    public static final double kMaintainSwerveHeadingKpHighVelocity = 0.0225;
+    public static final double kMaintainSwerveHeadingKiHighVelocity = 0.0;
+    public static final double kMaintainSwerveHeadingKdHighVelocity = 0.003;
+
+    public static final double kMaintainSwerveHeadingKpLowVelocity = 0.02;  // 0.01;
+    public static final double kMaintainSwerveHeadingKiLowVelocity = 0.0;
+    public static final double kMaintainSwerveHeadingKdLowVelocity = 0.0;
+
+    // Swerve heading controller gains
+    public static final double kHeadingControllerKp = 2.54;
+    public static final double kHeadingControllerKi = 0.0;
+    public static final double kHeadingControllerKd = 0.0;
+    public static final double kHeadingControllerKffv = 1.0;
+    public static final double kHeadingControllerKffa = 0.0;
+    public static final double kHeadingControllerKs = 0.0;
+
     public static final double kSnapRadiusKp = 2.0;
     public static final double kSnapRadiusKi = 0.0;
     public static final double kSnapRadiusKd = 0.0;
-    
-    //TODO tune radius controller maintain PID
+
     public static final double kMaintainRadiusKp = 1.5;
     public static final double kMaintainRadiusKi = 0.0;
     public static final double kMaintainRadiusKd = 0.0;

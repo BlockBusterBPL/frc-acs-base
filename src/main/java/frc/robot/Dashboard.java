@@ -51,9 +51,9 @@ public class Dashboard {
         drive_angularSpeedChooser = new WidgetSendable<SendableChooser<Double>>(driveTabName, "Angular Speed Limit",
                 DriveWithController.angularSpeedLimitChooser,
                 new WidgetConfig(2, 0, 2, 1, BuiltInWidgets.kComboBoxChooser));
-        drive_activeDriveController = new SupplierWidget<String>(driveTabName, "Active Drive Controller", "", () -> "",
+        drive_activeDriveController = new SupplierWidget<String>(driveTabName, "Drive Control State", "", () -> drive.getControlState().title,
                 new WidgetConfig(0, 1, 2, 1, BuiltInWidgets.kTextView));
-        drive_activeKinematicLimits = new SupplierWidget<String>(driveTabName, "Active Kinematic Limits", "", () -> "",
+        drive_activeKinematicLimits = new SupplierWidget<String>(driveTabName, "Current Kinematic Limits", "", () -> drive.getKinematicLimitsTitle(),
                 new WidgetConfig(2, 1, 2, 1, BuiltInWidgets.kTextView));
         drive_enableVision = new WidgetSendable<SendableChooser<Boolean>>(driveTabName, "Use AprilTags",
                 vision.visionEnableChooser, new WidgetConfig(0, 2, 2, 1, BuiltInWidgets.kSplitButtonChooser));
@@ -81,13 +81,13 @@ public class Dashboard {
                 new SendableTriggerButton("Calibrate", () -> drive.zeroEncoder(0)),
                 new WidgetConfig(6, 0, 1, 1, BuiltInWidgets.kCommand));
         drive_mod1Cal = new WidgetSendable<SendableTriggerButton>(driveTabName, "Moddule 1",
-                new SendableTriggerButton("Calibrate", () -> drive.zeroEncoder(0)),
+                new SendableTriggerButton("Calibrate", () -> drive.zeroEncoder(1)),
                 new WidgetConfig(7, 0, 1, 1, BuiltInWidgets.kCommand));
         drive_mod2Cal = new WidgetSendable<SendableTriggerButton>(driveTabName, "Moddule 2",
-                new SendableTriggerButton("Calibrate", () -> drive.zeroEncoder(0)),
+                new SendableTriggerButton("Calibrate", () -> drive.zeroEncoder(2)),
                 new WidgetConfig(8, 0, 1, 1, BuiltInWidgets.kCommand));
         drive_mod3Cal = new WidgetSendable<SendableTriggerButton>(driveTabName, "Moddule 3",
-                new SendableTriggerButton("Calibrate", () -> drive.zeroEncoder(0)),
+                new SendableTriggerButton("Calibrate", () -> drive.zeroEncoder(3)),
                 new WidgetConfig(9, 0, 1, 1, BuiltInWidgets.kCommand));
 
         drive_mod0_offset = new SupplierWidget<Double>(driveTabName, "Offset 0", 0.0, () -> drive.getCachedEncoderOffsets(0), new WidgetConfig(6, 1, 1, 1, BuiltInWidgets.kTextView));

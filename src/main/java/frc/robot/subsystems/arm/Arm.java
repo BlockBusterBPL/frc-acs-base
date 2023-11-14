@@ -242,4 +242,16 @@ public class Arm extends SubsystemBase {
     public boolean gameObjectIsCone() {
         return false; // TODO: this
     }
+
+    public void setGameObject(GameObjectType gameObject) {
+        this.gameObject = gameObject;
+    }
+
+    public void swapGameObject() {
+        if (gameObjectIsCone()) {
+            gameObject = GameObjectType.CUBE;
+        } else {
+            gameObject = GameObjectType.CONE;
+        }
+    }
 }
