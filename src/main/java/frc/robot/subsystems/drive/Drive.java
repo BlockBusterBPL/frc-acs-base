@@ -4,6 +4,9 @@
 
 package frc.robot.subsystems.drive;
 
+import java.lang.StackWalker.Option;
+import java.util.Optional;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -26,8 +29,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.Constants.Mode;
+import frc.robot.Constants.RobotType;
+import frc.robot.lib.Utility;
 import frc.robot.lib.dashboard.Alert;
 import frc.robot.lib.dashboard.Alert.AlertType;
+import frc.robot.lib.drive.AutoAlignMotionPlanner;
+import frc.robot.lib.drive.HeadingControlPlanner;
 import frc.robot.lib.drive.SwerveSetpoint;
 import frc.robot.lib.drive.SwerveSetpointGenerator;
 import frc.robot.lib.drive.SwerveSetpointGenerator.KinematicLimits;
@@ -56,7 +63,11 @@ public class Drive extends SubsystemBase {
     }
 
     private DriveControlState mControlState = DriveControlState.VELOCITY_CONTROL;
+    private boolean allowDriveAssists = true;
     private boolean mUseHeadingController = false;
+    private HeadingControlPlanner mHeadingControlPlanner = new HeadingControlPlanner();
+    private AutoAlignMotionPlanner mAutoAlignPlanner = new AutoAlignMotionPlanner();
+    private Pose2d mTargetPoint = new Pose2d();
     private KinematicLimits mKinematicLimits = Constants.kUncappedKinematicLimits;
 
     public static final SwerveModuleState[] X_MODE_STATES = {
@@ -68,9 +79,18 @@ public class Drive extends SubsystemBase {
 
     private GyroIO gyroIO;
     private GyroIOInputsAutoLogged gyroInputs;
+    private boolean ignoreGyro = false;
 
     private final Alert alertGyroNotConnected = new Alert(
-            "Gyro not connected! Reverting to wheel delta integration mode, please monitor robot pose. Using autonomous is NOT RECCOMENDED! This warning is expected when using the SimBot.",
+            "Gyro not connected! " + (Constants.getRobot() == RobotType.ROBOT_SIMBOT ? "This warning is expected when using the SimBot." : ""),
+            AlertType.ERROR);
+
+    private final Alert alertGyroManualFail = new Alert(
+            "Gyro inputs manually ignored by driver.", 
+            AlertType.WARNING);
+
+    private final Alert alertUsingDeltaIntegration = new Alert(
+            "Reverting to wheel delta integration mode, please monitor robot pose. Using autonomous is NOT RECCOMENDED!",
             AlertType.ERROR);
 
     private final Alert alertCoastModeEnabled = new Alert(
@@ -78,7 +98,7 @@ public class Drive extends SubsystemBase {
             AlertType.INFO);
 
     private final Alert alertSteerNeutralMode = new Alert(
-            "Swerve Alignment Mode Enabled! Performance may be reduced, as driving in this mode is not intended.",
+            "Swerve Steering Neutral Mode Enabled! Performance may be reduced, as driving in this mode is not intended.",
             AlertType.WARNING);
     
     private final Alert alertOffsetsNotSafe = new Alert(
@@ -98,8 +118,6 @@ public class Drive extends SubsystemBase {
     private ChassisSpeeds measuredSpeeds = new ChassisSpeeds();
 
     private SwerveSetpoint lastSetpoint = SwerveSetpoint.FOUR_WHEEL_IDENTITY;
-
-    private boolean xMode = false;
 
     private boolean isBrakeMode = false;
     private Timer lastMovementTimer = new Timer();
@@ -174,7 +192,6 @@ public class Drive extends SubsystemBase {
             Logger.getInstance().recordOutput("SwerveStates/SetpointsOptimized", new double[] {});
         } else {
             // Generate swerve setpoint
-            // TODO: implement a way to change kinematic limits
 
             SwerveModuleState[] setpointStates = new SwerveModuleState[4];
 
@@ -183,7 +200,10 @@ public class Drive extends SubsystemBase {
             }
             if (!mUseHeadingController) {
                 // TODO: Reset heading controller
+                
             }
+
+            Optional<ChassisSpeeds> driveSetpointOverride = Optional.empty();
 
             switch (mControlState) {
                 case PATH_FOLLOWING:
@@ -192,22 +212,26 @@ public class Drive extends SubsystemBase {
                     break;
                 case OPEN_LOOP:
                 case VELOCITY_CONTROL:
-                    setKinematicLimits(Constants.kSmoothKinematicLimits);
-                    // TODO: (?) Update heading controller
+                    setKinematicLimits(Constants.kTeleopKinematicLimits);
+                    // TODO: (?) Update heading controller (this is currently done in the drive command)
                     break;
                 case AUTO_ALIGN:
                 case AUTO_ALIGN_Y_THETA:
                     setKinematicLimits(Constants.kUncappedKinematicLimits);
                     // TODO: Update auto align
+                    driveSetpointOverride = updateAutoAlign();
                     break;
                 case X_MODE:
                     setKinematicLimits(Constants.kUncappedKinematicLimits);
-                    // TODO: set x mode states
                 default:
                     break;
             }
 
-            if (xMode) {
+            if (driveSetpointOverride.isPresent() && allowDriveAssists) {
+                setSetpoint(driveSetpointOverride.get());
+            }
+
+            if (mControlState == DriveControlState.X_MODE) {
                 SwerveSetpoint generatedSetpoint = generator.generateSetpointForXMode(mKinematicLimits, lastSetpoint, Constants.loopPeriodSecs);
                 lastSetpoint = generatedSetpoint;
                 setpointStates = generatedSetpoint.mModuleStates;
@@ -250,7 +274,7 @@ public class Drive extends SubsystemBase {
         measuredSpeeds = inverseSpeeds;
 
         // Update gyro angle
-        if (gyroInputs.connected) {
+        if (!shouldRevertToDeltaIntegration()) {
             lastGyroYaw = Rotation2d.fromRotations(gyroInputs.yawAngleRotations);
         } else {
             // estimate rotation angle from wheel deltas when gyro is not connected
@@ -312,12 +336,45 @@ public class Drive extends SubsystemBase {
 
         // Run alert checks
         alertGyroNotConnected.set(!gyroInputs.connected);
+        alertGyroManualFail.set(ignoreGyro);
+        alertUsingDeltaIntegration.set(shouldRevertToDeltaIntegration());
         alertCoastModeEnabled.set(!isBrakeMode);
         alertSteerNeutralMode.set(modules[0].getSteerNeutralMode());
         alertOffsetsNotSafe.set(allowUpdateEncoders);
     }
 
-    public void swerveDrive(ChassisSpeeds speeds) {
+    public void setVelocityClosedLoop(ChassisSpeeds speeds) {
+        mControlState = DriveControlState.VELOCITY_CONTROL;
+        setpoint = speeds;
+    }
+
+    public void setVelocityOpenLoop(ChassisSpeeds speeds) {
+        mControlState = DriveControlState.OPEN_LOOP;
+        setpoint = speeds;
+    }
+
+    public void setSnapToPoint(Pose2d targetPoint) {
+        if (mAutoAlignPlanner != null) {
+            if (mControlState != DriveControlState.AUTO_ALIGN) {
+                mAutoAlignPlanner.reset();
+                mControlState = DriveControlState.AUTO_ALIGN;
+            }
+            mAutoAlignPlanner.setTargetPoint(targetPoint);
+            mTargetPoint = targetPoint;
+        }
+    }
+
+    public void setSnapYTheta(Pose2d targetPoint) {
+        if (mAutoAlignPlanner != null) {
+            if (mControlState != DriveControlState.AUTO_ALIGN_Y_THETA) {
+                mAutoAlignPlanner.reset();
+                mControlState = DriveControlState.AUTO_ALIGN_Y_THETA;
+            }
+            mAutoAlignPlanner.setTargetPoint(targetPoint);
+        }
+    }
+
+    public void setSetpoint(ChassisSpeeds speeds) {
         setpoint = speeds;
     }
 
@@ -326,11 +383,11 @@ public class Drive extends SubsystemBase {
     }
     
     public void stop() {
-        swerveDrive(new ChassisSpeeds());
+        setVelocityClosedLoop(new ChassisSpeeds());
     }
 
-    public void setXMode(boolean xMode) {
-        this.xMode = xMode;
+    public void setXMode() {
+        mControlState = DriveControlState.X_MODE;
     }
 
     public Pose2d getPose() {
@@ -450,5 +507,39 @@ public class Drive extends SubsystemBase {
 
     public ChassisSpeeds getMeasuredSpeeds() {
         return measuredSpeeds;
+    }
+
+    private Optional<ChassisSpeeds> updatePathFollower() {
+        return Optional.empty();
+    }
+
+    private Optional<ChassisSpeeds> updateAutoAlign() {
+        if (mControlState != DriveControlState.AUTO_ALIGN && mControlState != DriveControlState.AUTO_ALIGN_Y_THETA) {
+            return Optional.empty();
+        }
+
+        final double now = Timer.getFPGATimestamp();
+        var position = getPose();
+        var velocity = Utility.getTwist2dFromChassisSpeeds(getMeasuredSpeeds());
+
+        ChassisSpeeds output = mAutoAlignPlanner.updateAutoAlign(now, position, velocity);
+
+        if (output != null) {
+            return Optional.of(ChassisSpeeds.fromFieldRelativeSpeeds(output, position.getRotation()));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public boolean shouldRevertToDeltaIntegration() {
+        return !gyroInputs.connected || ignoreGyro;
+    }
+
+    public void setIgnoreGyro(boolean ignoreGyro) {
+        this.ignoreGyro = ignoreGyro;
+    }
+
+    public void setDriveAssistFail(boolean failAssist) {
+        this.allowDriveAssists = !failAssist;
     }
 }

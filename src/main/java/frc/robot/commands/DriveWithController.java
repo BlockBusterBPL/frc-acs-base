@@ -28,6 +28,7 @@ public class DriveWithController extends CommandBase {
     private final Drive drive;
     private final Supplier<ControllerDriveInputs> driveInputSupplier;
     private final Supplier<Boolean> slowModeSupplier;
+    private final Supplier<Boolean> disableFieldOrient;
 
     private final TimeDelayedBoolean mShouldMaintainHeading = new TimeDelayedBoolean();
     private final SwerveHeadingController mSwerveHeadingController = SwerveHeadingController.getInstance();
@@ -52,12 +53,15 @@ public class DriveWithController extends CommandBase {
     public DriveWithController(
             Drive drive,
             Supplier<ControllerDriveInputs> driveInputSupplier,
-            Supplier<Boolean> slowModeSupplier) {
+            Supplier<Boolean> slowModeSupplier,
+            Supplier<Boolean> disableFieldOrient
+        ) {
         addRequirements(drive);
 
         this.drive = drive;
         this.driveInputSupplier = driveInputSupplier;
         this.slowModeSupplier = slowModeSupplier;
+        this.disableFieldOrient = disableFieldOrient;
     }
 
     // Called when the command is initially scheduled.
@@ -98,11 +102,10 @@ public class DriveWithController extends CommandBase {
         var speedsFromController = controllerInputs.getVelocityFieldOriented(
             Constants.kMaxVelocityMetersPerSecond, 
             Constants.kMaxAngularVelocityRadiansPerSecond, 
-            // drive.getPose().getRotation()
-            new Rotation2d()
+            ( disableFieldOrient.get() ? new Rotation2d() : drive.getPose().getRotation() )
         );
 
-        drive.swerveDrive(speedsFromController);
+        drive.setVelocityClosedLoop(speedsFromController);
     }
 
     // Called once the command ends or is interrupted.

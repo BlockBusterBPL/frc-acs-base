@@ -35,9 +35,8 @@ public class SwerveModule {
     private static final LoggedTunableNumber steerKP = new LoggedTunableNumber("Drive/Module/Steer/KP", Constants.DriveSubsystem.kSteerPIDConfig.kP);
     private static final LoggedTunableNumber steerKI = new LoggedTunableNumber("Drive/Module/Steer/KI", Constants.DriveSubsystem.kSteerPIDConfig.kI);
     private static final LoggedTunableNumber steerKD = new LoggedTunableNumber("Drive/Module/Steer/KD", Constants.DriveSubsystem.kSteerPIDConfig.kD);
-    private static final LoggedTunableNumber steerKS = new LoggedTunableNumber("Drive/Module/Steer/KS", Constants.DriveSubsystem.kSteerKS);
-    private static final LoggedTunableNumber steerKV = new LoggedTunableNumber("Drive/Module/Steer/KV", Constants.DriveSubsystem.kSteerKV);
-    private static final LoggedTunableNumber steerKA = new LoggedTunableNumber("Drive/Module/Steer/KA", Constants.DriveSubsystem.kSteerKA);
+    private static final LoggedTunableNumber steerKS = new LoggedTunableNumber("Drive/Module/Steer/KS", Constants.DriveSubsystem.kSteerPIDConfig.kS);
+    private static final LoggedTunableNumber steerKV = new LoggedTunableNumber("Drive/Module/Steer/KV", Constants.DriveSubsystem.kSteerPIDConfig.kV);
     
     private static final LoggedDashboardBoolean steerVoltageOverride = new LoggedDashboardBoolean("Drive/Module/Steer/OverrideVoltage", false);
     private boolean overrideSteerVoltage = false;
@@ -102,10 +101,6 @@ public class SwerveModule {
             io.setSteerKS(steerKS.get());
         }
 
-        if (steerKA.hasChanged(hashCode())) {
-            io.setSteerKA(steerKA.get());
-        }
-
         if (steerNeutralMode.getSelected() != steerIsNeutral) {
             io.setSteerBrakeMode(!steerNeutralMode.getSelected());
             steerIsNeutral = steerNeutralMode.getSelected();
@@ -159,7 +154,7 @@ public class SwerveModule {
     }
 
     public void stop() {
-        setStateClosedLoop(new SwerveModuleState());
+        io.stop();
     }
 
     public void setDriveBrakeMode(boolean brake) {

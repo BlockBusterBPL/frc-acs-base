@@ -70,4 +70,6 @@ public interface SwerveModuleIO {
     public default double getEncoderOffset() {return 0.0;};
 
     public default double getEncoderRawPosition() {return 0.0;}
+
+    public default void stop() {}
 }

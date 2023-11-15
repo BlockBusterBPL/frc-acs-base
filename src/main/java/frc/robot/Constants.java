@@ -171,38 +171,28 @@ public final class Constants {
     public static final SwerveDriveKinematics kKinematics = new SwerveDriveKinematics(
         kWheelPositions
     );
-    
-    // // Module Configurations
-    // public static final CanDeviceId kBackLeftDriveTalonId = new CanDeviceId(3, kCANivoreCANBusName);
-    // public static final CanDeviceId kBackLeftAziTalonId = new CanDeviceId(2, kCANivoreCANBusName);
-    // public static final CanDeviceId kBackLeftEncoderPortId = new CanDeviceId(4, kCANivoreCANBusName);
-    // public static final Rotation2d kBackLeftAziEncoderOffset = kPracticeBot ? Rotation2d.fromDegrees(272.285) : Rotation2d.fromDegrees(283.62);
-    
-    // public static final CanDeviceId kBackRightDriveTalonId = new CanDeviceId(6, kCANivoreCANBusName);
-    // public static final CanDeviceId kBackRightAziTalonId = new CanDeviceId(5, kCANivoreCANBusName);
-    // public static final CanDeviceId kBackRightEncoderPortId = new CanDeviceId(7, kCANivoreCANBusName);
-    // public static final Rotation2d kBackRightAziEncoderOffset = kPracticeBot ? Rotation2d.fromDegrees(194.67) : Rotation2d.fromDegrees(201.5);
-    
-    // public static final CanDeviceId kFrontRightDriveTalonId = new CanDeviceId(12, kCANivoreCANBusName);
-    // public static final CanDeviceId kFrontRightAziTalonId = new CanDeviceId(11, kCANivoreCANBusName);
-    // public static final CanDeviceId kFrontRightEncoderPortId = new CanDeviceId(13, kCANivoreCANBusName);
-    // public static final Rotation2d kFrontRightAziEncoderOffset = kPracticeBot ? Rotation2d.fromDegrees(103.45) : Rotation2d.fromDegrees(67.5);
-    
-    // public static final CanDeviceId kFrontLeftDriveTalonId = new CanDeviceId(9, kCANivoreCANBusName);
-    // public static final CanDeviceId kFrontLeftAziTalonId = new CanDeviceId(8, kCANivoreCANBusName);
-    // public static final CanDeviceId kFrontLeftEncoderPortId = new CanDeviceId(10, kCANivoreCANBusName);
-    // public static final Rotation2d kFrontLeftAziEncoderOffset = kPracticeBot ? Rotation2d.fromDegrees(14.5) : Rotation2d.fromDegrees(10.75);
-    
+
     // TODO rename these to be steer/drive
-    public static final double kMk4AziKp = 0.75;
-    public static final double kMk4AziKi = 0;
-    public static final double kMk4AziKd = 15;
-    
-    public static final double kMk4DriveVelocityKp = 0.1;
+    public static final double kMk4AziMMKp = 6.000; //0.505
+    public static final double kMk4AziMMKi = 0;
+    public static final double kMk4AziMMKd = 0;//0.0004; //0.2 / 500
+    public static final double kMk4AziMMKs = 0.8;
+    public static final double kMk4AziKv = 0.1224;
+
+    public static final double kMk4AziMMCruiseVelocity = 98.0;
+    public static final double kMk4AziMMAccel = 1000.0;
+
+
+    public static final double kMk4AziPositionKp = 1.0005; //0.505
+    public static final double kMk4AziPositionKi = 0;
+    public static final double kMk4AziPositionKd = 0.0004; //0.2 / 500
+
+    public static final double kMk4DriveVelocityKp = 0.02 * 12;
     public static final double kMk4DriveVelocityKi = 0.0;
-    public static final double kMk4DriveVelocityKd = 0.01;
-    public static final double kMk4DriveVelocityKf = 1023 / (kMaxVelocityMetersPerSecond / (Math.PI * Constants.kDriveWheelDiameter * Constants.kDriveReduction / 2048.0 * 10));
-    
+    public static final double kMk4DriveVelocityKd = 0.000002 * 12; //0.01
+    public static final double kMk4DriveVelocityKv = 1 / 101.98 * 12;// (kMaxVelocityMetersPerSecond / (Math.PI * Constants.kDriveWheelDiameter * Constants.kDriveReduction));
+    public static final double kMk4DriveVelocityKs = 0.8;
+
     public static final double kMaxAngularSpeedRadiansPerSecond = kMaxVelocityMetersPerSecond /
             Math.hypot(kDriveTrackwidthMeters / 2.0, kDriveWheelbaseMeters / 2.0);
     public static final double kMaxAngularAccelerationRadiansPerSecondSquared = kMaxAccelerationMetersPerSecondSquared /
@@ -261,34 +251,37 @@ public final class Constants {
     public static final double kAdaptivePathMaxLookaheadDistance = 24.0;
     public static final double kAdaptiveErrorLookaheadCoefficient = 0.01;
 
+    //Auto-Align
+    public static final double kAutoAlignAllowableDistance = 2.0; //Meters
+
+
+    //Heading Controller Drive
+    public static final double kFeedforwardScaleFactor = 2.0;
+
     public static final class DriveSubsystem {
         public static final Slot0Configs kDrivePIDConfig = new Slot0Configs();
         static {
-            kDrivePIDConfig.kP = 5.0;
+            kDrivePIDConfig.kP = 0.2 * 12;
             kDrivePIDConfig.kI = 0.0;
-            kDrivePIDConfig.kD = 0.0;
-            kDrivePIDConfig.kV = 2.0;
-            kDrivePIDConfig.kS = 0.0;
+            kDrivePIDConfig.kD = 0.000002 * 12;
+            kDrivePIDConfig.kV = 1 / 101.98 * 12;// (kMaxVelocityMetersPerSecond / (Math.PI * Constants.kDriveWheelDiameter * Constants.kDriveReduction));;
+            kDrivePIDConfig.kS = 0.8;
         }
 
         public static final Slot0Configs kSteerPIDConfig = new Slot0Configs();
         static {
-            kSteerPIDConfig.kP = 60;
+            kSteerPIDConfig.kP = 6.000 * 2 * Math.PI;
             kSteerPIDConfig.kI = 0.0;
-            kSteerPIDConfig.kD = 1.0;
-            kSteerPIDConfig.kV = 0.0;
-            kSteerPIDConfig.kS = 0.0;
+            kSteerPIDConfig.kD = 1.0 * 2 * Math.PI;
+            kSteerPIDConfig.kV = 0.1224 * 2 * Math.PI;
+            kSteerPIDConfig.kS = 0.8;
         }
-
-        public static final double kSteerKS = 0.0;
-        public static final double kSteerKV = 0.0;
-        public static final double kSteerKA = 0.0;
 
         public static final MotionMagicConfigs kSteerMagicConfig = new MotionMagicConfigs();
         static {
-            kSteerMagicConfig.MotionMagicCruiseVelocity = 0.25;
-            kSteerMagicConfig.MotionMagicAcceleration = 1.0;
-            kSteerMagicConfig.MotionMagicJerk = 10;
+            kSteerMagicConfig.MotionMagicCruiseVelocity = 98.0 / (2 * Math.PI);
+            kSteerMagicConfig.MotionMagicAcceleration = 1000.0 / (2 * Math.PI);
+            kSteerMagicConfig.MotionMagicJerk = 0.0;
         }
 
     }

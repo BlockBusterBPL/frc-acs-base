@@ -96,4 +96,9 @@ public class SimSwerveIO implements SwerveModuleIO {
 
         return meters * motorRotationsPerMeter;
     }
+
+    @Override
+    public void stop() {
+        setDriveSpeedOpenLoop(0);
+    }
 }

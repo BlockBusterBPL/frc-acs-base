@@ -9,9 +9,11 @@ import com.ctre.phoenixpro.StatusSignalValue;
 import com.ctre.phoenixpro.configs.CANcoderConfiguration;
 import com.ctre.phoenixpro.configs.TalonFXConfiguration;
 import com.ctre.phoenixpro.controls.MotionMagicTorqueCurrentFOC;
+import com.ctre.phoenixpro.controls.MotionMagicVoltage;
 import com.ctre.phoenixpro.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenixpro.controls.PositionVoltage;
 import com.ctre.phoenixpro.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenixpro.controls.VelocityVoltage;
 import com.ctre.phoenixpro.controls.VoltageOut;
 import com.ctre.phoenixpro.hardware.CANcoder;
 import com.ctre.phoenixpro.hardware.TalonFX;
@@ -33,13 +35,11 @@ public class FalconSwerveIO implements SwerveModuleIO {
     private final TalonFX m_drive;
     private final TalonFX m_steer;
 
-    private final VelocityTorqueCurrentFOC m_driveControl;
+    private final VelocityVoltage m_driveControl;
 
-    private final PositionVoltage m_steerControl;
+    private final MotionMagicVoltage m_steerControl;
     private final VoltageOut m_steerManualVoltageControl;
     private boolean useManualVoltage = false;
-
-    private SimpleMotorFeedforward m_steerFeedForward;
 
     private final TalonFXConfiguration driveConfig = new TalonFXConfiguration();
     private final FalconFeedbackControlHelper driveHelper;
@@ -70,7 +70,8 @@ public class FalconSwerveIO implements SwerveModuleIO {
         m_steer = new TalonFX(20 + moduleID, canbus);
         m_encoder = new CANcoder(20 + moduleID, canbus);
 
-        m_driveControl = new VelocityTorqueCurrentFOC(0, 0, 0, false);
+        // m_driveControl = new VelocityTorqueCurrentFOC(0, 0, 0, false);
+        m_driveControl = new VelocityVoltage(0, true, 0, 0, false);
 
         driveConfig.Slot0.kP = 0.0;
         driveConfig.Slot0.kV = 0.0;
@@ -80,10 +81,11 @@ public class FalconSwerveIO implements SwerveModuleIO {
         driveHelper = new FalconFeedbackControlHelper(m_drive, driveConfig.Slot0, null);
 
 
-        m_steerControl = new PositionVoltage(0, true, 0, 0, false);
+        // m_steerControl = new PositionVoltage(0, true, 0, 0, false);
+        m_steerControl = new MotionMagicVoltage(0, true, 0, 0, false);
         m_steerManualVoltageControl = new VoltageOut(0, true, false);
 
-        m_steerFeedForward = new SimpleMotorFeedforward(0, 0, 0);
+        // m_steerFeedForward = new SimpleMotorFeedforward(0, 0, 0);
 
         steerConfig.TorqueCurrent.PeakForwardTorqueCurrent = 20;
         steerConfig.TorqueCurrent.PeakReverseTorqueCurrent = -20;
@@ -232,29 +234,12 @@ public class FalconSwerveIO implements SwerveModuleIO {
 
     @Override
     public void setSteerKS(double steerKS) {
-        m_steerFeedForward = new SimpleMotorFeedforward(
-            steerKS, 
-            m_steerFeedForward.kv, 
-            m_steerFeedForward.ka
-            );
+        steerHelper.setKS(steerKS);
     }
         
     @Override
     public void setSteerKV(double steerKF) {
-        m_steerFeedForward = new SimpleMotorFeedforward(
-            m_steerFeedForward.ks, 
-            steerKF, 
-            m_steerFeedForward.ka
-        );
-    }
-
-    @Override
-    public void setSteerKA(double steerKA) {
-        m_steerFeedForward = new SimpleMotorFeedforward(
-            m_steerFeedForward.ks, 
-            m_steerFeedForward.kv, 
-            steerKA
-        );
+        steerHelper.setKV(steerKF);
     }
 
     @Override
@@ -287,5 +272,11 @@ public class FalconSwerveIO implements SwerveModuleIO {
         m_encoder.getConfigurator().refresh(encoderConfig);
         var currentOffset = encoderConfig.MagnetSensor.MagnetOffset;
         return m_encoder.getAbsolutePosition().getValue() - currentOffset;
+    }
+
+    @Override
+    public void stop() {
+        m_drive.stopMotor();
+        m_steer.stopMotor();
     }
 }

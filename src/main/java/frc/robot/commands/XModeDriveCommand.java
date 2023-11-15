@@ -13,11 +13,11 @@ public class XModeDriveCommand extends CommandBase {
     @Override
     public void initialize() {
         drive.stop();
-        drive.setXMode(true);
+        drive.setXMode();
     }
 
     @Override
     public void end(boolean interrupted) {
-        drive.setXMode(false);
+        // drive.setXMode(false);
     }
 }

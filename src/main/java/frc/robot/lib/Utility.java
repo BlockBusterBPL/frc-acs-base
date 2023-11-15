@@ -328,4 +328,8 @@ public class Utility {
         }
         return sum;
     }
+
+    public static Twist2d getTwist2dFromChassisSpeeds(ChassisSpeeds speeds) {
+        return new Twist2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
+    }
 }

@@ -9,6 +9,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -16,7 +17,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Mode;
 import frc.robot.commands.ArmCommandFactory;
-import frc.robot.commands.DriveResetGyroCommand;
+import frc.robot.commands.DriveUtilityCommandFactory;
 import frc.robot.commands.DriveWithController;
 import frc.robot.commands.XModeDriveCommand;
 import frc.robot.lib.OverrideSwitches;
@@ -76,11 +77,11 @@ public class RobotContainer {
     // OVERRIDE SWITCHES
     private final OverrideSwitches overrides = new OverrideSwitches(5);
 
-    private final Trigger reseedAngle = overrides.driverSwitch(0); // Reset gyro angle
-    private final Trigger gyroFail = overrides.driverSwitch(1); // Ingore sensor readings from gyro
-    private final Trigger reseedPosition = overrides.driverSwitch(2); // 
+    private final Trigger driverResetAngle = overrides.driverSwitch(0); // Reset gyro angle to forwards
+    private final Trigger driverReseedPosition = overrides.driverSwitch(2); // Gather avereage position from vision and update
+    private final Trigger driverGyroFail = overrides.driverSwitch(1); // Ingore sensor readings from gyro
     // private final Trigger powerStateOverride = overrides.driverSwitch(2); // drive subsystem ignore power states
-    private final Trigger driveAssistFail = overrides.driverSwitch(3); // 
+    private final Trigger driverAssistFail = overrides.driverSwitch(3); // disable all drive assists
 
     private final Trigger armForceEnable = overrides.operatorSwitch(0); // bypass arm sanity checks and force manual control
     private final Trigger armCalibrateStart = overrides.operatorSwitch(1); // run the arm calibration sequence
@@ -189,7 +190,7 @@ public class RobotContainer {
     }
 
     private void setDefaultCommands() {
-        drive.setDefaultCommand(new DriveWithController(drive, this::getDriveInputs, driverSlowMode::getAsBoolean));
+        drive.setDefaultCommand(new DriveWithController(drive, this::getDriveInputs, driverSlowMode::getAsBoolean, driverAssistFail::getAsBoolean));
     }
 
     private void configureBindings() {
@@ -197,7 +198,15 @@ public class RobotContainer {
 
         // Drive button bindings
         driverXMode.whileTrue(new XModeDriveCommand(drive));
-        driverGyroReset.onTrue(new DriveResetGyroCommand(drive));
+        driverGyroReset.onTrue(DriveUtilityCommandFactory.resetGyro(drive));
+
+        // Driver override switches
+        driverResetAngle.onTrue(DriveUtilityCommandFactory.resetGyro(drive));
+        driverReseedPosition.onTrue(DriveUtilityCommandFactory.reseedPosition(drive));
+        driverGyroFail.onTrue(DriveUtilityCommandFactory.failGyro(drive));
+        driverGyroFail.onFalse(DriveUtilityCommandFactory.unFailGyro(drive));
+        driverAssistFail.onTrue(DriveUtilityCommandFactory.failDriveAssist(drive));
+        driverAssistFail.onFalse(DriveUtilityCommandFactory.unFailDriveAssist(drive));
 
         //Operator button bindings
         operatorSwitchGamepiece.onTrue(ArmCommandFactory.toggleGamepiece(arm));
@@ -216,6 +225,8 @@ public class RobotContainer {
             ArmCommandFactory.shelfIntakeOpen(arm)
             .andThen(ArmCommandFactory.waitForGamepieceThenRetract(arm))
         );
+
+        // Operator override switches
     }
 
     public Command getAutonomousCommand() {
