@@ -1,114 +1,165 @@
 package frc.robot.subsystems.leds;
 
-import java.util.ArrayList;
+import com.ctre.phoenix.led.CANdle;
 
-import org.littletonrobotics.junction.Logger;
-
-import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.lib.leds.AnimationBuilder;
-import frc.robot.lib.leds.LEDColor;
-import frc.robot.lib.leds.LEDControlData;
-import frc.robot.lib.leds.LEDGroup;
-import frc.robot.lib.leds.LEDState;
-import frc.robot.lib.leds.AnimationBuilder.ColorAnimationTypes;
+import frc.robot.lib.leds.LEDStateContainer;
+import frc.robot.lib.leds.TimedLEDState;
 
 public class LED extends SubsystemBase {
-    private final LEDIO io;
-    private final LEDIOInputsAutoLogged inputs;
+    public enum WantedAction {
+        DISPLAY_BATTERY_LOW,
+        DISPLAY_GOOD_BATTERY,
+        DISPLAY_NOT_HOMED,
+        DISPLAY_DELIVERY,
+        DISPLAY_VISION,
+        DISPLAY_CONFIGURE_FAULT,
+        OFF
+    }
 
-    private final ArrayList<LEDControlData> statesToUpdate = new ArrayList<>(10);
+    private enum SystemState {
+        DISPLAYING_BATTERY_LOW,
+        DISPLAYING_CONFIGURE_FAULT,
+        DISPLAYING_GOOD_BATTERY,
+        DISPLAYING_NOT_HOMED,
+        DISPLAYING_DELIVERY,
+        DISPLAYING_VISION,
+        OFF
+    }
 
-    private final LEDGroup candle = new LEDGroup(0, 8, 0);
-    private final LEDGroup perimeter = new LEDGroup(8, 120, 1);
+    private CANdle candle;
 
-    private boolean coneMode = false;
-    private boolean dsConnected = false;
-    private boolean fmsConnected = false;
-    private boolean autoRotateAcquire = false;
-    private boolean autoRotateHold = false;
-    private boolean batteryVoltageLow = false;
-    private boolean drivePowerSave = false;
-    private boolean teamIndicator1 = false;
-    private boolean teamIndicator2 = false;
+    private SystemState mSystemState = SystemState.OFF;
+    private static WantedAction mWantedAction = WantedAction.OFF;
 
-    public LED(LEDIO io) {
-        this.io = io;
-        this.inputs = new LEDIOInputsAutoLogged();
+    private LEDStateContainer mDesiredLEDState = new LEDStateContainer();
+
+    private static TimedLEDState mDeliveryLEDState = TimedLEDState.StaticLEDState.kStaticOff;
+
+    private double mStateStartTime;
+
+    public LED() {
+        candle = new CANdle(8, "canivore");
+
+        mStateStartTime = Timer.getFPGATimestamp();
+    }
+
+    public static void setDeliveryLEDState(TimedLEDState ledState) {
+        mDeliveryLEDState = ledState;
+    }
+
+    public static void setWantedAction(WantedAction wantedAction) {
+        mWantedAction = wantedAction;
     }
 
     @Override
     public void periodic() {
-        io.updateInputs(inputs);
-        Logger.getInstance().processInputs("LEDs", inputs);
-
-        LEDState candleState = new LEDState(LEDColor.kBlack);
-        LEDState perimeterState = new LEDState(LEDColor.kBlack);
-
-        LEDColor gamepieceColor = coneMode ? LEDColor.kYellow : LEDColor.kPurple;
-
-        // ALL LEDS
-        if (drivePowerSave) {
+        double timestamp = Timer.getFPGATimestamp();
+        SystemState newState = getStateTransition();
+        if (mSystemState != newState) {
+            mSystemState = newState;
+            mStateStartTime = timestamp;
+        }
+        double timeInState = timestamp - mStateStartTime;
+        switch(mSystemState) {
+            case DISPLAYING_BATTERY_LOW:
+                setBatteryLowCommand(timeInState);
+                break;
+            case DISPLAYING_CONFIGURE_FAULT:
+                setConfigureFault(timeInState);
+                break;
+            case DISPLAYING_GOOD_BATTERY:
+                setGoodBattery(timeInState);
+                break;
+            case DISPLAYING_NOT_HOMED:
+                setNotHomedCommand(timeInState);
+                break;
+            case DISPLAYING_DELIVERY:
+                setDeliveryLEDCommand(timeInState);
+                break;
+            case DISPLAYING_VISION:
+                setDisplayingVision(timeInState);
+                break;
+            case OFF:
+                setOffCommand(timeInState);
+                break;
+            default:
+                break;
 
         }
+        mDesiredLEDState.writePixels(candle);
+    }
 
-        // PERIMETER LEDS
-        if (batteryVoltageLow) {
-            // keep gamepiece color, blink perimeter orange
-            perimeterState = new LEDState(
-                gamepieceColor, 
-                AnimationBuilder.generate(ColorAnimationTypes.FLASH, LEDColor.kOrange, 0.8)
-            );
-        } else if (teamIndicator1) {
-            // keep gamepiece color, blink perimeter red
-            perimeterState = new LEDState(
-                gamepieceColor, 
-                AnimationBuilder.generate(ColorAnimationTypes.FLASH, LEDColor.kRed, 0.8)
-            );
-        } else if (teamIndicator2) {
-            // keep gamepiece color, blink perimeter blue
-            perimeterState = new LEDState(
-                gamepieceColor, 
-                AnimationBuilder.generate(ColorAnimationTypes.FLASH, LEDColor.kBlue, 0.8)
-            );
-        } else if (autoRotateAcquire && !autoRotateHold) {
-            // clear gamepiece color, blink perimater gamepiece color
-            perimeterState = new LEDState(
-                null, 
-                AnimationBuilder.generate(ColorAnimationTypes.FLASH, gamepieceColor, 0.93)
-            );
-        } else if (autoRotateHold) {
-            // dim gamepiece color, pulse perimeter gampeice color
-            perimeterState = new LEDState(
-                null, 
-                AnimationBuilder.generate(ColorAnimationTypes.PULSE, gamepieceColor, 0.75)
-            );
-        } else {
-            // static gamepiece color
-            perimeterState = new LEDState(gamepieceColor);
+    private void setDeliveryLEDCommand(double timeInState) {
+        mDeliveryLEDState.getCurrentLEDState(mDesiredLEDState, timeInState);
+    }
+
+    private void setOffCommand(double timeInState) {
+        TimedLEDState.StaticLEDState.kStaticOff.getCurrentLEDState(mDesiredLEDState, timeInState);
+    }
+
+    private void setConfigureFault(double timeInState) {
+        TimedLEDState.BlinkingLEDState.kConfigureFail.getCurrentLEDState(mDesiredLEDState, timeInState);
+    }
+
+    private void setDisplayingVision(double timeInState) {
+        // Limelight limelight = Limelight.getInstance();
+        // if (DriverStation.isDisabled()) {
+        //     if (!limelight.hasTarget()) {
+        //         // If in disabled, and don't have target show yellow rapid blink.
+        //         TimedLEDState.BlinkingLEDState.kVisionMissing.getCurrentLEDState(mDesiredLEDState, timeInState);
+        //     } else {
+        //         // Otherwise, go green.
+        //         TimedLEDState.BlinkingLEDState.kVisionPresent.getCurrentLEDState(mDesiredLEDState, timeInState);
+        //     }
+        // } else {
+        //     // If we are in auto, show when limelight goes active.
+        //     if (limelight.getIsDisabled()) {
+        //         TimedLEDState.StaticLEDState.kVisionDisabled.getCurrentLEDState(mDesiredLEDState, timeInState);
+        //     } else {
+        //         TimedLEDState.StaticLEDState.kStaticRobotZeroedWithGoodBattery.getCurrentLEDState(mDesiredLEDState, timeInState);
+        //     }
+        // }
+        TimedLEDState.StaticLEDState.kStaticRobotZeroedWithGoodBattery.getCurrentLEDState(mDesiredLEDState, timeInState);
+    }
+
+    private void setNotHomedCommand(double timeInState) {
+        TimedLEDState.StaticLEDState.kStaticNotHomed.getCurrentLEDState(mDesiredLEDState, timeInState);
+    }
+
+    private void setGoodBattery(double timeInState) {
+        TimedLEDState.StaticLEDState.kStaticRobotZeroedWithGoodBattery.getCurrentLEDState(mDesiredLEDState, timeInState);
+    }
+
+    private void setBatteryLowCommand(double timeInState) {
+        TimedLEDState.StaticLEDState.kStaticBatteryLow.getCurrentLEDState(mDesiredLEDState, timeInState);
+    }
+
+    private boolean configure_fault = false;
+    public synchronized void setConfigureFault(boolean fault){
+        configure_fault = fault;
+    }
+
+    private SystemState getStateTransition() {
+        if (configure_fault) return SystemState.DISPLAYING_CONFIGURE_FAULT;
+        switch (mWantedAction) {
+            case DISPLAY_DELIVERY:
+                return SystemState.DISPLAYING_DELIVERY;
+            case DISPLAY_GOOD_BATTERY:
+                return SystemState.DISPLAYING_GOOD_BATTERY;
+            case DISPLAY_BATTERY_LOW:
+                return SystemState.DISPLAYING_BATTERY_LOW; 
+            case DISPLAY_NOT_HOMED:
+                return SystemState.DISPLAYING_NOT_HOMED;
+            case DISPLAY_VISION:
+                return SystemState.DISPLAYING_VISION;
+            case OFF:
+                return SystemState.OFF;
+            default:
+                System.out.println("Fell through on LED wanted action check: " + mWantedAction);
+                return SystemState.OFF;
         }
-
-        perimeter.checkChanged(perimeterState).ifPresent(statesToUpdate::add);
-
-        // CANDLE BLOCK LEDS
-        if (fmsConnected) {
-            // solid orange
-            candleState = new LEDState(LEDColor.kOrange);
-        } else if (dsConnected) {
-            // slow pulse orange with dim orange BG
-            candleState = new LEDState(LEDColor.kOrange.multiply(0.25), AnimationBuilder.generate(ColorAnimationTypes.PULSE, LEDColor.kOrange, 0.75));
-        } else {
-            // fast orange pulse with dim orange BG
-            candleState = new LEDState(LEDColor.kOrange.multiply(0.25), AnimationBuilder.generate(ColorAnimationTypes.PULSE, LEDColor.kOrange, 0.93));
-        }
-
-        candle.checkChanged(candleState).ifPresent(statesToUpdate::add);
-
-        statesToUpdate.forEach((s) -> {
-            io.setLEDs(s.start, s.length, s.color.red, s.color.green, s.color.blue);
-            s.animation.ifPresentOrElse((a) -> {io.animate(a, s.layer);}, () -> {io.clearAnimation(s.layer);});
-        });
-
-        statesToUpdate.clear();
     }
 }

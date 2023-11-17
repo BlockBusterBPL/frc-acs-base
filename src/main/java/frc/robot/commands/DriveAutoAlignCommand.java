@@ -20,7 +20,7 @@ public class DriveAutoAlignCommand extends CommandBase {
     private Optional<Pose2d> targetPoint;
 
     public DriveAutoAlignCommand(Drive drive, Arm arm) {
-        addRequirements(drive, arm);
+        addRequirements(drive);
 
         this.drive = drive;
         this.arm = arm;
@@ -47,11 +47,6 @@ public class DriveAutoAlignCommand extends CommandBase {
 
     @Override
     public void end(boolean interrupted) {
-        
-    }
-
-    @Override
-    public boolean isFinished() {
-        return false;
+        drive.stop();
     }
 }

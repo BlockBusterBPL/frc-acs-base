@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Mode;
 import frc.robot.commands.ArmCommandFactory;
+import frc.robot.commands.DriveAutoAlignCommand;
 import frc.robot.commands.DriveUtilityCommandFactory;
 import frc.robot.commands.DriveWithController;
 import frc.robot.commands.XModeDriveCommand;
@@ -40,8 +41,6 @@ import frc.robot.subsystems.drive.SimSwerveIO;
 import frc.robot.subsystems.drive.SimSwerveIO;
 import frc.robot.subsystems.drive.SwerveModuleIO;
 import frc.robot.subsystems.leds.LED;
-import frc.robot.subsystems.leds.LEDIO;
-import frc.robot.subsystems.leds.LEDIOCANdle;
 import frc.robot.subsystems.localizer.Localizer;
 import frc.robot.subsystems.localizer.LocalizerIO;
 import frc.robot.subsystems.localizer.LocalizerIOLL3;
@@ -60,7 +59,7 @@ public class RobotContainer {
     private final Trigger driverSlowMode = driver.leftBumper();
     private final Trigger driverXMode = driver.x();
     private final Trigger driverGyroReset = driver.back().debounce(1, DebounceType.kRising); // delay gyro reset for 1 second
-    private final Trigger driverAutoAlign = driver.leftTrigger(0.2);
+    private final Trigger driverAutoAlign = driver.rightTrigger(0.2);
 
     // OPERATOR CONTROLS
     private final CommandXboxController operator = new CommandXboxController(1);
@@ -77,8 +76,8 @@ public class RobotContainer {
     // OVERRIDE SWITCHES
     private final OverrideSwitches overrides = new OverrideSwitches(5);
 
-    private final Trigger driverResetAngle = overrides.driverSwitch(0); // Reset gyro angle to forwards
-    private final Trigger driverReseedPosition = overrides.driverSwitch(2); // Gather avereage position from vision and update
+    private final Trigger driverResetAngle = overrides.driverSwitch(0).debounce(1, DebounceType.kRising); // Reset gyro angle to forwards
+    private final Trigger driverReseedPosition = overrides.driverSwitch(2).debounce(1, DebounceType.kRising); // Gather avereage position from vision and update
     private final Trigger driverGyroFail = overrides.driverSwitch(1); // Ingore sensor readings from gyro
     // private final Trigger powerStateOverride = overrides.driverSwitch(2); // drive subsystem ignore power states
     private final Trigger driverAssistFail = overrides.driverSwitch(3); // disable all drive assists
@@ -100,7 +99,7 @@ public class RobotContainer {
     public RobotContainer(Robot robot) {
         if (Constants.getMode() != Mode.REPLAY) {
             switch (Constants.getRobot()) {
-                case ROBOT_2023C:
+                case ROBOT_2023_CN2:
                     drive = new Drive(
                             new GyroNavXIO(SPI.Port.kMXP),
                             new FalconSwerveIO(0, "canivore"),
@@ -108,11 +107,9 @@ public class RobotContainer {
                             new FalconSwerveIO(2, "canivore"),
                             new FalconSwerveIO(3, "canivore"));
                     arm = new Arm(new ArmIOFalcons(), new GripperIOFalcon());
-                    leds = new LED(new LEDIOCANdle(8, "canivore"));
+                    leds = new LED();
                     break;
-                case ROBOT_2023P:
-                    break;
-                case ROBOT_2023_CHASSIS:
+                case ROBOT_2023_CN1:
                     drive = new Drive(
                             new GyroNavXIO(SPI.Port.kMXP), 
                             new FalconSwerveIO(0, "canivore"), 
@@ -120,7 +117,7 @@ public class RobotContainer {
                             new FalconSwerveIO(2, "canivore"), 
                             new FalconSwerveIO(3, "canivore"));
                     // arm = new Arm(new ArmIOSimV1(), new GripperMiniNeoSimIO()); // simulate arm on chassis bot
-                    leds = new LED(new LEDIOCANdle(8, "canivore"));
+                    leds = new LED();
                     // vision = new Localizer(new LocalizerIOLL3(), drive::addVisionPose);
                     break;
                 case ROBOT_SIMBOT:
@@ -161,8 +158,7 @@ public class RobotContainer {
         }
 
         if (leds == null) {
-            leds = new LED(new LEDIO() {
-            });
+            leds = new LED();
         }
 
         if (vision == null) {
@@ -199,6 +195,7 @@ public class RobotContainer {
         // Drive button bindings
         driverXMode.whileTrue(new XModeDriveCommand(drive));
         driverGyroReset.onTrue(DriveUtilityCommandFactory.resetGyro(drive));
+        driverAutoAlign.whileTrue(new DriveAutoAlignCommand(drive, arm));
 
         // Driver override switches
         driverResetAngle.onTrue(DriveUtilityCommandFactory.resetGyro(drive));

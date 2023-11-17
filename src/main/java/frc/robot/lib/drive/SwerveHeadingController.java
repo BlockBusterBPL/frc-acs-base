@@ -3,7 +3,7 @@ package frc.robot.lib.drive;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.Constants;
-import frc.robot.PositionTracker;
+import frc.robot.RobotStateTracker;
 import frc.robot.lib.Utility;
 import frc.robot.lib.util.Util;
 
@@ -15,7 +15,7 @@ import frc.robot.lib.util.Util;
 public class SwerveHeadingController {
     private static SwerveHeadingController mInstance;
     // private RobotState mRobotState = RobotState.getInstance();
-    private PositionTracker mPositionTracker = PositionTracker.getInstance();
+    private RobotStateTracker mPositionTracker = RobotStateTracker.getInstance();
 
     public static SwerveHeadingController getInstance() {
         if (mInstance == null) {
@@ -97,7 +97,7 @@ public class SwerveHeadingController {
         }
 
         // var current_translational_velocity = RobotState.getInstance().getMeasuredVelocity().norm();
-        var current_translational_velocity = Utility.getSpeedAsScalar(PositionTracker.getCurrentRobotSpeeds());
+        var current_translational_velocity = Utility.getSpeedAsScalar(RobotStateTracker.getInstance().getCurrentRobotSpeeds());
         final double kMinTranslationalVelocity = 0.2;
         if (current_translational_velocity < kMinTranslationalVelocity) {
             current_translational_velocity = kMinTranslationalVelocity;

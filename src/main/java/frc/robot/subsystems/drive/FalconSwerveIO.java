@@ -255,7 +255,7 @@ public class FalconSwerveIO implements SwerveModuleIO {
     @Override
     public void updateEncoderOffset(double zeroRotations) {
         CANcoderLiveConfigHelper.editConfig(m_encoder, (c) -> {
-            c.MagnetSensor.MagnetOffset = zeroRotations;
+            c.MagnetSensor.MagnetOffset = -zeroRotations;
             return c;
         });
     }

@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BatteryTracker {
-  private static final List<RobotType> supportedRobots = List.of(RobotType.ROBOT_2023C);
+  private static final List<RobotType> supportedRobots = List.of(RobotType.ROBOT_2023_CN2);
   public static final String defaultName = "BAT-0000-000";
 
   private static final int nameLength = 12;

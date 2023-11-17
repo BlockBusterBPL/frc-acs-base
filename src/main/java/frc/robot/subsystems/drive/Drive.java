@@ -90,7 +90,7 @@ public class Drive extends SubsystemBase {
             AlertType.WARNING);
 
     private final Alert alertUsingDeltaIntegration = new Alert(
-            "Reverting to wheel delta integration mode, please monitor robot pose. Using autonomous is NOT RECCOMENDED!",
+            "Pose angle reverted to wheel delta integration mode, please monitor robot pose. Using autonomous is NOT RECCOMENDED!",
             AlertType.ERROR);
 
     private final Alert alertCoastModeEnabled = new Alert(

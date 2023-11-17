@@ -26,7 +26,7 @@ import com.ctre.phoenixpro.configs.MotionMagicConfigs;
 import com.ctre.phoenixpro.configs.Slot0Configs;
 
 public final class Constants {
-    private static final RobotType robot = RobotType.ROBOT_2023_CHASSIS;
+    private static final RobotType robot = RobotType.ROBOT_2023_CN1;
     public static final double loopPeriodSecs = 0.02;
     public static final boolean tuningMode = true;
     
@@ -40,7 +40,7 @@ public final class Constants {
                     .set(true);
                     invalidRobotAlertSent = true;
                 }
-                return RobotType.ROBOT_2023C;
+                return RobotType.ROBOT_2023_CN2;
             } else {
                 return robot;
             }
@@ -51,9 +51,8 @@ public final class Constants {
     
     public static Mode getMode() {
         switch (getRobot()) {
-            case ROBOT_2023C:
-            case ROBOT_2023P:
-            case ROBOT_2023_CHASSIS:
+            case ROBOT_2023_CN2:
+            case ROBOT_2023_CN1:
             return RobotBase.isReal() ? Mode.REAL : Mode.REPLAY;
             
             case ROBOT_SIMBOT:
@@ -65,12 +64,22 @@ public final class Constants {
     }
     
     public static final Map<RobotType, String> logFolders =
-    Map.of(RobotType.ROBOT_2023C, "/media/sda2/");
+    Map.of(RobotType.ROBOT_2023_CN2, "/media/sda2/");
     
     public static enum RobotType {
-        ROBOT_2023C,
-        ROBOT_2023P,
-        ROBOT_2023_CHASSIS,
+        /**
+         * Chassis Number 2 "Heavy Metal"
+         */
+        ROBOT_2023_CN2,
+
+        /**
+         * Chassis Number 1 "A-Frame"
+         */
+        ROBOT_2023_CN1,
+
+        /**
+         * Robot Simulator
+         */
         ROBOT_SIMBOT
     }
     
@@ -378,6 +387,8 @@ public final class Constants {
             public static final double kAutoScoreCubeThrottle = 0.6; 
         }
     }
+
+    public static final int kMaxLEDCount = 127;
     
     /** Checks whether the robot the correct robot is selected when deploying. */
     public static void main(String... args) {

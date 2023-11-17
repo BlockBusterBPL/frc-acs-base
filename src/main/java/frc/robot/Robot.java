@@ -45,6 +45,8 @@ import frc.robot.lib.dashboard.Alert;
 import frc.robot.lib.dashboard.SupplierWidget;
 import frc.robot.lib.dashboard.Alert.AlertType;
 import frc.robot.lib.util.VirtualSubsystem;
+import frc.robot.subsystems.leds.LED;
+import frc.robot.subsystems.leds.LED.WantedAction;
 
 public class Robot extends LoggedRobot {
     private static final String batteryNameFile = "/home/lvuser/battery-name.txt";
@@ -123,7 +125,7 @@ public class Robot extends LoggedRobot {
                 logNoFileAlert.set(true);
             }
             logger.addDataReceiver(new NT4Publisher());
-            if (Constants.getRobot() == RobotType.ROBOT_2023C) {
+            if (Constants.getRobot() == RobotType.ROBOT_2023_CN2) {
                 LoggedPowerDistribution.getInstance(1, ModuleType.kRev);
             }
             break;
@@ -242,11 +244,6 @@ public class Robot extends LoggedRobot {
         if (DriverStation.isEnabled()) {
         disabledTimer.reset();
         }
-        if (RobotController.getBatteryVoltage() < lowBatteryVoltage
-            && disabledTimer.hasElapsed(lowBatteryDisabledTime)) {
-            //TODO: Leds.getInstance().lowBatteryAlert = true;
-            lowBatteryAlert.set(true);
-        }
 
         // Log list of NT clients
         List<String> clientNames = new ArrayList<>();
@@ -302,19 +299,23 @@ public class Robot extends LoggedRobot {
     public void disabledInit() {}
     
     @Override
-    public void disabledPeriodic() {}
+    public void disabledPeriodic() {
+        if (RobotController.getBatteryVoltage() < lowBatteryVoltage
+            && disabledTimer.hasElapsed(lowBatteryDisabledTime)) {
+            //TODO: Leds.getInstance().lowBatteryAlert = true;
+            LED.setWantedAction(WantedAction.DISPLAY_BATTERY_LOW);
+            lowBatteryAlert.set(true);
+        } else {
+            LED.setWantedAction(WantedAction.DISPLAY_GOOD_BATTERY);
+        }
+    }
     
     @Override
     public void disabledExit() {}
     
     @Override
     public void autonomousInit() {
-        autoStart = Timer.getFPGATimestamp();
-        autoMessagePrinted = false;
-        autoCommand = robotContainer.getAutonomousCommand();
-        if (autoCommand != null) {
-            autoCommand.schedule();
-        }
+        
     }
     
     @Override
