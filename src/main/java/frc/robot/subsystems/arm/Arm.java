@@ -43,6 +43,7 @@ public class Arm extends SubsystemBase {
         INTAKE_CONE_GROUND(new ArmState(0, 0, 0, 0, 0, 0, Action.INTAKING, ArmSend.MEDIUM)),
         INTAKE_CONE_SHELF(new ArmState(0, 0, 0, 0, 0, 0, Action.INTAKING, ArmSend.MEDIUM)),
         INTAKE_WAIT_SHELF(new ArmState(0, 0, 0, 0, 0, 0, Action.NEUTRAL, ArmSend.FULL)),
+        SCORE_WAIT(new ArmState(0, 0, 0, 0, 0, 0, Action.NEUTRAL, ArmSend.FULL)),
         SCORE_CUBE_LOW(new ArmState(0, 0, 0, 0, 0, 0, Action.SCORING, ArmSend.FULL)),
         SCORE_CUBE_MID(new ArmState(0, 0, 0, 0, 0, 0, Action.SCORING, ArmSend.FULL)),
         SCORE_CUBE_HIGH(new ArmState(0, 0, 0, 0, 0, 0, Action.SCORING, ArmSend.MEDIUM)),

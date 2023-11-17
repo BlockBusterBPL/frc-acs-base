@@ -29,6 +29,7 @@ import frc.robot.subsystems.arm.ArmIOFalcons;
 import frc.robot.subsystems.arm.ArmIOSimV1;
 import frc.robot.subsystems.arm.GripperIO;
 import frc.robot.subsystems.arm.GripperIOFalcon;
+import frc.robot.subsystems.arm.Arm.GoalState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.FalconSwerveIO;
 import frc.robot.subsystems.drive.GyroIO;
@@ -59,10 +60,9 @@ public class RobotContainer {
 
     private final Trigger operatorSwitchGamepiece = operator.a();
     private final Trigger operatorManualStow = operator.x();
-    private final Trigger operatorAutoScore = operator.rightBumper();
-    private final Trigger operatorSelectLow = operator.povDown();
-    private final Trigger operatorSelectMid = operator.povRight();
-    private final Trigger operatorSelectHigh = operator.povUp();
+    private final Trigger operatorScoreLow = operator.povDown();
+    private final Trigger operatorScoreMid = operator.povRight();
+    private final Trigger operatorScoreHigh = operator.povUp();
     private final Trigger operatorIntakeGround = operator.leftTrigger(0.2);
     private final Trigger operatorIntakeShelf = operator.leftBumper();
 
@@ -200,21 +200,16 @@ public class RobotContainer {
 
         //Operator button bindings
         operatorSwitchGamepiece.onTrue(ArmCommandFactory.toggleGamepiece(arm));
-        operatorManualStow.onTrue(ArmCommandFactory.intakeRetract(arm));
-        // operatorAutoScore.onTrue();
-        // operatorSelectLow.onTrue();
-        // operatorSelectMid.onTrue();
-        // operatorSelectHigh.onTrue();
+        operatorManualStow.onTrue(ArmCommandFactory.retract(arm));
+        operatorScoreLow.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_CUBE_LOW, GoalState.SCORE_CONE_LOW, arm, drive));
+        operatorScoreMid.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_CUBE_MID, GoalState.SCORE_CONE_MID, arm, drive));
+        operatorScoreHigh.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_CUBE_HIGH, GoalState.SCORE_CONE_HIGH, arm, drive));
         operatorIntakeGround.onTrue(
             ArmCommandFactory.groundIntakeOpen(arm)
-            .andThen(ArmCommandFactory.waitForGamepieceThenRetract(arm))
+            .andThen(ArmCommandFactory.waitForIntakeThenRetract(arm))
         );
-        operatorIntakeGround.onFalse(ArmCommandFactory.intakeRetract(arm));
-
-        operatorIntakeShelf.onTrue(
-            ArmCommandFactory.shelfIntakeOpen(arm)
-            .andThen(ArmCommandFactory.waitForGamepieceThenRetract(arm))
-        );
+        operatorIntakeGround.onFalse(ArmCommandFactory.retract(arm));
+        operatorIntakeShelf.onTrue(ArmCommandFactory.autoIntakeShelf(arm, drive));
 
         // Operator override switches
     }

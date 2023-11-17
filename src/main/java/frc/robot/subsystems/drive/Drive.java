@@ -520,6 +520,10 @@ public class Drive extends SubsystemBase {
         }
     }
 
+    public boolean autoAlignAtTarget() {
+        return false; // TODO: detect if auto align is at target
+    }
+
     public boolean shouldRevertToDeltaIntegration() {
         return !gyroInputs.connected || ignoreGyro;
     }
