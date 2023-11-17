@@ -4,13 +4,10 @@
 
 package frc.robot.subsystems.localizer;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.MatBuilder;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -22,8 +19,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import frc.robot.lib.dashboard.Alert;
 import frc.robot.lib.dashboard.Alert.AlertType;
 import frc.robot.lib.util.VirtualSubsystem;
-import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.localizer.LocalizerIOInputsAutoLogged;
 
 /** Add your docs here. */
 public class Localizer extends VirtualSubsystem {

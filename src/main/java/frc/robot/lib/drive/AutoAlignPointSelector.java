@@ -9,7 +9,6 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.Constants;
-import frc.robot.lib.Utility;
 import frc.robot.lib.field.AprilTag;
 import frc.robot.lib.field.Field;
 
@@ -110,6 +109,8 @@ public class AutoAlignPointSelector {
                         break;
                     case RIGHT:
                         targetPose = Optional.of(closestTag.get().getFieldToTag().transformBy(new Transform2d(closestTag.get().getTagToRightAlign(), new Rotation2d())));
+                        break;
+                    default:
                         break;
                 }
                 targetPose = Optional.of(new Pose2d(targetPose.get().getTranslation(), Rotation2d.fromDegrees(180)));

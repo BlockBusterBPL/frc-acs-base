@@ -4,15 +4,10 @@
 
 package frc.robot.subsystems.drive;
 
-import com.ctre.phoenixpro.BaseStatusSignalValue;
 import com.ctre.phoenixpro.StatusSignalValue;
 import com.ctre.phoenixpro.configs.CANcoderConfiguration;
 import com.ctre.phoenixpro.configs.TalonFXConfiguration;
-import com.ctre.phoenixpro.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenixpro.controls.MotionMagicVoltage;
-import com.ctre.phoenixpro.controls.PositionTorqueCurrentFOC;
-import com.ctre.phoenixpro.controls.PositionVoltage;
-import com.ctre.phoenixpro.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenixpro.controls.VelocityVoltage;
 import com.ctre.phoenixpro.controls.VoltageOut;
 import com.ctre.phoenixpro.hardware.CANcoder;
@@ -22,9 +17,6 @@ import com.ctre.phoenixpro.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenixpro.signals.NeutralModeValue;
 import com.ctre.phoenixpro.signals.SensorDirectionValue;
 
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
 import frc.robot.Constants;
 import frc.robot.lib.phoenixpro.CANcoderLiveConfigHelper;
 import frc.robot.lib.phoenixpro.FalconFeedbackControlHelper;
@@ -61,9 +53,6 @@ public class FalconSwerveIO implements SwerveModuleIO {
     private StatusSignalValue<Double> m_steerAppliedCurrent;
     private StatusSignalValue<Double> m_steerSuppliedCurrent;
     private StatusSignalValue<Double> m_steerTempCelsius;
-
-    private SwerveModuleState m_state = new SwerveModuleState();
-    private SwerveModulePosition m_position = new SwerveModulePosition();
 
     public FalconSwerveIO(int moduleID, String canbus) {
         m_drive = new TalonFX(10 + moduleID, canbus);

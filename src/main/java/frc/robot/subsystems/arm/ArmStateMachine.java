@@ -37,7 +37,7 @@ public class ArmStateMachine {
         return mSystemState;
     }
 
-    public synchronized void setScoringOffset(double x) {mPlanner.setScoringOffset(x);}
+    // public synchronized void setScoringOffset(double x) {mPlanner.setScoringOffset(x);}
 
     public synchronized ArmState update(double timestamp, WantedAction wantedAction,
                                                      ArmState currentState) {

@@ -9,10 +9,8 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.SPI;
-import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Mode;
@@ -31,20 +29,15 @@ import frc.robot.subsystems.arm.ArmIOFalcons;
 import frc.robot.subsystems.arm.ArmIOSimV1;
 import frc.robot.subsystems.arm.GripperIO;
 import frc.robot.subsystems.arm.GripperIOFalcon;
-import frc.robot.subsystems.arm.GripperMiniNeoIO;
-import frc.robot.subsystems.arm.GripperMiniNeoSimIO;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.FalconSwerveIO;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroNavXIO;
 import frc.robot.subsystems.drive.SimSwerveIO;
-import frc.robot.subsystems.drive.SimSwerveIO;
 import frc.robot.subsystems.drive.SwerveModuleIO;
 import frc.robot.subsystems.leds.LED;
 import frc.robot.subsystems.localizer.Localizer;
 import frc.robot.subsystems.localizer.LocalizerIO;
-import frc.robot.subsystems.localizer.LocalizerIOLL3;
-import frc.robot.subsystems.localizer.LocalizerIOPhoton;
 
 public class RobotContainer {
     private Drive drive;
@@ -77,8 +70,8 @@ public class RobotContainer {
     private final OverrideSwitches overrides = new OverrideSwitches(5);
 
     private final Trigger driverResetAngle = overrides.driverSwitch(0).debounce(1, DebounceType.kRising); // Reset gyro angle to forwards
-    private final Trigger driverReseedPosition = overrides.driverSwitch(2).debounce(1, DebounceType.kRising); // Gather avereage position from vision and update
     private final Trigger driverGyroFail = overrides.driverSwitch(1); // Ingore sensor readings from gyro
+    private final Trigger driverReseedPosition = overrides.driverSwitch(2).debounce(1, DebounceType.kRising); // Gather avereage position from vision and update
     // private final Trigger powerStateOverride = overrides.driverSwitch(2); // drive subsystem ignore power states
     private final Trigger driverAssistFail = overrides.driverSwitch(3); // disable all drive assists
 
@@ -127,7 +120,7 @@ public class RobotContainer {
                             new SimSwerveIO(),
                             new SimSwerveIO(),
                             new SimSwerveIO());
-                    arm = new Arm(new ArmIOSimV1(), new GripperMiniNeoSimIO());
+                    arm = new Arm(new ArmIOSimV1(), new GripperIO() {}); // TODO: Gripper Sim
                     break;
                 default:
                     throw new IllegalStateException("Selected robot is not valid.");

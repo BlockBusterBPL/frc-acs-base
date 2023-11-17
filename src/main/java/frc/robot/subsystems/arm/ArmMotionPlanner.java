@@ -3,37 +3,37 @@ package frc.robot.subsystems.arm;
 import java.util.LinkedList;
 import java.util.Optional;
 
-import static frc.robot.Constants.ArmSubsystem.*;
+// import static frc.robot.Constants.ArmSubsystem.*;
 
 public class ArmMotionPlanner {
     private static final double kMinTiltForExtension = 0.1; // Minimum tilt to allow extension
     private static final double kMaxExtensionWhileStowed = 0.02; // Maximum extension to allow tilting below min tilt
-    private static final double kScoringWaitTime = 0.1; // how long to stay at scoring position
+    // private static final double kScoringWaitTime = 0.1; // how long to stay at scoring position
 
     protected LinkedList<ArmState> mIntermediateStateQueue = new LinkedList<>();
     private Optional<ArmState> mCurrentCommandedState = Optional.empty();
     private Optional<ArmState> mDesiredState = Optional.empty();
-    private double mStartedWaitingTimestamp = 0.0;
-    private double mScoringOffset = 0.0;
+    // private double mStartedWaitingTimestamp = 0.0;
+    // private double mScoringOffset = 0.0;
 
-    public synchronized void setScoringOffset(double x) {
-        mScoringOffset = x;
-    }
+    // public synchronized void setScoringOffset(double x) {
+    //     mScoringOffset = x;
+    // }
 
     public synchronized void setDesiredState(ArmState desiredState, ArmState currentState) {
-        Optional<ArmState> mLastDesiredState = mDesiredState;
+        // Optional<ArmState> mLastDesiredState = mDesiredState;
         mDesiredState = Optional.of(new ArmState(desiredState));
 
         // Everything beyond this is probably do-able; clear queue
         mIntermediateStateQueue.clear();
 
         // Which actions need conservative tolerances
-        boolean isConservative = mDesiredState.get().action == ArmState.Action.INTAKING
-                || mDesiredState.get().action == ArmState.Action.SCORING;
+        // boolean isConservative = mDesiredState.get().action == ArmState.Action.INTAKING
+                // || mDesiredState.get().action == ArmState.Action.SCORING;
 
-        double tiltAllowableError = (isConservative ? Tilt.kConservativeAllowableError : Tilt.kLiberalAllowableError);
-        double extendAllowableError = (isConservative ? Extend.kConservativeAllowableError : Extend.kLiberalAllowableError);
-        double wristAllowableError = (isConservative ? Wrist.kConservativeAllowableError : Wrist.kLiberalAllowableError);
+        // double tiltAllowableError = (isConservative ? Tilt.kConservativeAllowableError : Tilt.kLiberalAllowableError);
+        // double extendAllowableError = (isConservative ? Extend.kConservativeAllowableError : Extend.kLiberalAllowableError);
+        // double wristAllowableError = (isConservative ? Wrist.kConservativeAllowableError : Wrist.kLiberalAllowableError);
 
         // if current extension is above MEWS and current tilt is below MTFE, we are in an invalid state.
         // this should be corrected by tilting up to MTFE, then retracting to zero, then tilting to zero.

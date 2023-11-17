@@ -1,10 +1,6 @@
 package frc.robot.subsystems.arm;
 
-import java.util.Optional;
-
 import org.littletonrobotics.junction.AutoLog;
-
-import frc.robot.lib.TunablePID;
 
 public interface ArmIO {
     @AutoLog
@@ -57,12 +53,6 @@ public interface ArmIO {
     public default void setExtendFeedForward(double amps) {}
 
     public default void setWristFeedForward(double amps) {}
-
-    public default Optional<TunablePID> getTiltPID() {return Optional.empty();}
-
-    public default Optional<TunablePID> getExtendPID() {return Optional.empty();}
-
-    public default Optional<TunablePID> getWristPID() {return Optional.empty();}
 
     public default void tiltThrottle(double throttle) {}
 

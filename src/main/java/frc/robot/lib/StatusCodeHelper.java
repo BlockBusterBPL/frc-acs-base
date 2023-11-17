@@ -4,8 +4,6 @@
 
 package frc.robot.lib;
 
-import java.util.function.Supplier;
-
 import com.ctre.phoenixpro.StatusCode;
 
 import edu.wpi.first.wpilibj.DriverStation;

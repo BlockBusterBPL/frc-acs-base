@@ -4,8 +4,6 @@
 
 package frc.robot.lib.phoenixpro;
 
-import java.util.concurrent.TimeoutException;
-
 import com.ctre.phoenixpro.configs.MotionMagicConfigs;
 import com.ctre.phoenixpro.configs.Slot0Configs;
 import com.ctre.phoenixpro.configs.TalonFXConfigurator;
@@ -15,14 +13,12 @@ import com.ctre.phoenixpro.hardware.TalonFX;
 public class FalconFeedbackControlHelper {
     private static final double kTimeout = 0.1;
 
-    private final TalonFX m_motor;
     private final TalonFXConfigurator m_configurator;
 
     private final Slot0Configs m_pidConfigs;
     private final MotionMagicConfigs m_magicConfigs;
 
     public FalconFeedbackControlHelper(TalonFX motor, Slot0Configs defaultPID, MotionMagicConfigs defaultMagic) {
-        m_motor = motor;
         m_configurator = motor.getConfigurator();
 
         m_pidConfigs = new Slot0Configs();
@@ -41,7 +37,6 @@ public class FalconFeedbackControlHelper {
     }
 
     public FalconFeedbackControlHelper(TalonFX motor) {
-        m_motor = motor;
         m_configurator = motor.getConfigurator();
         
         m_pidConfigs = new Slot0Configs();

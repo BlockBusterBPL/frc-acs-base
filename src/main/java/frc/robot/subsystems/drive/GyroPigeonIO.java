@@ -12,7 +12,7 @@ import com.ctre.phoenixpro.hardware.Pigeon2;
 
 /** Add your docs here. */
 public class GyroPigeonIO implements GyroIO {
-    private final Pigeon2 gyro;
+    // private final Pigeon2 gyro;
     private final Pigeon2Configuration gyroConfig;
 
     private final StatusSignalValue<Double> yawSignal;
@@ -31,7 +31,7 @@ public class GyroPigeonIO implements GyroIO {
     private final ArrayList<StatusSignalValue<?>> statusSignals;
 
     public GyroPigeonIO(Pigeon2 gyro) {
-        this.gyro = gyro;
+        // this.gyro = gyro;
         gyroConfig = new Pigeon2Configuration();
         
         gyro.getConfigurator().apply(gyroConfig);
@@ -68,7 +68,7 @@ public class GyroPigeonIO implements GyroIO {
         statusSignals.forEach((v) -> v.refresh());
 
         inputs.calibrating = false; // pigeon2 does not report calibration status
-        inputs.connected = yawSignal.getError().isError();
+        inputs.connected = yawSignal.getError().isError(); // for our purposes, if the yaw is errored, we should probably ignore the readings
 
         inputs.yawAngleRotations = yawSignal.getValue() / 360.0;
         inputs.pitchAngleRotations = pitchSignal.getValue() / 360.0;

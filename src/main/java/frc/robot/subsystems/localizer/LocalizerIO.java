@@ -5,9 +5,6 @@
 package frc.robot.subsystems.localizer;
 
 import org.littletonrobotics.junction.AutoLog;
-import org.littletonrobotics.junction.inputs.LoggableInputs;
-import org.photonvision.PhotonCamera;
-import org.photonvision.PhotonPoseEstimator;
 
 /** Add your docs here. */
 public interface LocalizerIO {

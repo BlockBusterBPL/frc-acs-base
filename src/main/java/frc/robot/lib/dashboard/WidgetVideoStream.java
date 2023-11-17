@@ -12,15 +12,10 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
 /** A concretely typed wrapper class for video stream dashboard widgets. */
 public class WidgetVideoStream<T extends VideoSource> {
-    private final T stream;
-    private final WidgetConfig config;
 
     private static final Collection<WidgetVideoStream<?>> widgetsList = new ArrayList<>();
 
     public WidgetVideoStream(String tab, String title, T stream, WidgetConfig config) {
-        this.stream = stream;
-        this.config = config;
-
         if (config.getUseBuiltInWidgets()) {
             Shuffleboard.getTab(tab).add(title, stream)
                 .withPosition(config.getColumn(), config.getRow())

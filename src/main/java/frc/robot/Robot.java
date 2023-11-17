@@ -302,7 +302,6 @@ public class Robot extends LoggedRobot {
     public void disabledPeriodic() {
         if (RobotController.getBatteryVoltage() < lowBatteryVoltage
             && disabledTimer.hasElapsed(lowBatteryDisabledTime)) {
-            //TODO: Leds.getInstance().lowBatteryAlert = true;
             LED.setWantedAction(WantedAction.DISPLAY_BATTERY_LOW);
             lowBatteryAlert.set(true);
         } else {

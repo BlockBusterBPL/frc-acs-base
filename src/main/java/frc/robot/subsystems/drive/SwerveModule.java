@@ -7,18 +7,12 @@ package frc.robot.subsystems.drive;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 
-import static frc.robot.Constants.kDriveReduction;
-import static frc.robot.Constants.kSteerReduction;
-import static frc.robot.Constants.kDriveWheelDiameter;
-
 import frc.robot.Constants;
-import frc.robot.lib.util.LoggedTunableBoolean;
 import frc.robot.lib.util.LoggedTunableNumber;
 
 /** Add your docs here. */

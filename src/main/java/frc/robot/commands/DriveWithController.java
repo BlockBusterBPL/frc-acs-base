@@ -7,12 +7,7 @@ package frc.robot.commands;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.Constants;
@@ -96,7 +91,7 @@ public class DriveWithController extends CommandBase {
         }
 
         if (mSwerveHeadingController.getHeadingControllerState() != HeadingControllerState.OFF) {
-            controllerInputs.setRotation(mSwerveHeadingController.update(drive.getFieldOrientation().getZ())); //TODO: degrees
+            controllerInputs.setRotation(mSwerveHeadingController.update(Math.toDegrees(drive.getFieldOrientation().getZ())));
         }
 
         var speedsFromController = controllerInputs.getVelocityFieldOriented(

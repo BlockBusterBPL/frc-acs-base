@@ -21,9 +21,7 @@ public class SimSwerveIO implements SwerveModuleIO {
     private SimpleMotorFeedforward driveFF = new SimpleMotorFeedforward(0, 0.75);
     private PIDController steerPID = new PIDController(48, 0, 0);
 
-    private double turnRelativePosition = 0.0;
     private double turnAbsolutePosition = Math.random();
-    private double driveAppliedVolts = 0.0;
     private double turnAppliedVolts = 0.0;
 
     public SimSwerveIO() {
@@ -36,7 +34,6 @@ public class SimSwerveIO implements SwerveModuleIO {
         turnSim.update(Constants.loopPeriodSecs);
 
         double angleDiff = turnSim.getAngularVelocityRPM() / 60.0 * Constants.loopPeriodSecs;
-        turnRelativePosition += angleDiff;
         turnAbsolutePosition += angleDiff;
         while (turnAbsolutePosition < 0.0) {
             turnAbsolutePosition += 1.0;

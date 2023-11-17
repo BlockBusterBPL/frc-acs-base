@@ -5,7 +5,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.Constants;
 import frc.robot.RobotStateTracker;
 import frc.robot.lib.Utility;
-import frc.robot.lib.util.Util;
 
 /**
  * Controls overall swerve heading of the robot through motion profile.
@@ -15,7 +14,6 @@ import frc.robot.lib.util.Util;
 public class SwerveHeadingController {
     private static SwerveHeadingController mInstance;
     // private RobotState mRobotState = RobotState.getInstance();
-    private RobotStateTracker mPositionTracker = RobotStateTracker.getInstance();
 
     public static SwerveHeadingController getInstance() {
         if (mInstance == null) {
@@ -106,7 +104,7 @@ public class SwerveHeadingController {
         if (current_translational_velocity > kMaxTranlationalVelocity) {
             current_translational_velocity = kMaxTranlationalVelocity;
         }
-        double interp = (current_translational_velocity - kMinTranslationalVelocity) / kMaxTranlationalVelocity;
+        // double interp = (current_translational_velocity - kMinTranslationalVelocity) / kMaxTranlationalVelocity;
 
         switch (mHeadingControllerState) {
             case OFF:
@@ -122,7 +120,7 @@ public class SwerveHeadingController {
                 // mPIDFController.setOutputRange(-1.0, 1.0);
                 break;
             case POLAR_MAINTAIN:
-                //mPIDFController.setPID(Constants.kMaintainSwerveHeadingKp, Constants.kMaintainSwerveHeadingKi, Constants.kMaintainSwerveHeadingKd);
+                // mPIDFController.setPID(Constants.kMaintainSwerveHeadingKp, Constants.kMaintainSwerveHeadingKi, Constants.kMaintainSwerveHeadingKd);
                 break;
             case POLAR_SNAP:
                 mPIDFController.setPID(Constants.kSnapSwerveHeadingKp, Constants.kSnapSwerveHeadingKi, Constants.kSnapSwerveHeadingKd);

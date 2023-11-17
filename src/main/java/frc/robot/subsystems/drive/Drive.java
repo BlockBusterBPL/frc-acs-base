@@ -4,7 +4,6 @@
 
 package frc.robot.subsystems.drive;
 
-import java.lang.StackWalker.Option;
 import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
@@ -14,9 +13,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -34,7 +31,6 @@ import frc.robot.lib.Utility;
 import frc.robot.lib.dashboard.Alert;
 import frc.robot.lib.dashboard.Alert.AlertType;
 import frc.robot.lib.drive.AutoAlignMotionPlanner;
-import frc.robot.lib.drive.HeadingControlPlanner;
 import frc.robot.lib.drive.SwerveSetpoint;
 import frc.robot.lib.drive.SwerveSetpointGenerator;
 import frc.robot.lib.drive.SwerveSetpointGenerator.KinematicLimits;
@@ -64,8 +60,6 @@ public class Drive extends SubsystemBase {
 
     private DriveControlState mControlState = DriveControlState.VELOCITY_CONTROL;
     private boolean allowDriveAssists = true;
-    private boolean mUseHeadingController = false;
-    private HeadingControlPlanner mHeadingControlPlanner = new HeadingControlPlanner();
     private AutoAlignMotionPlanner mAutoAlignPlanner = new AutoAlignMotionPlanner();
     private Pose2d mTargetPoint = new Pose2d();
     private KinematicLimits mKinematicLimits = Constants.kUncappedKinematicLimits;
@@ -195,30 +189,20 @@ public class Drive extends SubsystemBase {
 
             SwerveModuleState[] setpointStates = new SwerveModuleState[4];
 
-            if (mControlState != DriveControlState.OPEN_LOOP && mControlState != DriveControlState.VELOCITY_CONTROL) {
-                mUseHeadingController = false;
-            }
-            if (!mUseHeadingController) {
-                // TODO: Reset heading controller
-                
-            }
-
             Optional<ChassisSpeeds> driveSetpointOverride = Optional.empty();
 
             switch (mControlState) {
                 case PATH_FOLLOWING:
                     setKinematicLimits(Constants.kFastKinematicLimits);
-                    // TODO: Update path follower
+                    driveSetpointOverride = updatePathFollower();
                     break;
                 case OPEN_LOOP:
                 case VELOCITY_CONTROL:
                     setKinematicLimits(Constants.kTeleopKinematicLimits);
-                    // TODO: (?) Update heading controller (this is currently done in the drive command)
                     break;
                 case AUTO_ALIGN:
                 case AUTO_ALIGN_Y_THETA:
                     setKinematicLimits(Constants.kUncappedKinematicLimits);
-                    // TODO: Update auto align
                     driveSetpointOverride = updateAutoAlign();
                     break;
                 case X_MODE:
@@ -359,8 +343,8 @@ public class Drive extends SubsystemBase {
                 mAutoAlignPlanner.reset();
                 mControlState = DriveControlState.AUTO_ALIGN;
             }
-            mAutoAlignPlanner.setTargetPoint(targetPoint);
             mTargetPoint = targetPoint;
+            mAutoAlignPlanner.setTargetPoint(mTargetPoint);
         }
     }
 
@@ -370,12 +354,17 @@ public class Drive extends SubsystemBase {
                 mAutoAlignPlanner.reset();
                 mControlState = DriveControlState.AUTO_ALIGN_Y_THETA;
             }
-            mAutoAlignPlanner.setTargetPoint(targetPoint);
+            mTargetPoint = targetPoint;
+            mAutoAlignPlanner.setTargetPoint(mTargetPoint);
         }
     }
 
     public void setSetpoint(ChassisSpeeds speeds) {
         setpoint = speeds;
+    }
+
+    public Pose2d getTargetPoint() {
+        return mTargetPoint;
     }
 
     public void reseedRotation() {
@@ -391,7 +380,7 @@ public class Drive extends SubsystemBase {
     }
 
     public Pose2d getPose() {
-        return lastRobotPose; // TODO
+        return lastRobotPose;
     }
 
     public Rotation3d getGyroAngle() {
