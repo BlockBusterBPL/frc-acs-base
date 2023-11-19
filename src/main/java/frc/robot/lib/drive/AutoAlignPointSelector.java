@@ -71,13 +71,21 @@ public class AutoAlignPointSelector {
             left = new Pose2d(left.getTranslation(), Rotation2d.fromDegrees(180));
             Pose2d right = tag.getFieldToTag().transformBy(new Transform2d(tag.getTagToRightAlign(), new Rotation2d()));
             right = new Pose2d(right.getTranslation(), Rotation2d.fromDegrees(180));
-            if (cone) {
-                return minimizeDistance(point, new Pose2d[]{left,right});
-            } else if (cube) {
-                return Optional.of(center);
+            if (cone && cube) {
+                return minimizeDistance(point, new Pose2d[]{left, center, right});
+            } else if (cone && !cube) {
+                return minimizeDistance(point, new Pose2d[]{left, right});
             } else {
-                return minimizeDistance(point, new Pose2d[]{left,center,right});
+                return Optional.of(center);
             }
+            
+            // if (cone) {
+            //     return minimizeDistance(point, new Pose2d[]{left,right});
+            // } else if (cube) {
+            //     return Optional.of(center);
+            // } else {
+            //     return minimizeDistance(point, new Pose2d[]{left,center,right});
+            // }
         } else {
             Pose2d left = tag.getFieldToTag().transformBy(new Transform2d(tag.getTagToLeftAlign(), new Rotation2d()));
             left = new Pose2d(left.getTranslation(), Rotation2d.fromDegrees(0));

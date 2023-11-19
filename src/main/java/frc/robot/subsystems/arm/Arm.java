@@ -21,6 +21,7 @@ import frc.robot.RobotStateTracker;
 import frc.robot.Robot;
 import frc.robot.Constants.Mode;
 import frc.robot.lib.drive.AutoAlignPointSelector;
+import frc.robot.lib.drive.AutoAlignPointSelector.RequestedAlignment;
 import frc.robot.lib.leds.LEDState;
 import frc.robot.lib.leds.TimedLEDState;
 import frc.robot.lib.util.TimeDelayedBoolean;
@@ -44,6 +45,7 @@ public class Arm extends SubsystemBase {
         INTAKE_CONE_SHELF(new ArmState(0.143, 0.78, 0.48, 0.02, 0.03, 0.05, Action.INTAKING, ArmSend.MEDIUM)),
         INTAKE_WAIT_SHELF(new ArmState(0.143, 0, 0.2, 0.02, 0.03, 0.05, Action.NEUTRAL, ArmSend.FULL)),
         SCORE_WAIT(new ArmState(0.12, 0, 0.12, 0.02, 0.03, 0.05, Action.NEUTRAL, ArmSend.FULL)),
+        SCORE_WAIT_LOW(new ArmState(0.08, 0, 0.12, 0.02, 0.03, 0.05, Action.NEUTRAL, ArmSend.FULL)),
         SCORE_CUBE_LOW(new ArmState(0.05, 0, 0, 0.02, 0.03, 0.05, Action.SCORING, ArmSend.FULL)),
         SCORE_CUBE_MID(new ArmState(0.12, 0.75, 0.16, 0.02, 0.03, 0.05, Action.SCORING, ArmSend.FULL)),
         SCORE_CUBE_HIGH(new ArmState(0.13, 1.1, 0.13, 0.02, 0.03, 0.05, Action.SCORING, ArmSend.MEDIUM)),
@@ -169,7 +171,8 @@ public class Arm extends SubsystemBase {
         commandedState = nextArmState;
         expectedState = commandedState;
         Logger.getInstance().recordOutput("Arm/GoalState/Name", goalState.name());
-        Logger.getInstance().recordOutput("Arm/GoalState/Action", goalState.state.action.name());
+        Logger.getInstance().recordOutput("Arm/CommandedState/Action", commandedState.action.name());
+        Logger.getInstance().recordOutput("Arm/RequestedAlignment", getRequestedAlignment().name());
 
         // set correct game object type
         gripperIO.setGameObject(gameObject);
@@ -178,27 +181,25 @@ public class Arm extends SubsystemBase {
         // interpret and execute action from next arm state
         double gripperCommandedOutput = 0;
 
-        if (mMotionPlanner.isFinished()) {
-            switch (goalState.state.action) {
-                case INTAKING:
-                    if (!isDoneIntaking()) {
-                        gripperCommandedOutput = -1;
-                    } else {
-                        gripperCommandedOutput = 0;
-                    }
-                    break;
-                case SCORING:
-                    if (atGoal() && !isDoneScoring()) {
-                        gripperCommandedOutput = 1;
-                    } else {
-                        gripperCommandedOutput = 0;
-                    }
-                    break;
-                case NEUTRAL:
-                default:
+        switch (commandedState.action) {
+            case INTAKING:
+                if (!isDoneIntaking()) {
+                    gripperCommandedOutput = -1;
+                } else {
                     gripperCommandedOutput = 0;
-                    break;
-            }
+                }
+                break;
+            case SCORING:
+                if (atGoal() && !isDoneScoring()) {
+                    gripperCommandedOutput = 1;
+                } else {
+                    gripperCommandedOutput = 0;
+                }
+                break;
+            case NEUTRAL:
+            default:
+                gripperCommandedOutput = 0;
+                break;
         }
 
         gripperIO.setMotor(gripperCommandedOutput);
@@ -244,7 +245,7 @@ public class Arm extends SubsystemBase {
     } 
 
     public boolean atGoal() {
-        return mMotionPlanner.isFinished();
+        return mMotionPlanner.isFinished() && measuredState.isInRange(commandedState);
     }
 
     public GoalState getGoalState() {
@@ -323,6 +324,21 @@ public class Arm extends SubsystemBase {
         }
     }
 
+    public RequestedAlignment getRequestedAlignment() {
+        boolean isCone = gameObjectIsCone();
+        boolean isScoreLow = getGoalState() == GoalState.SCORE_CONE_LOW || getGoalState() == GoalState.SCORE_CUBE_LOW || getGoalState() == GoalState.SCORE_WAIT_LOW;
+
+        if (isScoreLow) {
+            return RequestedAlignment.AUTO;
+        } else {
+            if (isCone) {
+                return RequestedAlignment.AUTO_CONE;
+            } else {
+                return RequestedAlignment.AUTO_CUBE;
+            }
+        }
+    }
+
     private synchronized Optional<TimedLEDState> handleLEDs(double timestamp) {
         Optional<TimedLEDState> signal = handleScoringAlignmentLEDs(timestamp);
         if (signal.isEmpty()) {
@@ -364,7 +380,7 @@ public class Arm extends SubsystemBase {
                 break;
         }
 
-        if (goalState == GoalState.SCORE_CONE_LOW || goalState == GoalState.SCORE_CUBE_LOW) {
+        if (goalState == GoalState.SCORE_CONE_LOW || goalState == GoalState.SCORE_CUBE_LOW || goalState == GoalState.SCORE_WAIT_LOW) {
             // if we aren't low scoring, we need to pick cones or cubes for alignment hinter
             alignmentType = AutoAlignPointSelector.RequestedAlignment.AUTO;
         }

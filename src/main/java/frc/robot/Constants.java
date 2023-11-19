@@ -224,6 +224,7 @@ public final class Constants {
     
     // Swerve Heading Controller
     public static final double kSwerveHeadingControllerErrorTolerance = 1.5; // degree error
+    public static final double kSwerveHeadingControllerMaintainThreshold = 25.0; // at what error will the heading controller switch from snap mode to maintain mode
 
     public static final double kSnapSwerveHeadingKp = 0.05;
     public static final double kSnapSwerveHeadingKi = 0.0;

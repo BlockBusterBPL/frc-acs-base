@@ -119,7 +119,7 @@ public class DriveWithController extends CommandBase {
 
         if (autoMaintain || shouldSnapClosestCardinal || shouldSnapOppositeCardinal) {
             mHeadingGoal.ifPresent(mSwerveHeadingController::setGoal);
-            if (mSwerveHeadingController.isAtGoal()) {
+            if (mSwerveHeadingController.getAbsError() <= Constants.kSwerveHeadingControllerMaintainThreshold) {
                 mSwerveHeadingController.setHeadingControllerState(HeadingControllerState.MAINTAIN);
             } else {
                 mSwerveHeadingController.setHeadingControllerState(HeadingControllerState.SNAP);

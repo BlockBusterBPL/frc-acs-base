@@ -72,7 +72,7 @@ public class RobotContainer {
     private final Trigger operatorScoreHigh = operator.povUp();
     private final Trigger operatorIntakeGround = operator.leftTrigger(0.2);
     private final Trigger operatorIntakeShelf = operator.leftBumper();
-    private final Trigger operatorResetMotionPlanner = operator.back();
+    private final Trigger operatorResetMotionPlanner = operator.back().debounce(1, DebounceType.kRising);
 
     // OVERRIDE SWITCHES
     private final OverrideSwitches overrides = new OverrideSwitches(5);
@@ -220,9 +220,9 @@ public class RobotContainer {
         //Operator button bindings
         operatorSwitchGamepiece.onTrue(ArmCommandFactory.toggleGamepiece(arm));
         operatorManualStow.onTrue(ArmCommandFactory.retract(arm));
-        operatorScoreLow.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_CUBE_LOW, GoalState.SCORE_CONE_LOW, arm, drive));
-        operatorScoreMid.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_CUBE_MID, GoalState.SCORE_CONE_MID, arm, drive));
-        operatorScoreHigh.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_CUBE_HIGH, GoalState.SCORE_CONE_HIGH, arm, drive));
+        operatorScoreLow.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_WAIT_LOW, GoalState.SCORE_CUBE_LOW, GoalState.SCORE_CONE_LOW, arm, drive));
+        operatorScoreMid.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_WAIT, GoalState.SCORE_CUBE_MID, GoalState.SCORE_CONE_MID, arm, drive));
+        operatorScoreHigh.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_WAIT, GoalState.SCORE_CUBE_HIGH, GoalState.SCORE_CONE_HIGH, arm, drive));
         operatorIntakeGround.onTrue(
             ArmCommandFactory.groundIntakeOpen(arm)
             .andThen(ArmCommandFactory.waitForIntakeThenRetract(arm))
