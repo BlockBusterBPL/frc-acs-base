@@ -2,6 +2,8 @@ package frc.robot.lib.leds;
 
 import com.ctre.phoenix.led.CANdle;
 
+import frc.robot.subsystems.leds.LEDIO;
+
 public class LEDState implements ILEDDisplayable {
     public static final LEDState kOff = new LEDState(0, 0, 0); //No Color
 
@@ -45,8 +47,8 @@ public class LEDState implements ILEDDisplayable {
     public int red;
 
     @Override
-    public void writePixels(CANdle candle) {
-        candle.setLEDs(this.red, this.green, this.blue);
+    public void writePixels(LEDIO ledIO) {
+        ledIO.setLEDs(this.red, this.green, this.blue);
     }
 
     @Override

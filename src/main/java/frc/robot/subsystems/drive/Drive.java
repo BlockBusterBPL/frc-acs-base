@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Robot;
+import frc.robot.RobotStateTracker;
 import frc.robot.Constants.Mode;
 import frc.robot.Constants.RobotType;
 import frc.robot.lib.Utility;
@@ -195,19 +196,24 @@ public class Drive extends SubsystemBase {
                 case PATH_FOLLOWING:
                     setKinematicLimits(Constants.kFastKinematicLimits);
                     driveSetpointOverride = updatePathFollower();
+                    Logger.getInstance().recordOutput("Drive/AutoAlign/LastPoseTarget", new Pose2d());
                     break;
                 case OPEN_LOOP:
                 case VELOCITY_CONTROL:
                     setKinematicLimits(Constants.kTeleopKinematicLimits);
+                    Logger.getInstance().recordOutput("Drive/AutoAlign/LastPoseTarget", new Pose2d());
                     break;
                 case AUTO_ALIGN:
                 case AUTO_ALIGN_Y_THETA:
                     setKinematicLimits(Constants.kUncappedKinematicLimits);
                     driveSetpointOverride = updateAutoAlign();
+                    Logger.getInstance().recordOutput("Drive/AutoAlign/LastPoseTarget", mTargetPoint);
                     break;
                 case X_MODE:
                     setKinematicLimits(Constants.kUncappedKinematicLimits);
+                    Logger.getInstance().recordOutput("Drive/AutoAlign/LastPoseTarget", new Pose2d());
                 default:
+                    Logger.getInstance().recordOutput("Drive/AutoAlign/LastPoseTarget", new Pose2d());
                     break;
             }
 
@@ -232,6 +238,12 @@ public class Drive extends SubsystemBase {
             for (int i = 0; i < 4; i++) {
                 optimizedStates[i] = modules[i].setStateClosedLoop(setpointStates[i]);
             }
+
+            RobotStateTracker.getInstance().setCurrentRobotPose(lastRobotPose);
+            RobotStateTracker.getInstance().setCurrentRobotPosition(lastRobotPose.getTranslation());
+            RobotStateTracker.getInstance().setCurrentRobotVelocity(measuredSpeeds);
+            RobotStateTracker.getInstance().setAutoAlignActive(mControlState == DriveControlState.AUTO_ALIGN || mControlState == DriveControlState.AUTO_ALIGN_Y_THETA);
+            RobotStateTracker.getInstance().setAutoAlignComplete(autoAlignAtTarget());
 
             // Log setpoint states
             Logger.getInstance().recordOutput("SwerveStates/Setpoints", setpointStates);
@@ -514,14 +526,15 @@ public class Drive extends SubsystemBase {
         ChassisSpeeds output = mAutoAlignPlanner.updateAutoAlign(now, position, velocity);
 
         if (output != null) {
-            return Optional.of(ChassisSpeeds.fromFieldRelativeSpeeds(output, position.getRotation()));
+            return Optional.of(output);
         } else {
             return Optional.empty();
         }
     }
 
     public boolean autoAlignAtTarget() {
-        return false; // TODO: detect if auto align is at target
+        return getPose().relativeTo(getTargetPoint()).getTranslation().getNorm() <= Constants.kLEDClosenessDeadbandMeters 
+            && (mControlState == DriveControlState.AUTO_ALIGN || mControlState == DriveControlState.AUTO_ALIGN_Y_THETA);
     }
 
     public boolean shouldRevertToDeltaIntegration() {

@@ -10,12 +10,12 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 /** Add your docs here. */
 public class RobotStateTracker {
-    private Translation2d mCurrentRobotPosition;
-    private ChassisSpeeds mCurrentRobotSpeed;
-    private Pose2d mCurrentRobotPose;
+    private Translation2d mCurrentRobotPosition = new Translation2d();
+    private ChassisSpeeds mCurrentRobotSpeed = new ChassisSpeeds();
+    private Pose2d mCurrentRobotPose = new Pose2d();
 
-    private boolean mAutoAlignActive;
-    private boolean mAutoAlignComplete;
+    private boolean mAutoAlignActive = false;
+    private boolean mAutoAlignComplete = false;
 
     public static final RobotStateTracker instance = new RobotStateTracker();
 
@@ -53,5 +53,17 @@ public class RobotStateTracker {
 
     public void setCurrentRobotVelocity(ChassisSpeeds speeds) {
         mCurrentRobotSpeed = speeds;
+    }
+
+    public void setCurrentRobotPose(Pose2d mCurrentRobotPose) {
+        this.mCurrentRobotPose = mCurrentRobotPose;
+    }
+
+    public void setAutoAlignActive(boolean mAutoAlignActive) {
+        this.mAutoAlignActive = mAutoAlignActive;
+    }
+
+    public void setAutoAlignComplete(boolean mAutoAlignComplete) {
+        this.mAutoAlignComplete = mAutoAlignComplete;
     }
 }

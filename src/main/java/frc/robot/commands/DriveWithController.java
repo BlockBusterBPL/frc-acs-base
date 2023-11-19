@@ -24,6 +24,11 @@ public class DriveWithController extends CommandBase {
     private final Supplier<ControllerDriveInputs> driveInputSupplier;
     private final Supplier<Boolean> slowModeSupplier;
     private final Supplier<Boolean> disableFieldOrient;
+    private final Supplier<Boolean> snapClosestCardinal;
+    private final Supplier<Boolean> snapOppositeCardinal;
+
+    private boolean snapOppositeFirstRun = true;
+    private double snapOppositeReferenceAngle = 0.0;
 
     private final TimeDelayedBoolean mShouldMaintainHeading = new TimeDelayedBoolean();
     private final SwerveHeadingController mSwerveHeadingController = SwerveHeadingController.getInstance();
@@ -49,7 +54,9 @@ public class DriveWithController extends CommandBase {
             Drive drive,
             Supplier<ControllerDriveInputs> driveInputSupplier,
             Supplier<Boolean> slowModeSupplier,
-            Supplier<Boolean> disableFieldOrient
+            Supplier<Boolean> disableFieldOrient,
+            Supplier<Boolean> snapClosestCardinal,
+            Supplier<Boolean> snapOppositeCardinal
         ) {
         addRequirements(drive);
 
@@ -57,6 +64,8 @@ public class DriveWithController extends CommandBase {
         this.driveInputSupplier = driveInputSupplier;
         this.slowModeSupplier = slowModeSupplier;
         this.disableFieldOrient = disableFieldOrient;
+        this.snapClosestCardinal = snapClosestCardinal;
+        this.snapOppositeCardinal = snapOppositeCardinal;
     }
 
     // Called when the command is initially scheduled.
@@ -72,8 +81,8 @@ public class DriveWithController extends CommandBase {
         var linearSpeedFactor = linearSpeedLimitChooser.getSelected();
         var angularSpeedFactor = angularSpeedLimitChooser.getSelected();
         if (slowModeSupplier.get()) {
-            linearSpeedFactor *= 0.25;
-            angularSpeedFactor *= 0.25;
+            linearSpeedFactor *= 0.375;
+            angularSpeedFactor *= 0.375;
         }
 
         var controllerInputs = driveInputSupplier.get()
@@ -82,16 +91,57 @@ public class DriveWithController extends CommandBase {
         boolean drive_turning = !Util.epsilonEquals(controllerInputs.getRotation(), 0);
         boolean drive_translating = Utility.getSpeedAsScalar(drive.getMeasuredSpeeds()) >= 0.1;
 
-        if (mShouldMaintainHeading.update(!drive_turning && drive_translating, 0.2)) {
-            mSwerveHeadingController.setHeadingControllerState(HeadingControllerState.MAINTAIN);
-            mHeadingGoal.ifPresent(mSwerveHeadingController::setGoal);
+        boolean shouldSnapClosestCardinal = snapClosestCardinal.get();
+        boolean shouldSnapOppositeCardinal = snapOppositeCardinal.get();
+        boolean autoMaintain = mShouldMaintainHeading.update(!drive_turning && drive_translating && !shouldSnapClosestCardinal && !shouldSnapOppositeCardinal, 0.2);
+
+        double robotAngleDegrees = drive.getPose().getRotation().getDegrees();
+
+        if (shouldSnapOppositeCardinal) {
+            if (snapOppositeFirstRun) {
+                snapOppositeReferenceAngle = robotAngleDegrees;
+                snapOppositeFirstRun = false;
+            }
+            double closestCardinal = getClosestCardinal(snapOppositeReferenceAngle);
+            double oppositeCardinal = (closestCardinal == 0.0 ? -180.0 : 0.0);
+            // System.out.println("closest cardinal: " + closestCardinal + " opposite cardinal: " + oppositeCardinal);
+            mHeadingGoal = Optional.of(oppositeCardinal);
         } else {
-            mSwerveHeadingController.setHeadingControllerState(HeadingControllerState.OFF);
-            mHeadingGoal = Optional.of(drive.getFieldOrientation().getZ());
+            snapOppositeFirstRun = true;
         }
 
+        if (shouldSnapClosestCardinal && !shouldSnapOppositeCardinal) {
+            double closestCardinal = getClosestCardinal(drive.getPose().getRotation().getDegrees());
+            mHeadingGoal = Optional.of(closestCardinal);
+        } else if (!autoMaintain && !shouldSnapOppositeCardinal) {
+            mHeadingGoal = Optional.of(drive.getPose().getRotation().getDegrees());
+        }
+
+        if (autoMaintain || shouldSnapClosestCardinal || shouldSnapOppositeCardinal) {
+            mHeadingGoal.ifPresent(mSwerveHeadingController::setGoal);
+            if (mSwerveHeadingController.isAtGoal()) {
+                mSwerveHeadingController.setHeadingControllerState(HeadingControllerState.MAINTAIN);
+            } else {
+                mSwerveHeadingController.setHeadingControllerState(HeadingControllerState.SNAP);
+            }
+        } else {
+            mSwerveHeadingController.setHeadingControllerState(HeadingControllerState.OFF);
+        }
+
+        // if (snapClosestCardinal.get()) {
+        //     double closestCardinalHeading = 0;
+        //     mSwerveHeadingController.setHeadingControllerState(HeadingControllerState.SNAP);
+        //     mSwerveHeadingController.setGoal(closestCardinalHeading);            
+        // } else if (mShouldMaintainHeading.update(!drive_turning && drive_translating, 0.2)) {
+        //     mSwerveHeadingController.setHeadingControllerState(HeadingControllerState.MAINTAIN);
+        //     mHeadingGoal.ifPresent(mSwerveHeadingController::setGoal);
+        // } else {
+        //     mSwerveHeadingController.setHeadingControllerState(HeadingControllerState.OFF);
+        //     mHeadingGoal = Optional.of(drive.getFieldOrientation().getZ());
+        // }
+
         if (mSwerveHeadingController.getHeadingControllerState() != HeadingControllerState.OFF) {
-            controllerInputs.setRotation(mSwerveHeadingController.update(Math.toDegrees(drive.getFieldOrientation().getZ())));
+            controllerInputs.setRotation(mSwerveHeadingController.update(drive.getPose().getRotation().getDegrees()));
         }
 
         var speedsFromController = controllerInputs.getVelocityFieldOriented(
@@ -114,5 +164,9 @@ public class DriveWithController extends CommandBase {
     @Override
     public boolean isFinished() {
         return false;
+    }
+
+    private double getClosestCardinal(double robotAngle) {
+        return Math.round(robotAngle/180.0) * 180;
     }
 }

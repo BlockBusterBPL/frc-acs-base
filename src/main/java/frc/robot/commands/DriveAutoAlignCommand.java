@@ -29,20 +29,16 @@ public class DriveAutoAlignCommand extends CommandBase {
 
     @Override
     public void initialize() {
-        
-    }
-
-    @Override
-    public void execute() {
         // get target point
         targetPoint = AutoAlignPointSelector.chooseTargetPoint(
             drive.getPose(), 
             arm.gameObjectIsCone() ? RequestedAlignment.AUTO_CONE : RequestedAlignment.AUTO_CUBE
         );
+    }
 
-        if (targetPoint.isPresent()) {
-            drive.setSnapYTheta(targetPoint.get());
-        }
+    @Override
+    public void execute() {
+        targetPoint.ifPresentOrElse(drive::setSnapYTheta, drive::stop);
     }
 
     @Override

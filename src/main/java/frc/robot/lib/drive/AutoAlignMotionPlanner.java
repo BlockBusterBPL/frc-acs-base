@@ -15,6 +15,8 @@ import frc.robot.lib.motion.ProfileFollower;
 
 import java.util.OptionalDouble;
 
+import org.littletonrobotics.junction.Logger;
+
 public class AutoAlignMotionPlanner {
 
     private ProfileFollower mXController = new ProfileFollower(2.5, 0.0, 0.0, 1.0, 0.0, 0.0);
@@ -55,8 +57,7 @@ public class AutoAlignMotionPlanner {
     }
 
     public synchronized ChassisSpeeds updateAutoAlign(double timestamp, Pose2d currentPose, Twist2d current_vel) {
-        var odom_to_target_point = poseTransformBy(poseInverse(currentPose), mFieldToTargetPoint);
-        // var odom_to_target_point = mFieldToTargetPoint.relativeTo(currentPose);
+        var odom_to_target_point = mFieldToTargetPoint;
 
         mXController.setGoalAndConstraints(
             new MotionProfileGoal(odom_to_target_point.getTranslation().getX(), 0, IMotionProfileGoal.CompletionBehavior.VIOLATE_MAX_ACCEL, 0.08, 0.05),

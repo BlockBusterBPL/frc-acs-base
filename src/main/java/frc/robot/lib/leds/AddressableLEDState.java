@@ -3,6 +3,7 @@ package frc.robot.lib.leds;
 import com.ctre.phoenix.led.CANdle;
 
 import frc.robot.Constants;
+import frc.robot.subsystems.leds.LEDIO;
 
 import java.util.Arrays;
 
@@ -51,7 +52,7 @@ public class AddressableLEDState implements ILEDDisplayable {
     }
 
     @Override
-    public void writePixels(CANdle candle) {
+    public void writePixels(LEDIO ledIO) {
         if (mPixels == null || mPixels.length == 0) {
             // do not write empty data
             return;
@@ -62,12 +63,12 @@ public class AddressableLEDState implements ILEDDisplayable {
         for (int i = 0; i < mPixels.length; i++) {
             if (mPixels[i] == null) mPixels[i] = LEDState.kOff;
             if (!run.equals(mPixels[i])) {
-                candle.setLEDs(run.red, run.green, run.blue, 255, runStart, (i-runStart));
+                ledIO.setLEDs(run.red, run.green, run.blue, 255, runStart, (i-runStart));
                 runStart = i;
                 run = mPixels[i];
             }
         }
-        candle.setLEDs(run.red, run.green, run.blue, 255, runStart, (mPixels.length-runStart));
+        ledIO.setLEDs(run.red, run.green, run.blue, 255, runStart, (mPixels.length-runStart));
     }
 
     public void copyFrom(AddressableLEDState other) {

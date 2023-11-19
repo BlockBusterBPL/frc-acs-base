@@ -45,23 +45,24 @@ public class ArmCommandFactory {
     }
 
     public static final Command shelfIntakeOpen(Arm arm, Drive drive) {
-        return new ConditionalCommand(
+        return 
+        // new ConditionalCommand(
+            // new ConditionalCommand(
+            //     new ArmSetGoalTillFinished(arm, GoalState.INTAKE_CONE_SHELF), 
+            //     new ArmSetGoalTillFinished(arm, GoalState.INTAKE_CUBE_SHELF), 
+            //     arm::gameObjectIsCone
+            // ), 
             new SequentialCommandGroup(
-                new ArmSetGoalTillFinished(arm, GoalState.INTAKE_WAIT_SHELF),
-                new WaitUntilCommand(drive::autoAlignAtTarget), // this should wait until we are close enough
+                // new ArmSetGoalTillFinished(arm, GoalState.INTAKE_WAIT_SHELF),
+                // new WaitUntilCommand(drive::autoAlignAtTarget), // this should wait until we are close enough
                 new ConditionalCommand(
                     new ArmSetGoalTillFinished(arm, GoalState.INTAKE_CONE_SHELF), 
                     new ArmSetGoalTillFinished(arm, GoalState.INTAKE_CUBE_SHELF), 
                     arm::gameObjectIsCone
                 )
-            ), 
-            new ConditionalCommand(
-                new ArmSetGoalTillFinished(arm, GoalState.INTAKE_CONE_SHELF), 
-                new ArmSetGoalTillFinished(arm, GoalState.INTAKE_CUBE_SHELF), 
-                arm::gameObjectIsCone
-            ), 
-            drive::autoAlignAtTarget // this should also check if we are close enough
-        );
+            );//, 
+            // drive::autoAlignAtTarget // this should also check if we are close enough
+        // );
     }
 
     public static final Command autoIntakeShelf(Arm arm, Drive drive) {

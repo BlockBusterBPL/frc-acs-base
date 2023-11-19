@@ -1,5 +1,7 @@
 package frc.robot.subsystems.leds;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix.led.CANdle;
 
 import edu.wpi.first.wpilibj.Timer;
@@ -28,7 +30,8 @@ public class LED extends SubsystemBase {
         OFF
     }
 
-    private CANdle candle;
+    private LEDIO ledIO;
+    private LEDIOInputsAutoLogged ledIOInputs;
 
     private SystemState mSystemState = SystemState.OFF;
     private static WantedAction mWantedAction = WantedAction.OFF;
@@ -39,8 +42,9 @@ public class LED extends SubsystemBase {
 
     private double mStateStartTime;
 
-    public LED() {
-        candle = new CANdle(8, "canivore");
+    public LED(LEDIO ledIO) {
+        this.ledIO = ledIO;
+        ledIOInputs = new LEDIOInputsAutoLogged();
 
         mStateStartTime = Timer.getFPGATimestamp();
     }
@@ -55,12 +59,17 @@ public class LED extends SubsystemBase {
 
     @Override
     public void periodic() {
+        ledIO.updateInputs(ledIOInputs);
+
         double timestamp = Timer.getFPGATimestamp();
         SystemState newState = getStateTransition();
         if (mSystemState != newState) {
             mSystemState = newState;
             mStateStartTime = timestamp;
         }
+
+        Logger.getInstance().recordOutput("LEDs/SystemState", mSystemState.name());
+
         double timeInState = timestamp - mStateStartTime;
         switch(mSystemState) {
             case DISPLAYING_BATTERY_LOW:
@@ -88,7 +97,7 @@ public class LED extends SubsystemBase {
                 break;
 
         }
-        mDesiredLEDState.writePixels(candle);
+        mDesiredLEDState.writePixels(ledIO);
     }
 
     private void setDeliveryLEDCommand(double timeInState) {

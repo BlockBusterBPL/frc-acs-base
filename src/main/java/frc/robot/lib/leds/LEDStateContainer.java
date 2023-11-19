@@ -2,6 +2,8 @@ package frc.robot.lib.leds;
 
 import com.ctre.phoenix.led.CANdle;
 
+import frc.robot.subsystems.leds.LEDIO;
+
 public class LEDStateContainer implements ILEDDisplayable {
     LEDState staticState;
     AddressableLEDState addressableState;
@@ -28,11 +30,11 @@ public class LEDStateContainer implements ILEDDisplayable {
     }
 
     @Override
-    public void writePixels(CANdle candle) {
+    public void writePixels(LEDIO ledIO) {
         if (inAddressableMode) {
-            this.addressableState.writePixels(candle);
+            this.addressableState.writePixels(ledIO);
         } else {
-            this.staticState.writePixels(candle);
+            this.staticState.writePixels(ledIO);
         }
     }
 }

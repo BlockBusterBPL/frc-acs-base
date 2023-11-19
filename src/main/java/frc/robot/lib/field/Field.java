@@ -26,9 +26,9 @@ public class Field {
         private static final Translation2d kTag3ToRightAlign = new Translation2d(0.77, -0.55);
         private static final Translation2d kTag3ToLeftAlign = new Translation2d(0.77, 0.55);
 
-        private static final Translation2d kTag5ToCenterAlign = new Translation2d(0.77, 0.0);
-        private static final Translation2d kTag5ToRightAlign = new Translation2d(0.77, -0.55);
-        private static final Translation2d kTag5ToLeftAlign = new Translation2d(0.77, 0.55);
+        private static final Translation2d kTag5ToCenterAlign = new Translation2d(-0.77, 0.0);
+        private static final Translation2d kTag5ToRightAlign = new Translation2d(-0.77, -0.55);
+        private static final Translation2d kTag5ToLeftAlign = new Translation2d(-0.77, 0.55);
         public static final AprilTag kAprilTag1 = new AprilTag(
                 1,
                 0.462534,
@@ -92,9 +92,9 @@ public class Field {
         private static final Translation2d kTag6ToRightAlign = new Translation2d(0.77, -0.55);
         private static final Translation2d kTag6ToLeftAlign = new Translation2d(0.77, 0.55);
 
-        private static final Translation2d kTag4ToCenterAlign = new Translation2d(0.77, 0.0);
-        private static final Translation2d kTag4ToRightAlign = new Translation2d(0.77, -0.55);
-        private static final Translation2d kTag4ToLeftAlign = new Translation2d(0.77, 0.55);
+        private static final Translation2d kTag4ToCenterAlign = new Translation2d(-0.77, 0.0);
+        private static final Translation2d kTag4ToRightAlign = new Translation2d(-0.77, -0.55);
+        private static final Translation2d kTag4ToLeftAlign = new Translation2d(-0.77, 0.55);
         public static final AprilTag kAprilTag8 = new AprilTag(
                 8,
                 0.462534,

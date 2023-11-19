@@ -24,9 +24,9 @@ public class ArmIOSimV1 implements ArmIO {
     private Timer wristTimer;
 
     public ArmIOSimV1() {
-        tiltConstraints = new Constraints(0.5, 1);
-        extendConstraints = new Constraints(0.5, 1);
-        wristConstraints = new Constraints(0.5, 1);
+        tiltConstraints = new Constraints(0.1875, 0.75);
+        extendConstraints = new Constraints(1.5, 4);
+        wristConstraints = new Constraints(1.75, 3);
 
         lastTiltState = new State();
         lastExtendState = new State();

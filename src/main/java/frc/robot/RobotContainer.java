@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Mode;
@@ -29,6 +30,7 @@ import frc.robot.subsystems.arm.ArmIOFalcons;
 import frc.robot.subsystems.arm.ArmIOSimV1;
 import frc.robot.subsystems.arm.GripperIO;
 import frc.robot.subsystems.arm.GripperIOFalcon;
+import frc.robot.subsystems.arm.GripperIOSim;
 import frc.robot.subsystems.arm.Arm.GoalState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.FalconSwerveIO;
@@ -37,6 +39,9 @@ import frc.robot.subsystems.drive.GyroNavXIO;
 import frc.robot.subsystems.drive.SimSwerveIO;
 import frc.robot.subsystems.drive.SwerveModuleIO;
 import frc.robot.subsystems.leds.LED;
+import frc.robot.subsystems.leds.LEDIO;
+import frc.robot.subsystems.leds.LEDIOCANdle;
+import frc.robot.subsystems.leds.LEDIOSim;
 import frc.robot.subsystems.localizer.Localizer;
 import frc.robot.subsystems.localizer.LocalizerIO;
 
@@ -53,7 +58,9 @@ public class RobotContainer {
     private final Trigger driverSlowMode = driver.leftBumper();
     private final Trigger driverXMode = driver.x();
     private final Trigger driverGyroReset = driver.back().debounce(1, DebounceType.kRising); // delay gyro reset for 1 second
-    private final Trigger driverAutoAlign = driver.rightTrigger(0.2);
+    private final Trigger driverAutoAlign = driver.a();
+    private final Trigger driverSnapClosestCardinal = driver.rightTrigger(0.2);
+    private final Trigger driverSnapOppositeCardinal = driver.leftTrigger(0.2);
 
     // OPERATOR CONTROLS
     private final CommandXboxController operator = new CommandXboxController(1);
@@ -65,15 +72,16 @@ public class RobotContainer {
     private final Trigger operatorScoreHigh = operator.povUp();
     private final Trigger operatorIntakeGround = operator.leftTrigger(0.2);
     private final Trigger operatorIntakeShelf = operator.leftBumper();
+    private final Trigger operatorResetMotionPlanner = operator.back();
 
     // OVERRIDE SWITCHES
     private final OverrideSwitches overrides = new OverrideSwitches(5);
 
-    private final Trigger driverResetAngle = overrides.driverSwitch(0).debounce(1, DebounceType.kRising); // Reset gyro angle to forwards
-    private final Trigger driverGyroFail = overrides.driverSwitch(1); // Ingore sensor readings from gyro
-    private final Trigger driverReseedPosition = overrides.driverSwitch(2).debounce(1, DebounceType.kRising); // Gather avereage position from vision and update
+    // private final Trigger driverResetAngle = overrides.driverSwitch(0).debounce(1, DebounceType.kRising); // Reset gyro angle to forwards
+    private final Trigger driverGyroFail = overrides.driverSwitch(0); // Ingore sensor readings from gyro
+    private final Trigger driverReseedPosition = overrides.driverSwitch(1).debounce(1, DebounceType.kRising); // Gather avereage position from vision and update
     // private final Trigger powerStateOverride = overrides.driverSwitch(2); // drive subsystem ignore power states
-    private final Trigger driverAssistFail = overrides.driverSwitch(3); // disable all drive assists
+    private final Trigger driverAssistFail = overrides.driverSwitch(2); // disable all drive assists
 
     private final Trigger armForceEnable = overrides.operatorSwitch(0); // bypass arm sanity checks and force manual control
     private final Trigger armCalibrateStart = overrides.operatorSwitch(1); // run the arm calibration sequence
@@ -100,7 +108,7 @@ public class RobotContainer {
                             new FalconSwerveIO(2, "canivore"),
                             new FalconSwerveIO(3, "canivore"));
                     arm = new Arm(new ArmIOFalcons(), new GripperIOFalcon());
-                    leds = new LED();
+                    leds = new LED(new LEDIOCANdle(8, "canivore"));
                     break;
                 case ROBOT_2023_CN1:
                     drive = new Drive(
@@ -110,7 +118,7 @@ public class RobotContainer {
                             new FalconSwerveIO(2, "canivore"), 
                             new FalconSwerveIO(3, "canivore"));
                     // arm = new Arm(new ArmIOSimV1(), new GripperMiniNeoSimIO()); // simulate arm on chassis bot
-                    leds = new LED();
+                    // leds =
                     // vision = new Localizer(new LocalizerIOLL3(), drive::addVisionPose);
                     break;
                 case ROBOT_SIMBOT:
@@ -120,7 +128,8 @@ public class RobotContainer {
                             new SimSwerveIO(),
                             new SimSwerveIO(),
                             new SimSwerveIO());
-                    arm = new Arm(new ArmIOSimV1(), new GripperIO() {}); // TODO: Gripper Sim
+                    arm = new Arm(new ArmIOSimV1(), new GripperIOSim());
+                    leds = new LED(new LEDIOSim(127));
                     break;
                 default:
                     throw new IllegalStateException("Selected robot is not valid.");
@@ -151,7 +160,9 @@ public class RobotContainer {
         }
 
         if (leds == null) {
-            leds = new LED();
+            leds = new LED(new LEDIO() {
+                
+            });
         }
 
         if (vision == null) {
@@ -179,7 +190,16 @@ public class RobotContainer {
     }
 
     private void setDefaultCommands() {
-        drive.setDefaultCommand(new DriveWithController(drive, this::getDriveInputs, driverSlowMode::getAsBoolean, driverAssistFail::getAsBoolean));
+        drive.setDefaultCommand(
+            new DriveWithController(
+                drive, 
+                this::getDriveInputs, 
+                driverSlowMode::getAsBoolean, 
+                driverAssistFail::getAsBoolean, 
+                driverSnapClosestCardinal::getAsBoolean,
+                driverSnapOppositeCardinal::getAsBoolean
+            )
+        );
     }
 
     private void configureBindings() {
@@ -191,7 +211,6 @@ public class RobotContainer {
         driverAutoAlign.whileTrue(new DriveAutoAlignCommand(drive, arm));
 
         // Driver override switches
-        driverResetAngle.onTrue(DriveUtilityCommandFactory.resetGyro(drive));
         driverReseedPosition.onTrue(DriveUtilityCommandFactory.reseedPosition(drive));
         driverGyroFail.onTrue(DriveUtilityCommandFactory.failGyro(drive));
         driverGyroFail.onFalse(DriveUtilityCommandFactory.unFailGyro(drive));
@@ -208,8 +227,11 @@ public class RobotContainer {
             ArmCommandFactory.groundIntakeOpen(arm)
             .andThen(ArmCommandFactory.waitForIntakeThenRetract(arm))
         );
-        operatorIntakeGround.onFalse(ArmCommandFactory.retract(arm));
+        // operatorIntakeGround.onFalse(ArmCommandFactory.retract(arm));
         operatorIntakeShelf.onTrue(ArmCommandFactory.autoIntakeShelf(arm, drive));
+
+        operatorResetMotionPlanner.onTrue(new InstantCommand(() -> arm.setResetMotionPlanner(true), arm));
+        operatorResetMotionPlanner.onFalse(new InstantCommand(() -> arm.setResetMotionPlanner(false), arm));
 
         // Operator override switches
     }
@@ -219,6 +241,6 @@ public class RobotContainer {
     }
 
     private ControllerDriveInputs getDriveInputs() {
-        return new ControllerDriveInputs(-driver.getLeftY(), driver.getLeftX(), driver.getRightX()).squareInputs().applyDeadZone(0.05, 0.05, 0.05, 0.08);
+        return new ControllerDriveInputs(-driver.getLeftY(), -driver.getLeftX(), -driver.getRightX()).applyDeadZone(0.05, 0.05, 0.05, 0.08).cubeInputs();
     }
 }

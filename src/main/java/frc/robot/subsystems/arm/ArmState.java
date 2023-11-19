@@ -37,6 +37,8 @@ public class ArmState {
         this.tiltTolerance = tiltTolerance;
         this.extendTolerance = extendTolerance;
         this.wristTolerance = wristTolerance;
+        this.action = action;
+        this.send = send;
     }
 
     public ArmState(ArmState other) {

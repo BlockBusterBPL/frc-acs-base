@@ -26,7 +26,7 @@ import com.ctre.phoenixpro.configs.MotionMagicConfigs;
 import com.ctre.phoenixpro.configs.Slot0Configs;
 
 public final class Constants {
-    private static final RobotType robot = RobotType.ROBOT_2023_CN1;
+    private static final RobotType robot = RobotType.ROBOT_SIMBOT;
     public static final double loopPeriodSecs = 0.02;
     public static final boolean tuningMode = true;
     
@@ -168,13 +168,13 @@ public final class Constants {
     
     public static final Translation2d[] kWheelPositions = {
         // Front left
-        new Translation2d(Constants.kDriveTrackwidthMeters / 2.0, -Constants.kDriveWheelbaseMeters / 2.0),
-        // Front right
         new Translation2d(Constants.kDriveTrackwidthMeters / 2.0, Constants.kDriveWheelbaseMeters / 2.0),
+        // Front right
+        new Translation2d(Constants.kDriveTrackwidthMeters / 2.0, -Constants.kDriveWheelbaseMeters / 2.0),
         // Back left
-        new Translation2d(-Constants.kDriveTrackwidthMeters / 2.0, -Constants.kDriveWheelbaseMeters / 2.0),
+        new Translation2d(-Constants.kDriveTrackwidthMeters / 2.0, Constants.kDriveWheelbaseMeters / 2.0),
         // Back right
-        new Translation2d(-Constants.kDriveTrackwidthMeters / 2.0, Constants.kDriveWheelbaseMeters / 2.0)
+        new Translation2d(-Constants.kDriveTrackwidthMeters / 2.0, -Constants.kDriveWheelbaseMeters / 2.0)
     };
     
     public static final SwerveDriveKinematics kKinematics = new SwerveDriveKinematics(
@@ -397,4 +397,6 @@ public final class Constants {
             System.exit(1);
         }
     }
+
+    public static final double kLEDClosenessDeadbandMeters = 0.03;
 }

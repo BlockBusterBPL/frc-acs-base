@@ -1,7 +1,7 @@
 package frc.robot.lib.leds;
 
-import com.ctre.phoenix.led.CANdle;
+import frc.robot.subsystems.leds.LEDIO;
 
 public interface ILEDDisplayable {
-    void writePixels(CANdle candle);
+    void writePixels(LEDIO ledio);
 }
