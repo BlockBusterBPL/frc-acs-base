@@ -97,11 +97,11 @@ public class Arm extends SubsystemBase {
     private final Mechanism2d targetMech = new Mechanism2d(1.75, 1.75);
     private final MechanismRoot2d targetRoot = targetMech.getRoot("Main Pivot", 0.25, 0.25);
     private final MechanismLigament2d targetElevator = targetRoot
-            .append(new MechanismLigament2d("Elevator", ARM_BASE_LENGTH, 0, 5, new Color8Bit(Color.kOrange)));
+            .append(new MechanismLigament2d("Elevator", ARM_BASE_LENGTH, 0, 5, new Color8Bit(Color.kLightGray)));
     private final MechanismLigament2d targetOffsetPlate = targetElevator
-            .append(new MechanismLigament2d("Offset Plate", 0.08, 270, 5, new Color8Bit(Color.kGray)));
+            .append(new MechanismLigament2d("Offset Plate", 0.08, 270, 5, new Color8Bit(Color.kLightGray)));
     private final MechanismLigament2d targetWrist = targetOffsetPlate
-            .append(new MechanismLigament2d("Wrist", Units.inchesToMeters(12), 100, 5, new Color8Bit(Color.kPurple)));
+            .append(new MechanismLigament2d("Wrist", Units.inchesToMeters(12), 100, 5, new Color8Bit(Color.kLightGray)));
 
     private ArmIO armIO;
     private ArmIOInputsAutoLogged armInputs;

@@ -104,7 +104,6 @@ public class DriveWithController extends CommandBase {
             }
             double closestCardinal = getClosestCardinal(snapOppositeReferenceAngle);
             double oppositeCardinal = (closestCardinal == 0.0 ? -180.0 : 0.0);
-            // System.out.println("closest cardinal: " + closestCardinal + " opposite cardinal: " + oppositeCardinal);
             mHeadingGoal = Optional.of(oppositeCardinal);
         } else {
             snapOppositeFirstRun = true;
@@ -127,18 +126,6 @@ public class DriveWithController extends CommandBase {
         } else {
             mSwerveHeadingController.setHeadingControllerState(HeadingControllerState.OFF);
         }
-
-        // if (snapClosestCardinal.get()) {
-        //     double closestCardinalHeading = 0;
-        //     mSwerveHeadingController.setHeadingControllerState(HeadingControllerState.SNAP);
-        //     mSwerveHeadingController.setGoal(closestCardinalHeading);            
-        // } else if (mShouldMaintainHeading.update(!drive_turning && drive_translating, 0.2)) {
-        //     mSwerveHeadingController.setHeadingControllerState(HeadingControllerState.MAINTAIN);
-        //     mHeadingGoal.ifPresent(mSwerveHeadingController::setGoal);
-        // } else {
-        //     mSwerveHeadingController.setHeadingControllerState(HeadingControllerState.OFF);
-        //     mHeadingGoal = Optional.of(drive.getFieldOrientation().getZ());
-        // }
 
         if (mSwerveHeadingController.getHeadingControllerState() != HeadingControllerState.OFF) {
             controllerInputs.setRotation(mSwerveHeadingController.update(drive.getPose().getRotation().getDegrees()));

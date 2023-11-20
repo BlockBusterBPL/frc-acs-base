@@ -6,8 +6,8 @@ import java.util.Optional;
 // import static frc.robot.Constants.ArmSubsystem.*;
 
 public class ArmMotionPlanner {
-    private static final double kMinTiltForExtension = -0.1; // Minimum tilt to allow extension
-    private static final double kMaxExtensionWhileStowed = Double.MAX_VALUE; // Maximum extension to allow tilting below min tilt
+    private static final double kMinTiltForExtension = 0.02; // Minimum tilt to allow extension
+    private static final double kMaxExtensionWhileStowed = 0.02; // Maximum extension to allow tilting below min tilt
     // private static final double kScoringWaitTime = 0.1; // how long to stay at scoring position
 
     protected LinkedList<ArmState> mIntermediateStateQueue = new LinkedList<>();

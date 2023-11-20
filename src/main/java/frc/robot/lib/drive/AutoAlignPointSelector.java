@@ -78,14 +78,6 @@ public class AutoAlignPointSelector {
             } else {
                 return Optional.of(center);
             }
-            
-            // if (cone) {
-            //     return minimizeDistance(point, new Pose2d[]{left,right});
-            // } else if (cube) {
-            //     return Optional.of(center);
-            // } else {
-            //     return minimizeDistance(point, new Pose2d[]{left,center,right});
-            // }
         } else {
             Pose2d left = tag.getFieldToTag().transformBy(new Transform2d(tag.getTagToLeftAlign(), new Rotation2d()));
             left = new Pose2d(left.getTranslation(), Rotation2d.fromDegrees(0));
