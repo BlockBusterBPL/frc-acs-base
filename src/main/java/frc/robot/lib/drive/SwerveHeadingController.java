@@ -65,6 +65,10 @@ public class SwerveHeadingController {
         return Math.abs(mPIDFController.getPositionError()) <= Constants.kSwerveHeadingControllerErrorTolerance;
     }
 
+    public double getAbsError() {
+        return Math.abs(mPIDFController.getPositionError());
+    }
+
     public double calculateAngleToOrigin(Pose2d current_pose) {
         // centerOfGoal = mRobotState.getFieldToGoal();
         centerOfGoal = new Pose2d();

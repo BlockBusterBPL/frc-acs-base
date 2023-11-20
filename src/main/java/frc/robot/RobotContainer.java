@@ -61,6 +61,7 @@ public class RobotContainer {
     private final Trigger driverAutoAlign = driver.a();
     private final Trigger driverSnapClosestCardinal = driver.rightTrigger(0.2);
     private final Trigger driverSnapOppositeCardinal = driver.leftTrigger(0.2);
+    private final Trigger driverTempDisableFieldOriented = driver.rightBumper();
 
     // OPERATOR CONTROLS
     private final CommandXboxController operator = new CommandXboxController(1);
@@ -72,7 +73,7 @@ public class RobotContainer {
     private final Trigger operatorScoreHigh = operator.povUp();
     private final Trigger operatorIntakeGround = operator.leftTrigger(0.2);
     private final Trigger operatorIntakeShelf = operator.leftBumper();
-    private final Trigger operatorResetMotionPlanner = operator.back();
+    private final Trigger operatorResetMotionPlanner = operator.back().debounce(1, DebounceType.kRising);
 
     // OVERRIDE SWITCHES
     private final OverrideSwitches overrides = new OverrideSwitches(5);
@@ -88,6 +89,9 @@ public class RobotContainer {
     private final Trigger overrideArmSafety = overrides.operatorSwitch(2); // run arm at full speed even off FMS
     private final Trigger overrideLedBrightness = overrides.operatorSwitch(3); // full led brightness when off FMS
     private final Trigger ledsIndicateFailed = overrides.operatorSwitch(4); // indicate arm failed on LEDS
+
+    // Virtual Triggers
+    private final Trigger driverNoFieldOriented = driverTempDisableFieldOriented.or(driverGyroFail);
 
     private final Alert driverDisconnected = new Alert("Driver controller disconnected (port 0).", AlertType.WARNING);
     private final Alert operatorDisconnected = new Alert("Operator controller disconnected (port 1).",
@@ -169,7 +173,7 @@ public class RobotContainer {
             vision = new Localizer(new LocalizerIO() {}, (v) -> {});
         }
 
-        dashboard = new Dashboard(robot, drive, arm, leds, vision);
+        dashboard = new Dashboard(robot, this, drive, arm, leds, vision);
 
         if (Constants.tuningMode) {
             new Alert("Tuning mode active! This should not be used in competition.", AlertType.INFO).set(true);
@@ -195,7 +199,7 @@ public class RobotContainer {
                 drive, 
                 this::getDriveInputs, 
                 driverSlowMode::getAsBoolean, 
-                driverAssistFail::getAsBoolean, 
+                driverNoFieldOriented::getAsBoolean, 
                 driverSnapClosestCardinal::getAsBoolean,
                 driverSnapOppositeCardinal::getAsBoolean
             )
@@ -220,9 +224,9 @@ public class RobotContainer {
         //Operator button bindings
         operatorSwitchGamepiece.onTrue(ArmCommandFactory.toggleGamepiece(arm));
         operatorManualStow.onTrue(ArmCommandFactory.retract(arm));
-        operatorScoreLow.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_CUBE_LOW, GoalState.SCORE_CONE_LOW, arm, drive));
-        operatorScoreMid.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_CUBE_MID, GoalState.SCORE_CONE_MID, arm, drive));
-        operatorScoreHigh.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_CUBE_HIGH, GoalState.SCORE_CONE_HIGH, arm, drive));
+        operatorScoreLow.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_WAIT_LOW, GoalState.SCORE_CUBE_LOW, GoalState.SCORE_CONE_LOW, arm, drive));
+        operatorScoreMid.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_WAIT, GoalState.SCORE_CUBE_MID, GoalState.SCORE_CONE_MID, arm, drive));
+        operatorScoreHigh.onTrue(ArmCommandFactory.autoScore(GoalState.SCORE_WAIT, GoalState.SCORE_CUBE_HIGH, GoalState.SCORE_CONE_HIGH, arm, drive));
         operatorIntakeGround.onTrue(
             ArmCommandFactory.groundIntakeOpen(arm)
             .andThen(ArmCommandFactory.waitForIntakeThenRetract(arm))

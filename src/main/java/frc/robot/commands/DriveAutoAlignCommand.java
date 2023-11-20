@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.lib.drive.AutoAlignPointSelector;
 import frc.robot.lib.drive.AutoAlignPointSelector.RequestedAlignment;
 import frc.robot.subsystems.arm.Arm;
+import frc.robot.subsystems.arm.Arm.GoalState;
 import frc.robot.subsystems.drive.Drive;
 
 /** Add your docs here. */
@@ -32,7 +33,7 @@ public class DriveAutoAlignCommand extends CommandBase {
         // get target point
         targetPoint = AutoAlignPointSelector.chooseTargetPoint(
             drive.getPose(), 
-            arm.gameObjectIsCone() ? RequestedAlignment.AUTO_CONE : RequestedAlignment.AUTO_CUBE
+            arm.getRequestedAlignment()
         );
     }
 

@@ -72,14 +72,14 @@ public class ArmCommandFactory {
         );
     }
 
-    public static final Command autoScore(GoalState goalState, Arm arm, Drive drive) {
+    public static final Command autoScore(GoalState waitState, GoalState goalState, Arm arm, Drive drive) {
         return new ConditionalCommand(
             new SequentialCommandGroup(
                 new ArmSetGoalTillFinished(arm, goalState),
                 waitForScoreThenRetract(arm)
             ), 
             new SequentialCommandGroup(
-                new ArmSetGoalTillFinished(arm, GoalState.SCORE_WAIT),
+                new ArmSetGoalTillFinished(arm, waitState),
                 new WaitUntilCommand(drive::autoAlignAtTarget),
                 new ArmSetGoalTillFinished(arm, goalState),
                 waitForScoreThenRetract(arm)
@@ -88,10 +88,10 @@ public class ArmCommandFactory {
         );
     }
 
-    public static final Command autoScore(GoalState stateIfCube, GoalState stateIfCone, Arm arm, Drive drive) {
+    public static final Command autoScore(GoalState waitState, GoalState stateIfCube, GoalState stateIfCone, Arm arm, Drive drive) {
         return new ConditionalCommand(
-            autoScore(stateIfCone, arm, drive), 
-            autoScore(stateIfCube, arm, drive), 
+            autoScore(waitState, stateIfCone, arm, drive), 
+            autoScore(waitState, stateIfCube, arm, drive), 
             arm::gameObjectIsCone
         );
     }

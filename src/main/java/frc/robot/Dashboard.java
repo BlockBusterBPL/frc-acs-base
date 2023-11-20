@@ -3,10 +3,12 @@ package frc.robot;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import frc.robot.commands.DriveWithController;
+import frc.robot.lib.dashboard.Alert;
 import frc.robot.lib.dashboard.SendableTriggerButton;
 import frc.robot.lib.dashboard.SupplierWidget;
 import frc.robot.lib.dashboard.WidgetConfig;
 import frc.robot.lib.dashboard.WidgetSendable;
+import frc.robot.lib.dashboard.Alert.SendableAlerts;
 import frc.robot.subsystems.arm.Arm;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.SwerveModule;
@@ -43,7 +45,28 @@ public class Dashboard {
     public final SupplierWidget<Double> drive_mod2_position;
     public final SupplierWidget<Double> drive_mod3_position;
 
-    public Dashboard(Robot robot, Drive drive, Arm arm, LED led, Localizer vision) {
+    // Setup Tab
+    public final String setupTabName = "Setup";
+    public final WidgetSendable<SendableAlerts> setup_alerts;
+//     public final SupplierWidget<Boolean> setup_redAlliance;
+//     public final SupplierWidget<Boolean> setup_blueAlliance;
+//     public final WidgetSendable<SendableChooser<String>> setup_autonMode; // TODO: replace this with the actual chooser type
+
+//     public final SupplierWidget<Boolean> setup_batteryOK;
+//     public final SupplierWidget<Boolean> setup_canOK;
+//     public final SupplierWidget<Boolean> setup_inputsOK;
+//     public final SupplierWidget<Boolean> setup_visionOK;
+//     public final WidgetSendable<SendableTriggerButton> setup_clearFaults;
+    
+//     public final SupplierWidget<Boolean> setup_driveOK;
+//     public final SupplierWidget<Boolean> setup_armOK;
+//     public final SupplierWidget<Boolean> setup_grabberOK;
+//     public final SupplierWidget<Boolean> setup_ledsOK;
+
+//     public final WidgetSendable<SendableTriggerButton> setup_scanForFaults;
+    
+
+    public Dashboard(Robot robot, RobotContainer container, Drive drive, Arm arm, LED led, Localizer vision) {
         // Drive Tab
         drive_linearSpeedChooser = new WidgetSendable<SendableChooser<Double>>(driveTabName, "Linear Speed Limit",
                 DriveWithController.linearSpeedLimitChooser,
@@ -99,5 +122,8 @@ public class Dashboard {
         drive_mod1_position = new SupplierWidget<Double>(driveTabName, "Position 1", 0.0, () -> drive.getLastEncoderPosition(1), new WidgetConfig(7, 2, 1, 1, BuiltInWidgets.kTextView));
         drive_mod2_position = new SupplierWidget<Double>(driveTabName, "Position 2", 0.0, () -> drive.getLastEncoderPosition(2), new WidgetConfig(8, 2, 1, 1, BuiltInWidgets.kTextView));
         drive_mod3_position = new SupplierWidget<Double>(driveTabName, "Position 3", 0.0, () -> drive.getLastEncoderPosition(3), new WidgetConfig(9, 2, 1, 1, BuiltInWidgets.kTextView));
+
+        // Setup Tab
+        setup_alerts = new WidgetSendable<Alert.SendableAlerts>(setupTabName, "Master Alerts", Alert.getDefaultAlertGroup(), new WidgetConfig(6, 0, 4, 4, "Alerts"));
     }
 }
