@@ -82,7 +82,7 @@ public class Dashboard {
                 vision.visionEnableChooser, new WidgetConfig(0, 2, 2, 1, BuiltInWidgets.kSplitButtonChooser));
 
         drive_allowEncoderCal = new WidgetSendable<SendableChooser<Boolean>>(driveTabName, "Encoder Updates",
-                drive.encoderUpdateChooser, new WidgetConfig(4, 0, 2, 1, BuiltInWidgets.kSplitButtonChooser));
+                drive.mEncoderUpdateChooser, new WidgetConfig(4, 0, 2, 1, BuiltInWidgets.kSplitButtonChooser));
 
         drive_saveEncoderOffsets = new WidgetSendable<SendableTriggerButton>(driveTabName, "Save Offsets",
                 new SendableTriggerButton("Save", () -> {

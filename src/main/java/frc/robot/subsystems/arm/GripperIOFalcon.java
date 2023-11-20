@@ -8,40 +8,40 @@ import frc.robot.lib.phoenixpro.TalonConfigHelper;
 import frc.robot.subsystems.arm.Arm.GameObjectType;
 
 public class GripperIOFalcon implements GripperIO {
-    private final TalonFX gripperMotor;
-    private final TalonFXConfiguration gripperConfig;
-    private final DutyCycleOut gripperControl;
+    private final TalonFX mGripperMotor;
+    private final TalonFXConfiguration mGripperConfig;
+    private final DutyCycleOut mGripperControl;
 
-    private boolean coneMode;
+    private boolean mConeMode;
 
     public GripperIOFalcon() {
-        gripperConfig = TalonConfigHelper.getBaseConfig();
-        gripperConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        gripperConfig.CurrentLimits.StatorCurrentLimit = 40;
-        gripperConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        gripperConfig.CurrentLimits.SupplyCurrentLimit = 20;
+        mGripperConfig = TalonConfigHelper.getBaseConfig();
+        mGripperConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        mGripperConfig.CurrentLimits.StatorCurrentLimit = 40;
+        mGripperConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        mGripperConfig.CurrentLimits.SupplyCurrentLimit = 20;
 
-        gripperMotor = new TalonFX(40, "canivore");
-        gripperMotor.getConfigurator().apply(gripperConfig);
+        mGripperMotor = new TalonFX(40, "canivore");
+        mGripperMotor.getConfigurator().apply(mGripperConfig);
 
-        gripperControl = new DutyCycleOut(0, true, false);
+        mGripperControl = new DutyCycleOut(0, true, false);
 
-        coneMode = false;
+        mConeMode = false;
     }
 
     @Override
     public void updateOutputs() {
-        gripperMotor.setControl(gripperControl);
+        mGripperMotor.setControl(mGripperControl);
     }
 
     @Override
     public void setGameObject(GameObjectType object) {
-        this.coneMode = (object == GameObjectType.CONE);
+        mConeMode = (object == GameObjectType.CONE);
     }
 
     @Override
     public void setMotor(double throttle) {
-        throttle *= (coneMode ? -1.0 : 1.0);
-        gripperControl.Output = throttle;
+        throttle *= (mConeMode ? -1.0 : 1.0);
+        mGripperControl.Output = throttle;
     }
 }

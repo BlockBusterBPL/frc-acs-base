@@ -12,13 +12,11 @@ public interface SwerveModuleIO {
     public static class SwerveModuleIOInputs {
         public double driveMeters = 0.0;
         public double driveVelocityMetersPerSec = 0.0;
-        public double driveAppliedCurrentAmps = 0.0;
         public double driveSuppliedCurrentAmps = 0.0;
         public double driveTempCelsius = 0.0;
 
         public double steerPositionRotations = 0.0;
         public double steerVelocityRotPerSec = 0.0;
-        public double steerAppliedCurrentAmps = 0.0;
         public double steerSuppliedCurrentAmps = 0.0;
         public double steerTempCelsius = 0.0;
 
@@ -31,13 +29,15 @@ public interface SwerveModuleIO {
 
     public default void setDriveSpeedClosedLoop(double speedMetersPerSecond) {}
     
-    public default void setDriveSpeedOpenLoop(double speedMetersPerSecond) {}
+    public default void setDriveThrottleOpenLoop(double throttle) {}
+
+    public default void setDriveUseOpenLoop(boolean enabledThrottle) {}
 
     public default void setSteerPositionTarget(double steerAngleRotations) {}
 
-    public default void setSteerVoltageManual(double steerVoltage) {}
+    public default void setSteerVoltageOpenLoop(double steerVoltage) {}
     
-    public default void setSteerVoltageEnabled(boolean enableManualVoltage) {}
+    public default void setSteerUseOpenLoop(boolean enableManualVoltage) {}
 
     public default void setDriveBrakeMode(boolean driveBrakeMode) {}
 

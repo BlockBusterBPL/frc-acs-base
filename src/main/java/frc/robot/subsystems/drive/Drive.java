@@ -39,9 +39,9 @@ import frc.robot.subsystems.localizer.VisionPose;
 
 /** Add your docs here. */
 public class Drive extends SubsystemBase {
-    private static final double coastThresholdMetersPerSec = 0.05; // Need to be under this to switch to coast when
+    private static final double kCoastThresholdMetersPerSec = 0.05; // Need to be under this to switch to coast when
                                                                    // disabling
-    private static final double coastThresholdSecs = 6.0; // Need to be under the above speed for this length of time to
+    private static final double kCoastThresholdSecs = 6.0; // Need to be under the above speed for this length of time to
                                                           // switch to coast
 
     public enum DriveControlState {
@@ -60,126 +60,126 @@ public class Drive extends SubsystemBase {
     }
 
     private DriveControlState mControlState = DriveControlState.VELOCITY_CONTROL;
-    private boolean allowDriveAssists = true;
+    private boolean mAllowDriveAssists = true;
     private AutoAlignMotionPlanner mAutoAlignPlanner = new AutoAlignMotionPlanner();
     private Pose2d mTargetPoint = new Pose2d();
     private KinematicLimits mKinematicLimits = Constants.kUncappedKinematicLimits;
 
-    public static final SwerveModuleState[] X_MODE_STATES = {
+    public static final SwerveModuleState[] kXModeStates = {
         new SwerveModuleState(0, Rotation2d.fromRotations(-0.125)),
         new SwerveModuleState(0, Rotation2d.fromRotations(0.125)),
         new SwerveModuleState(0, Rotation2d.fromRotations(0.125)),
         new SwerveModuleState(0, Rotation2d.fromRotations(-0.125))
     };
 
-    private GyroIO gyroIO;
-    private GyroIOInputsAutoLogged gyroInputs;
-    private boolean ignoreGyro = false;
+    private GyroIO mGyroIO;
+    private GyroIOInputsAutoLogged mGyroInputs;
+    private boolean mIgnoreGyro = false;
 
-    private final Alert alertGyroNotConnected = new Alert(
+    private final Alert mAlertGyroNotConnected = new Alert(
             "Gyro not connected! " + (Constants.getRobot() == RobotType.ROBOT_SIMBOT ? "This warning is expected when using the SimBot." : ""),
             AlertType.ERROR);
 
-    private final Alert alertGyroManualFail = new Alert(
+    private final Alert mAlertGyroManualFail = new Alert(
             "Gyro inputs manually ignored by driver.", 
             AlertType.WARNING);
 
-    private final Alert alertUsingDeltaIntegration = new Alert(
+    private final Alert mAlertUsingDeltaIntegration = new Alert(
             "Pose angle reverted to wheel delta integration mode, please monitor robot pose. Using autonomous is NOT RECCOMENDED!",
             AlertType.ERROR);
 
-    private final Alert alertCoastModeEnabled = new Alert(
+    private final Alert mAlertCoastModeEnabled = new Alert(
             "Swerve Drive Coast Mode Enabled.",
             AlertType.INFO);
 
-    private final Alert alertSteerNeutralMode = new Alert(
+    private final Alert mAlertSteerNeutralMode = new Alert(
             "Swerve Steering Neutral Mode Enabled! Performance may be reduced, as driving in this mode is not intended.",
             AlertType.WARNING);
     
-    private final Alert alertOffsetsNotSafe = new Alert(
+    private final Alert mAlertOffsetsNotSafe = new Alert(
             "Swerve offset safety not enabled! Module offsets could be updated by accident", 
             AlertType.WARNING);
 
-    private final SwerveModule[] modules;
+    private final SwerveModule[] mModules;
     private final int kFrontLeftID = 0;
     private final int kFrontRightID = 1;
     private final int kRearLeftID = 2;
     private final int kRearRightID = 3;
 
-    SwerveDriveKinematics kinematics = new SwerveDriveKinematics(Constants.kWheelPositions);
-    SwerveSetpointGenerator generator = new SwerveSetpointGenerator(kinematics);
+    SwerveDriveKinematics mKinematics = new SwerveDriveKinematics(Constants.kWheelPositions);
+    SwerveSetpointGenerator mGenerator = new SwerveSetpointGenerator(mKinematics);
 
-    private ChassisSpeeds setpoint = new ChassisSpeeds();
-    private ChassisSpeeds measuredSpeeds = new ChassisSpeeds();
+    private ChassisSpeeds mSetpoint = new ChassisSpeeds();
+    private ChassisSpeeds mMeasuredSpeeds = new ChassisSpeeds();
 
-    private SwerveSetpoint lastSetpoint = SwerveSetpoint.FOUR_WHEEL_IDENTITY;
+    private SwerveSetpoint mLastSetpoint = SwerveSetpoint.FOUR_WHEEL_IDENTITY;
 
-    private boolean isBrakeMode = false;
-    private Timer lastMovementTimer = new Timer();
+    private boolean mIsBrakeMode = false;
+    private Timer mLastMovementTimer = new Timer();
 
-    private double[] lastModulePositionsMeters = new double[] { 0.0, 0.0, 0.0, 0.0 };
-    private SwerveModulePosition[] lastSwervePositions = new SwerveModulePosition[] {
+    private double[] mLastModuleDistancesMeters = new double[] { 0.0, 0.0, 0.0, 0.0 };
+    private SwerveModulePosition[] mLastSwervePositions = new SwerveModulePosition[] {
             new SwerveModulePosition(),
             new SwerveModulePosition(),
             new SwerveModulePosition(),
             new SwerveModulePosition()
     };
-    private Rotation2d lastGyroYaw = new Rotation2d();
-    private Pose2d lastRobotPose = new Pose2d();
-    private Rotation3d robotRotation3d = new Rotation3d();
+    private Rotation2d mLastGyroYaw = new Rotation2d();
+    private Pose2d mLastRobotPose = new Pose2d();
+    private Rotation3d mLastRotation3d = new Rotation3d();
 
-    private SwerveDrivePoseEstimator odometry;
+    private SwerveDrivePoseEstimator mPoseEstimator;
 
-    private Rotation2d autonTarget;
+    private Rotation2d mAutonRotationTarget;
 
-    private boolean allowUpdateEncoders = false;
+    private boolean mAllowUpdateEncoders = false;
 
-    public SendableChooser<Boolean> encoderUpdateChooser = new SendableChooser<>();
-    private double[] encoderOffsetCache;
+    public SendableChooser<Boolean> mEncoderUpdateChooser = new SendableChooser<>();
+    private double[] mEncoderOffsetCache;
 
     public Drive(GyroIO gyroIO, SwerveModuleIO frontLeftIO, SwerveModuleIO frontRightIO, SwerveModuleIO rearLeftIO,
             SwerveModuleIO rearRightIO) {
-        this.gyroIO = gyroIO;
-        this.gyroInputs = new GyroIOInputsAutoLogged();
-        modules = new SwerveModule[4];
+        mGyroIO = gyroIO;
+        mGyroInputs = new GyroIOInputsAutoLogged();
+        mModules = new SwerveModule[4];
 
-        modules[kFrontLeftID] = new SwerveModule(frontLeftIO, kFrontLeftID);
-        modules[kFrontRightID] = new SwerveModule(frontRightIO, kFrontRightID);
-        modules[kRearLeftID] = new SwerveModule(rearLeftIO, kRearLeftID);
-        modules[kRearRightID] = new SwerveModule(rearRightIO, kRearRightID);
+        mModules[kFrontLeftID] = new SwerveModule(frontLeftIO, kFrontLeftID);
+        mModules[kFrontRightID] = new SwerveModule(frontRightIO, kFrontRightID);
+        mModules[kRearLeftID] = new SwerveModule(rearLeftIO, kRearLeftID);
+        mModules[kRearRightID] = new SwerveModule(rearRightIO, kRearRightID);
 
-        odometry = new SwerveDrivePoseEstimator(kinematics, lastGyroYaw, lastSwervePositions, getPose());
+        mPoseEstimator = new SwerveDrivePoseEstimator(mKinematics, mLastGyroYaw, mLastSwervePositions, getPose());
 
-        autonTarget = new Rotation2d();
+        mAutonRotationTarget = new Rotation2d();
 
-        encoderUpdateChooser.setDefaultOption("Disabled (Safe)", false);
-        encoderUpdateChooser.addOption("ENABLED (UNSAFE)", true);
-        encoderOffsetCache = new double[4];
+        mEncoderUpdateChooser.setDefaultOption("Disabled (Safe)", false);
+        mEncoderUpdateChooser.addOption("ENABLED (UNSAFE)", true);
+        mEncoderOffsetCache = new double[4];
 
-        lastMovementTimer.reset();
+        mLastMovementTimer.reset();
     }
 
     @Override
     public void periodic() {
         // Update subsystem inputs - this should always be the first thing in periodic()
-        gyroIO.updateInputs(gyroInputs);
-        Logger.getInstance().processInputs("Drive/Gyro", gyroInputs);
+        mGyroIO.updateInputs(mGyroInputs);
+        Logger.getInstance().processInputs("Drive/Gyro", mGyroInputs);
 
-        for (SwerveModule swerveModule : modules) {
+        for (SwerveModule swerveModule : mModules) {
             swerveModule.periodic();
         }
 
         // Update battery simulation in sim mode
         if (Constants.getMode() == Mode.SIM) {
             double simCurrent = 0.0;
-            for (SwerveModule module : modules) {
+            for (SwerveModule module : mModules) {
                 simCurrent += module.getTotalCurrent();
             }
             Robot.updateSimCurrentDraw(this.getClass().getName(), simCurrent);
         }
 
         if (DriverStation.isDisabled()) {
-            for (var module : modules) {
+            for (var module : mModules) {
                 module.stop();
             }
             // Make sure to clear reported swerve setpoints
@@ -217,18 +217,18 @@ public class Drive extends SubsystemBase {
                     break;
             }
 
-            if (driveSetpointOverride.isPresent() && allowDriveAssists) {
+            if (driveSetpointOverride.isPresent() && mAllowDriveAssists) {
                 setSetpoint(driveSetpointOverride.get());
             }
 
             if (mControlState == DriveControlState.X_MODE) {
-                SwerveSetpoint generatedSetpoint = generator.generateSetpointForXMode(mKinematicLimits, lastSetpoint, Constants.loopPeriodSecs);
-                lastSetpoint = generatedSetpoint;
+                SwerveSetpoint generatedSetpoint = mGenerator.generateSetpointForXMode(mKinematicLimits, mLastSetpoint, Constants.loopPeriodSecs);
+                mLastSetpoint = generatedSetpoint;
                 setpointStates = generatedSetpoint.mModuleStates;
             } else {
-                SwerveSetpoint generatedSetpoint = generator.generateSetpoint(mKinematicLimits, lastSetpoint,
-                    setpoint, Constants.loopPeriodSecs);
-                lastSetpoint = generatedSetpoint;
+                SwerveSetpoint generatedSetpoint = mGenerator.generateSetpoint(mKinematicLimits, mLastSetpoint,
+                    mSetpoint, Constants.loopPeriodSecs);
+                mLastSetpoint = generatedSetpoint;
                 setpointStates = generatedSetpoint.mModuleStates;
             }
             
@@ -236,12 +236,12 @@ public class Drive extends SubsystemBase {
             // Send setpoints to modules
             SwerveModuleState[] optimizedStates = new SwerveModuleState[4];
             for (int i = 0; i < 4; i++) {
-                optimizedStates[i] = modules[i].setStateClosedLoop(setpointStates[i]);
+                optimizedStates[i] = mModules[i].setStateClosedLoop(setpointStates[i]);
             }
 
-            RobotStateTracker.getInstance().setCurrentRobotPose(lastRobotPose);
-            RobotStateTracker.getInstance().setCurrentRobotPosition(lastRobotPose.getTranslation());
-            RobotStateTracker.getInstance().setCurrentRobotVelocity(measuredSpeeds);
+            RobotStateTracker.getInstance().setCurrentRobotPose(mLastRobotPose);
+            RobotStateTracker.getInstance().setCurrentRobotPosition(mLastRobotPose.getTranslation());
+            RobotStateTracker.getInstance().setCurrentRobotVelocity(mMeasuredSpeeds);
             RobotStateTracker.getInstance().setAutoAlignActive(mControlState == DriveControlState.AUTO_ALIGN || mControlState == DriveControlState.AUTO_ALIGN_Y_THETA);
             RobotStateTracker.getInstance().setAutoAlignComplete(autoAlignAtTarget());
 
@@ -253,100 +253,100 @@ public class Drive extends SubsystemBase {
         // Log measured states
         SwerveModuleState[] measuredStates = new SwerveModuleState[4];
         for (int i = 0; i < 4; i++) {
-            measuredStates[i] = modules[i].getState();
+            measuredStates[i] = mModules[i].getState();
         }
         Logger.getInstance().recordOutput("SwerveStates/Measured", measuredStates);
 
         SwerveModulePosition[] wheelDeltas = new SwerveModulePosition[4];
         for (int i = 0; i < 4; i++) {
             wheelDeltas[i] = new SwerveModulePosition(
-                    (modules[i].getDistance() - lastModulePositionsMeters[i]),
-                    modules[i].getAngle());
-            lastModulePositionsMeters[i] = modules[i].getDistance();
+                    (mModules[i].getDistance() - mLastModuleDistancesMeters[i]),
+                    mModules[i].getAngle());
+            mLastModuleDistancesMeters[i] = mModules[i].getDistance();
         }
 
         // Calculate robot velocity from measured chassis speeds
-        var inverseSpeeds = kinematics.toChassisSpeeds(measuredStates);
-        measuredSpeeds = inverseSpeeds;
+        var inverseSpeeds = mKinematics.toChassisSpeeds(measuredStates);
+        mMeasuredSpeeds = inverseSpeeds;
 
         // Update gyro angle
         if (!shouldRevertToDeltaIntegration()) {
-            lastGyroYaw = Rotation2d.fromRotations(gyroInputs.yawAngleRotations);
+            mLastGyroYaw = Rotation2d.fromRotations(mGyroInputs.yawAngleRotations);
         } else {
             // estimate rotation angle from wheel deltas when gyro is not connected
-            lastGyroYaw = lastGyroYaw
+            mLastGyroYaw = mLastGyroYaw
                     .plus(new Rotation2d(inverseSpeeds.omegaRadiansPerSecond).times(Constants.loopPeriodSecs));
         }
 
-        for (int i = 0; i < modules.length; i++) {
-            lastSwervePositions[i] = modules[i].getPosition();
+        for (int i = 0; i < mModules.length; i++) {
+            mLastSwervePositions[i] = mModules[i].getPosition();
         }
 
         // Update odometry
-        lastRobotPose = odometry.update(lastGyroYaw, lastSwervePositions);
+        mLastRobotPose = mPoseEstimator.update(mLastGyroYaw, mLastSwervePositions);
 
         // poseEstimator.addDriveData(Timer.getFPGATimestamp(), twist);
         Logger.getInstance().recordOutput("Odometry/Robot", getPose());
 
         // Log 3D odometry pose
         var robotTranslation3d = new Translation3d(
-                lastRobotPose.getX(),
-                lastRobotPose.getY(),
+                mLastRobotPose.getX(),
+                mLastRobotPose.getY(),
                 0);
 
-        robotRotation3d = new Rotation3d(
-                gyroInputs.pitchAngleRotations * 2 * Math.PI,
-                gyroInputs.rollAngleRotations * 2 * Math.PI,
-                lastGyroYaw.getRadians());
+        mLastRotation3d = new Rotation3d(
+                mGyroInputs.pitchAngleRotations * 2 * Math.PI,
+                mGyroInputs.rollAngleRotations * 2 * Math.PI,
+                mLastGyroYaw.getRadians());
 
-        var robotPose3d = new Pose3d(robotTranslation3d, robotRotation3d);
+        var robotPose3d = new Pose3d(robotTranslation3d, mLastRotation3d);
 
         Logger.getInstance().recordOutput("Odometry/Robot3d", robotPose3d);
 
         // Update brake mode
         boolean stillMoving = false;
         for (int i = 0; i < 4; i++) {
-            if (Math.abs(modules[i].getVelocity()) > coastThresholdMetersPerSec) {
+            if (Math.abs(mModules[i].getVelocity()) > kCoastThresholdMetersPerSec) {
                 stillMoving = true;
             }
         }
         if (stillMoving)
-            lastMovementTimer.reset();
+            mLastMovementTimer.reset();
         if (DriverStation.isEnabled()) {
-            if (!isBrakeMode) {
-                isBrakeMode = true;
-                for (var module : modules) {
+            if (!mIsBrakeMode) {
+                mIsBrakeMode = true;
+                for (var module : mModules) {
                     module.setDriveBrakeMode(true);
                 }
             }
         } else {
-            if (isBrakeMode && lastMovementTimer.hasElapsed(coastThresholdSecs)) {
-                isBrakeMode = false;
-                for (var module : modules) {
+            if (mIsBrakeMode && mLastMovementTimer.hasElapsed(kCoastThresholdSecs)) {
+                mIsBrakeMode = false;
+                for (var module : mModules) {
                     module.setDriveBrakeMode(false);
                 }
             }
         }
 
-        allowUpdateEncoders = encoderUpdateChooser.getSelected();
+        mAllowUpdateEncoders = mEncoderUpdateChooser.getSelected();
 
         // Run alert checks
-        alertGyroNotConnected.set(!gyroInputs.connected);
-        alertGyroManualFail.set(ignoreGyro);
-        alertUsingDeltaIntegration.set(shouldRevertToDeltaIntegration());
-        alertCoastModeEnabled.set(!isBrakeMode);
-        alertSteerNeutralMode.set(modules[0].getSteerNeutralMode());
-        alertOffsetsNotSafe.set(allowUpdateEncoders);
+        mAlertGyroNotConnected.set(!mGyroInputs.connected);
+        mAlertGyroManualFail.set(mIgnoreGyro);
+        mAlertUsingDeltaIntegration.set(shouldRevertToDeltaIntegration());
+        mAlertCoastModeEnabled.set(!mIsBrakeMode);
+        mAlertSteerNeutralMode.set(mModules[0].getSteerNeutralMode());
+        mAlertOffsetsNotSafe.set(mAllowUpdateEncoders);
     }
 
     public void setVelocityClosedLoop(ChassisSpeeds speeds) {
         mControlState = DriveControlState.VELOCITY_CONTROL;
-        setpoint = speeds;
+        mSetpoint = speeds;
     }
 
     public void setVelocityOpenLoop(ChassisSpeeds speeds) {
         mControlState = DriveControlState.OPEN_LOOP;
-        setpoint = speeds;
+        mSetpoint = speeds;
     }
 
     public void setSnapToPoint(Pose2d targetPoint) {
@@ -371,8 +371,8 @@ public class Drive extends SubsystemBase {
         }
     }
 
-    public void setSetpoint(ChassisSpeeds speeds) {
-        setpoint = speeds;
+    private void setSetpoint(ChassisSpeeds speeds) {
+        mSetpoint = speeds;
     }
 
     public Pose2d getTargetPoint() {
@@ -380,7 +380,7 @@ public class Drive extends SubsystemBase {
     }
 
     public void reseedRotation() {
-        odometry.resetPosition(lastGyroYaw, lastSwervePositions, new Pose2d(lastRobotPose.getTranslation(), new Rotation2d()));
+        mPoseEstimator.resetPosition(mLastGyroYaw, mLastSwervePositions, new Pose2d(mLastRobotPose.getTranslation(), new Rotation2d()));
     }
     
     public void stop() {
@@ -392,45 +392,45 @@ public class Drive extends SubsystemBase {
     }
 
     public Pose2d getPose() {
-        return lastRobotPose;
+        return mLastRobotPose;
     }
 
     public Rotation3d getGyroAngle() {
-        return robotRotation3d;
+        return mLastRotation3d;
     }
 
     public Rotation3d getFieldOrientation() {
-        return robotRotation3d.minus(new Rotation3d(0, 0, getGyroAngle().getZ()));
+        return mLastRotation3d.minus(new Rotation3d(0, 0, getGyroAngle().getZ()));
     }
 
-    public Rotation2d getAutonTarget() {
-        return autonTarget;
+    public Rotation2d getAutonRotationTarget() {
+        return mAutonRotationTarget;
     }
 
-    public void setAutonTarget(Rotation2d autonTarget) {
-        this.autonTarget = autonTarget;
+    public void setAutonRotationTarget(Rotation2d autonTarget) {
+        this.mAutonRotationTarget = autonTarget;
     }
 
     public void addVisionPose(VisionPose pose) {
-        odometry.addVisionMeasurement(pose.pose.toPose2d(), pose.timestampSeconds, pose.stddevs);
+        mPoseEstimator.addVisionMeasurement(pose.pose.toPose2d(), pose.timestampSeconds, pose.stddevs);
     }
 
     public boolean updateEncoderOffset(int module, double newOffset) {
-        if (allowUpdateEncoders) {
-            modules[module].updateEncoderOffset(newOffset);
+        if (mAllowUpdateEncoders) {
+            mModules[module].updateEncoderOffset(newOffset);
             return true;
         }
         return false;
     }
 
     public boolean zeroEncoder(int module) {
-        return updateEncoderOffset(module, modules[module].getEncoderRawPosition());
+        return updateEncoderOffset(module, mModules[module].getEncoderRawPosition());
     }
 
     public boolean updateAllEncoderOffsets(double[] offsets) {
-        if (allowUpdateEncoders) {
-            for (int i = 0; i < modules.length; i++) {
-                modules[i].updateEncoderOffset(offsets[i]);
+        if (mAllowUpdateEncoders) {
+            for (int i = 0; i < mModules.length; i++) {
+                mModules[i].updateEncoderOffset(offsets[i]);
             }
             return true;
         }
@@ -438,14 +438,14 @@ public class Drive extends SubsystemBase {
     }
 
     public boolean updateEncoderOffsetsFromPersist() {
-        if (allowUpdateEncoders) {
+        if (mAllowUpdateEncoders) {
             boolean allValuesPresent = Preferences.containsKey("drive/offsets/0")
                 && Preferences.containsKey("drive/offsets/1")
                 && Preferences.containsKey("drive/offsets/2")
                 && Preferences.containsKey("drive/offsets/3");
             if (allValuesPresent) {
                 double[] offsets = new double[4];
-                for (int i = 0; i < modules.length; i++) {
+                for (int i = 0; i < mModules.length; i++) {
                     offsets[i] = Preferences.getDouble("drive/offsets/"+i, 0);
                 }
                 updateAllEncoderOffsets(offsets);
@@ -457,9 +457,9 @@ public class Drive extends SubsystemBase {
     }
 
     public boolean saveEncoderOffsetsToPersist() {
-        if (allowUpdateEncoders) {
-            for (int i = 0; i < modules.length; i++) {
-                Preferences.setDouble("drive/offsets/"+i, modules[i].getEncoderOffset());
+        if (mAllowUpdateEncoders) {
+            for (int i = 0; i < mModules.length; i++) {
+                Preferences.setDouble("drive/offsets/"+i, mModules[i].getEncoderOffset());
             }
             return true;
         }
@@ -467,17 +467,17 @@ public class Drive extends SubsystemBase {
     }
 
     public void refreshEncoderOffsets() {
-        for (int i = 0; i < modules.length; i++) {
-            encoderOffsetCache[i] = modules[i].getEncoderOffset();
+        for (int i = 0; i < mModules.length; i++) {
+            mEncoderOffsetCache[i] = mModules[i].getEncoderOffset();
         }
     }
 
     public double getCachedEncoderOffsets(int module) {
-        return encoderOffsetCache[module];
+        return mEncoderOffsetCache[module];
     }
 
     public double getLastEncoderPosition(int module) {
-        return lastSwervePositions[module].angle.getRotations();
+        return mLastSwervePositions[module].angle.getRotations();
     }
 
     public void setKinematicLimits(KinematicLimits limits) {
@@ -507,7 +507,7 @@ public class Drive extends SubsystemBase {
     }
 
     public ChassisSpeeds getMeasuredSpeeds() {
-        return measuredSpeeds;
+        return mMeasuredSpeeds;
     }
 
     private Optional<ChassisSpeeds> updatePathFollower() {
@@ -538,14 +538,14 @@ public class Drive extends SubsystemBase {
     }
 
     public boolean shouldRevertToDeltaIntegration() {
-        return !gyroInputs.connected || ignoreGyro;
+        return !mGyroInputs.connected || mIgnoreGyro;
     }
 
     public void setIgnoreGyro(boolean ignoreGyro) {
-        this.ignoreGyro = ignoreGyro;
+        this.mIgnoreGyro = ignoreGyro;
     }
 
     public void setDriveAssistFail(boolean failAssist) {
-        this.allowDriveAssists = !failAssist;
+        this.mAllowDriveAssists = !failAssist;
     }
 }

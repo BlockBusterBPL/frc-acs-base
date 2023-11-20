@@ -4,8 +4,12 @@ import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix.led.CANdle;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.RobotStateTracker;
+import frc.robot.lib.LimelightHelpers;
+import frc.robot.lib.LimelightHelpers.LimelightResults;
 import frc.robot.lib.leds.LEDStateContainer;
 import frc.robot.lib.leds.TimedLEDState;
 
@@ -114,23 +118,24 @@ public class LED extends SubsystemBase {
 
     private void setDisplayingVision(double timeInState) {
         // Limelight limelight = Limelight.getInstance();
-        // if (DriverStation.isDisabled()) {
-        //     if (!limelight.hasTarget()) {
-        //         // If in disabled, and don't have target show yellow rapid blink.
-        //         TimedLEDState.BlinkingLEDState.kVisionMissing.getCurrentLEDState(mDesiredLEDState, timeInState);
-        //     } else {
-        //         // Otherwise, go green.
-        //         TimedLEDState.BlinkingLEDState.kVisionPresent.getCurrentLEDState(mDesiredLEDState, timeInState);
-        //     }
-        // } else {
-        //     // If we are in auto, show when limelight goes active.
-        //     if (limelight.getIsDisabled()) {
-        //         TimedLEDState.StaticLEDState.kVisionDisabled.getCurrentLEDState(mDesiredLEDState, timeInState);
-        //     } else {
-        //         TimedLEDState.StaticLEDState.kStaticRobotZeroedWithGoodBattery.getCurrentLEDState(mDesiredLEDState, timeInState);
-        //     }
-        // }
-        TimedLEDState.StaticLEDState.kStaticRobotZeroedWithGoodBattery.getCurrentLEDState(mDesiredLEDState, timeInState);
+        LimelightResults results = LimelightHelpers.getLatestResults("limelight");
+        if (DriverStation.isDisabled()) {
+            if (results.targetingResults.targets_Fiducials.length < 1) {
+                // If in disabled, and don't have target show yellow rapid blink.
+                TimedLEDState.BlinkingLEDState.kVisionMissing.getCurrentLEDState(mDesiredLEDState, timeInState);
+            } else {
+                // Otherwise, go green.
+                TimedLEDState.BlinkingLEDState.kVisionPresent.getCurrentLEDState(mDesiredLEDState, timeInState);
+            }
+        } else {
+            // If we are in auto, show when limelight goes active.
+            if (!RobotStateTracker.getInstance().getAutoAlignActive()) {
+                TimedLEDState.StaticLEDState.kVisionDisabled.getCurrentLEDState(mDesiredLEDState, timeInState);
+            } else {
+                TimedLEDState.StaticLEDState.kStaticRobotZeroedWithGoodBattery.getCurrentLEDState(mDesiredLEDState, timeInState);
+            }
+        }
+        // TimedLEDState.StaticLEDState.kStaticRobotZeroedWithGoodBattery.getCurrentLEDState(mDesiredLEDState, timeInState);
     }
 
     private void setNotHomedCommand(double timeInState) {

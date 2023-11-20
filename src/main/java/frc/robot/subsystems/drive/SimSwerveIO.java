@@ -61,11 +61,11 @@ public class SimSwerveIO implements SwerveModuleIO {
 
     @Override
     public void setDriveSpeedClosedLoop(double speedMetersPerSecond) {
-        setDriveSpeedOpenLoop(speedMetersPerSecond);
+        setDriveThrottleOpenLoop(speedMetersPerSecond);
     }
 
     @Override
-    public void setDriveSpeedOpenLoop(double speedMetersPerSecond) {
+    public void setDriveThrottleOpenLoop(double speedMetersPerSecond) {
         double speedTargetRPS = convertMetersToRotations(speedMetersPerSecond);
         setDriveVoltage(driveFF.calculate(speedTargetRPS));
     }
@@ -96,6 +96,6 @@ public class SimSwerveIO implements SwerveModuleIO {
 
     @Override
     public void stop() {
-        setDriveSpeedOpenLoop(0);
+        setDriveThrottleOpenLoop(0);
     }
 }

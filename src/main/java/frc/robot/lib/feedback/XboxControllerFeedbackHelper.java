@@ -22,7 +22,11 @@ public class XboxControllerFeedbackHelper {
         kBoth
     }
 
-    public class FeedbackOutput {
+    public static class FeedbackOutput {
+        public static final FeedbackOutput kNoOutput = new FeedbackOutput(FeedbackTypes.kBoth, 0);
+        public static final FeedbackOutput kAlignmentReady = new FeedbackOutput(FeedbackTypes.kFine, 0.25);
+        public static final FeedbackOutput kAlignmentOnTarget = new FeedbackOutput(FeedbackTypes.kFine, 0.5);
+
         public final FeedbackTypes mFeedbackType;
         public final double mFeedbackStrength;
 
@@ -36,7 +40,10 @@ public class XboxControllerFeedbackHelper {
         public FeedbackOutput getOutput(double timeSinceStart);
     }
 
-    public class ConstantFeedback implements FeedbackPattern {
+    public static class ConstantFeedback implements FeedbackPattern {
+        public static final ConstantFeedback kNone = new ConstantFeedback(FeedbackOutput.kNoOutput);
+        public static final ConstantFeedback kAlignmentOnTarget = new ConstantFeedback(FeedbackOutput.kAlignmentOnTarget);
+
         private final FeedbackOutput mOutput;
 
         public ConstantFeedback(FeedbackOutput output) {
@@ -49,7 +56,9 @@ public class XboxControllerFeedbackHelper {
         }
     }
 
-    public class TimedFeedback implements FeedbackPattern {
+    public static class TimedFeedback implements FeedbackPattern {
+        public static final TimedFeedback kAlignmentAvailable = new TimedFeedback(0.25, 0.25, FeedbackOutput.kAlignmentReady, FeedbackOutput.kNoOutput);
+
         private final double mTimeOn;
         private final double mTimeOff;
         private final FeedbackOutput mOutputWhenOn;

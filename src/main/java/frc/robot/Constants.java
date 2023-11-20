@@ -107,6 +107,8 @@ public final class Constants {
     // Drive constants
     /** SDS Mk4 L2 Gear Ratio */
     public static final double kSDS_L2 = 1 / ((14.0 / 50.0) * (27.0 / 17.0) * (15.0 / 45.0));
+    public static final double kSDS_L3 = 1 / ((14.0 / 50.0) * (26.0 / 16.0) * (15.0 / 45.0));
+    public static final double kSDS_L3_BOOSTED = 1 / ((16.0 / 50.0) * (26.0 / 16.0) * (15.0 / 45.0));
     public static final double kDriveReduction = kSDS_L2;//(14.0 / 50.0) * (28.0 / 16.0) * (15.0 / 45.0);
     public static final double kSteerReduction = (14.0 / 50.0) * (10.0 / 60.0);
     public static final double kDriveWheelDiameter = Units.inchesToMeters(4.0); /// meters, TODO measure
@@ -115,6 +117,10 @@ public final class Constants {
     
     public static final double kMaxVelocityMetersPerSecond = 5.05; //Calibrated 3/12 on Comp Bot
     public static final double kMaxAccelerationMetersPerSecondSquared = 4.4;
+
+    // switch from field-oriented commutation to trapezoidal commutation as an emulated field weakening mode
+    public static final boolean kUseFieldWeakening = true;
+    public static final double kMinVelocityForFieldWeakening = 4.0;
     
     // Robot constants
     public static final double kMaxDriveAcceleration = 1867 * 0.8;   // m/s^2 tuned 2/18 practice bot
@@ -335,8 +341,8 @@ public final class Constants {
             public static final double kMagicAccel = 0.0;
             public static final double kMagicJerk = 0.0;
 
-            public static final double kLiberalAllowableError = 0.1;
-            public static final double kConservativeAllowableError = 0.05;
+            public static final double kLiberalAllowableError = 0.05;
+            public static final double kConservativeAllowableError = 0.02;
             
             public static final double kHomePosition = 0.0;
         }
@@ -354,8 +360,8 @@ public final class Constants {
             public static final double kMagicAccel = 0.0;
             public static final double kMagicJerk = 0.0;
 
-            public static final double kLiberalAllowableError = 0.1;
-            public static final double kConservativeAllowableError = 0.02;
+            public static final double kLiberalAllowableError = 0.06;
+            public static final double kConservativeAllowableError = 0.03;
 
             public static final double kHomePosition = 0.0;
         }

@@ -7,6 +7,7 @@ package frc.robot.subsystems.drive;
 import com.ctre.phoenixpro.StatusSignalValue;
 import com.ctre.phoenixpro.configs.CANcoderConfiguration;
 import com.ctre.phoenixpro.configs.TalonFXConfiguration;
+import com.ctre.phoenixpro.controls.DutyCycleOut;
 import com.ctre.phoenixpro.controls.MotionMagicVoltage;
 import com.ctre.phoenixpro.controls.VelocityVoltage;
 import com.ctre.phoenixpro.controls.VoltageOut;
@@ -24,120 +25,118 @@ import frc.robot.lib.phoenixpro.TalonFXLiveConfigHelper;
 
 /** Add your docs here. */
 public class FalconSwerveIO implements SwerveModuleIO {
-    private final TalonFX m_drive;
-    private final TalonFX m_steer;
+    private final TalonFX mDriveMotor;
+    private final TalonFX mSteerMotor;
 
-    private final VelocityVoltage m_driveControl;
+    private final VelocityVoltage mDriveControl;
+    private final DutyCycleOut mDriveControlOpenLoop;
+    private boolean mUseOpenLoopDrive = false;
 
-    private final MotionMagicVoltage m_steerControl;
-    private final VoltageOut m_steerManualVoltageControl;
-    private boolean useManualVoltage = false;
+    private final MotionMagicVoltage mSteerControl;
+    private final VoltageOut mSteerControlOpenLoop;
+    private boolean mUseOpenLoopSteering = false;
 
-    private final TalonFXConfiguration driveConfig = new TalonFXConfiguration();
-    private final FalconFeedbackControlHelper driveHelper;
+    private final TalonFXConfiguration mDriveConfig = new TalonFXConfiguration();
+    private final FalconFeedbackControlHelper mDriveFeedbackHelper;
 
-    private final TalonFXConfiguration steerConfig = new TalonFXConfiguration();
-    private final FalconFeedbackControlHelper steerHelper;
+    private final TalonFXConfiguration mSteerConfig = new TalonFXConfiguration();
+    private final FalconFeedbackControlHelper mSteerFeedbackHelper;
 
-    private final CANcoder m_encoder;
+    private final CANcoder mEncoder;
 
-    private final CANcoderConfiguration encoderConfig = new CANcoderConfiguration();
+    private final CANcoderConfiguration mEncoderConfig = new CANcoderConfiguration();
 
-    private StatusSignalValue<Double> m_drivePosition;
-    private StatusSignalValue<Double> m_driveVelocity;
-    private StatusSignalValue<Double> m_driveAppliedCurrent;
-    private StatusSignalValue<Double> m_driveSuppliedCurrent;
-    private StatusSignalValue<Double> m_driveTempCelsius;
-    private StatusSignalValue<Double> m_steerPosition;
-    private StatusSignalValue<Double> m_steerVelocity;
-    private StatusSignalValue<Double> m_steerAppliedCurrent;
-    private StatusSignalValue<Double> m_steerSuppliedCurrent;
-    private StatusSignalValue<Double> m_steerTempCelsius;
+    private StatusSignalValue<Double> mDrivePosition;
+    private StatusSignalValue<Double> mDriveVelocity;
+    private StatusSignalValue<Double> mDriveSuppliedCurrent;
+    private StatusSignalValue<Double> mDriveTempCelsius;
+    private StatusSignalValue<Double> mSteerPosition;
+    private StatusSignalValue<Double> mSteerVelocity;
+    private StatusSignalValue<Double> mSteerSuppliedCurrent;
+    private StatusSignalValue<Double> mSteerTempCelsius;
 
     public FalconSwerveIO(int moduleID, String canbus) {
-        m_drive = new TalonFX(10 + moduleID, canbus);
-        m_steer = new TalonFX(20 + moduleID, canbus);
-        m_encoder = new CANcoder(20 + moduleID, canbus);
+        mDriveMotor = new TalonFX(10 + moduleID, canbus);
+        mSteerMotor = new TalonFX(20 + moduleID, canbus);
+        mEncoder = new CANcoder(20 + moduleID, canbus);
 
-        // m_driveControl = new VelocityTorqueCurrentFOC(0, 0, 0, false);
-        m_driveControl = new VelocityVoltage(0, true, 0, 0, false);
+        mDriveControl = new VelocityVoltage(0, true, 0, 0, false);
+        mDriveControlOpenLoop = new DutyCycleOut(0, false, false);
 
-        driveConfig.Slot0.kP = 0.0;
-        driveConfig.Slot0.kV = 0.0;
-        driveConfig.TorqueCurrent.PeakForwardTorqueCurrent = 40;
-        driveConfig.TorqueCurrent.PeakReverseTorqueCurrent = -40;
-        m_drive.getConfigurator().apply(driveConfig);
-        driveHelper = new FalconFeedbackControlHelper(m_drive, driveConfig.Slot0, null);
+        mDriveConfig.Slot0.kP = 0.0;
+        mDriveConfig.Slot0.kV = 0.0;
+        mDriveConfig.TorqueCurrent.PeakForwardTorqueCurrent = 40;
+        mDriveConfig.TorqueCurrent.PeakReverseTorqueCurrent = -40;
+        mDriveMotor.getConfigurator().apply(mDriveConfig);
+        mDriveFeedbackHelper = new FalconFeedbackControlHelper(mDriveMotor, mDriveConfig.Slot0, null);
 
+        mSteerControl = new MotionMagicVoltage(0, true, 0, 0, false);
+        mSteerControlOpenLoop = new VoltageOut(0, true, false);
 
-        // m_steerControl = new PositionVoltage(0, true, 0, 0, false);
-        m_steerControl = new MotionMagicVoltage(0, true, 0, 0, false);
-        m_steerManualVoltageControl = new VoltageOut(0, true, false);
+        mSteerConfig.TorqueCurrent.PeakForwardTorqueCurrent = 20;
+        mSteerConfig.TorqueCurrent.PeakReverseTorqueCurrent = -20;
+        mSteerConfig.Feedback.FeedbackRemoteSensorID = mEncoder.getDeviceID();
+        mSteerConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
+        mSteerConfig.Feedback.RotorToSensorRatio = 1/Constants.kSteerReduction;
+        mSteerConfig.ClosedLoopGeneral.ContinuousWrap = true;
+        mSteerMotor.getConfigurator().apply(mSteerConfig);
+        mSteerFeedbackHelper = new FalconFeedbackControlHelper(mSteerMotor, mSteerConfig.Slot0, mSteerConfig.MotionMagic);
 
-        // m_steerFeedForward = new SimpleMotorFeedforward(0, 0, 0);
+        mEncoder.getConfigurator().refresh(mEncoderConfig);
+        mEncoderConfig.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Signed_PlusMinusHalf;
+        mEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
+        mEncoder.getConfigurator().apply(mEncoderConfig);
 
-        steerConfig.TorqueCurrent.PeakForwardTorqueCurrent = 20;
-        steerConfig.TorqueCurrent.PeakReverseTorqueCurrent = -20;
-        steerConfig.Feedback.FeedbackRemoteSensorID = m_encoder.getDeviceID();
-        steerConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
-        steerConfig.Feedback.RotorToSensorRatio = 1/Constants.kSteerReduction;
-        steerConfig.ClosedLoopGeneral.ContinuousWrap = true;
-        m_steer.getConfigurator().apply(steerConfig);
-        steerHelper = new FalconFeedbackControlHelper(m_steer, steerConfig.Slot0, steerConfig.MotionMagic);
-
-        m_encoder.getConfigurator().refresh(encoderConfig);
-        encoderConfig.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Signed_PlusMinusHalf;
-        encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
-        m_encoder.getConfigurator().apply(encoderConfig);
-
-        m_drivePosition = m_drive.getPosition();
-        m_driveVelocity = m_drive.getVelocity();
-        m_driveAppliedCurrent = m_drive.getTorqueCurrent();
-        m_driveSuppliedCurrent = m_drive.getSupplyCurrent();
-        m_driveTempCelsius = m_drive.getDeviceTemp();
-        m_steerPosition = m_steer.getPosition();
-        m_steerVelocity = m_steer.getVelocity();
-        m_steerAppliedCurrent = m_steer.getTorqueCurrent();
-        m_steerSuppliedCurrent = m_steer.getSupplyCurrent();
-        m_steerTempCelsius = m_steer.getDeviceTemp();
+        mDrivePosition = mDriveMotor.getPosition();
+        mDriveVelocity = mDriveMotor.getVelocity();
+        mDriveSuppliedCurrent = mDriveMotor.getSupplyCurrent();
+        mDriveTempCelsius = mDriveMotor.getDeviceTemp();
+        mSteerPosition = mSteerMotor.getPosition();
+        mSteerVelocity = mSteerMotor.getVelocity();
+        mSteerSuppliedCurrent = mSteerMotor.getSupplyCurrent();
+        mSteerTempCelsius = mSteerMotor.getDeviceTemp();
     }
 
     @Override
     public void updateInputs(SwerveModuleIOInputs inputs) {
-        m_drivePosition.refresh();
-        m_driveVelocity.refresh();
-        m_driveAppliedCurrent.refresh();
-        m_driveSuppliedCurrent.refresh();
-        m_driveTempCelsius.refresh();
-        m_steerPosition.refresh();
-        m_steerVelocity.refresh();
-        m_steerAppliedCurrent.refresh();
-        m_steerSuppliedCurrent.refresh();
-        m_steerTempCelsius.refresh();
+        mDrivePosition.refresh();
+        mDriveVelocity.refresh();
+        mDriveSuppliedCurrent.refresh();
+        mDriveTempCelsius.refresh();
+        mSteerPosition.refresh();
+        mSteerVelocity.refresh();
+        mSteerSuppliedCurrent.refresh();
+        mSteerTempCelsius.refresh();
         
-        double position_compensated = m_drivePosition.getValue() + (m_driveVelocity.getValue() * m_drivePosition.getTimestamp().getLatency());
-        double angle_compensated = m_steerPosition.getValue() + (m_steerVelocity.getValue() * m_steerPosition.getTimestamp().getLatency());
+        double position_compensated = mDrivePosition.getValue() + (mDriveVelocity.getValue() * mDrivePosition.getTimestamp().getLatency());
+        double angle_compensated = mSteerPosition.getValue() + (mSteerVelocity.getValue() * mSteerPosition.getTimestamp().getLatency());
 
         inputs.driveMeters = convertRotationsToMeters(position_compensated);
-        inputs.driveVelocityMetersPerSec = convertRotationsToMeters(m_driveVelocity.getValue());
-        inputs.driveAppliedCurrentAmps = m_driveAppliedCurrent.getValue();
-        inputs.driveSuppliedCurrentAmps = m_driveSuppliedCurrent.getValue();
-        inputs.driveTempCelsius = m_driveTempCelsius.getValue();
+        inputs.driveVelocityMetersPerSec = convertRotationsToMeters(mDriveVelocity.getValue());
+        inputs.driveSuppliedCurrentAmps = mDriveSuppliedCurrent.getValue();
+        inputs.driveTempCelsius = mDriveTempCelsius.getValue();
 
         inputs.steerPositionRotations = angle_compensated;
-        inputs.steerVelocityRotPerSec = m_steerVelocity.getValue();
-        inputs.steerAppliedCurrentAmps = m_steerAppliedCurrent.getValue();
-        inputs.steerSuppliedCurrentAmps = m_steerSuppliedCurrent.getValue();
-        inputs.steerTempCelsius = m_steerTempCelsius.getValue();
+        inputs.steerVelocityRotPerSec = mSteerVelocity.getValue();
+        inputs.steerSuppliedCurrentAmps = mSteerSuppliedCurrent.getValue();
+        inputs.steerTempCelsius = mSteerTempCelsius.getValue();
     }
 
     @Override
     public void updateOutputs() {
-        m_drive.setControl(m_driveControl);
-        if (useManualVoltage) {
-            m_steer.setControl(m_steerManualVoltageControl);
+        boolean targetSpeedAboveThreshold = mDriveControl.Velocity >= Constants.kMinVelocityForFieldWeakening;
+        boolean currentSpeedAboveThreshold = convertRotationsToMeters(mDriveVelocity.getValue()) >= Constants.kMinVelocityForFieldWeakening;
+        mDriveControl.EnableFOC = !(targetSpeedAboveThreshold && currentSpeedAboveThreshold && Constants.kUseFieldWeakening);
+        
+        if (mUseOpenLoopDrive) {
+            mDriveMotor.setControl(mDriveControlOpenLoop);
         } else {
-            m_steer.setControl(m_steerControl);
+            mDriveMotor.setControl(mDriveControl);
+        }
+        if (mUseOpenLoopSteering) {
+            mSteerMotor.setControl(mSteerControlOpenLoop);
+        } else {
+            mSteerMotor.setControl(mSteerControl);
         }
     }
 
@@ -157,17 +156,27 @@ public class FalconSwerveIO implements SwerveModuleIO {
 
     @Override
     public void setDriveSpeedClosedLoop(double speedMetersPerSecond) {
-        m_driveControl.Velocity = convertMetersToRotations(speedMetersPerSecond);
+        mDriveControl.Velocity = convertMetersToRotations(speedMetersPerSecond);
+    }
+
+    @Override
+    public void setDriveThrottleOpenLoop(double throttle) {
+        mDriveControlOpenLoop.Output = throttle;
+    }
+
+    @Override
+    public void setDriveUseOpenLoop(boolean useOpenLoopDrive) {
+        mUseOpenLoopDrive = useOpenLoopDrive;
     }
 
     @Override
     public void setSteerPositionTarget(double steerAngleRotations) {
-        m_steerControl.Position = steerAngleRotations;
+        mSteerControl.Position = steerAngleRotations;
     }
 
     @Override
     public void setDriveBrakeMode(boolean driveBrakeMode) {
-        TalonFXLiveConfigHelper.editConfig(m_drive, (c) -> {
+        TalonFXLiveConfigHelper.editConfig(mDriveMotor, (c) -> {
             c.MotorOutput.NeutralMode = (driveBrakeMode ? NeutralModeValue.Brake : NeutralModeValue.Coast);
             return c;
         });
@@ -175,7 +184,7 @@ public class FalconSwerveIO implements SwerveModuleIO {
 
     @Override
     public void setSteerBrakeMode(boolean steerBrakeMode) {
-        TalonFXLiveConfigHelper.editConfig(m_steer, (c) -> {
+        TalonFXLiveConfigHelper.editConfig(mSteerMotor, (c) -> {
             c.MotorOutput.NeutralMode = (steerBrakeMode ? NeutralModeValue.Brake : NeutralModeValue.Coast);
             return c;
         });
@@ -183,67 +192,67 @@ public class FalconSwerveIO implements SwerveModuleIO {
 
     @Override
     public void setDriveKP(double driveKP) {
-        driveHelper.setKP(driveKP);
+        mDriveFeedbackHelper.setKP(driveKP);
     }
 
     @Override
     public void setDriveKI(double driveKI) {
-        driveHelper.setKI(driveKI);
+        mDriveFeedbackHelper.setKI(driveKI);
     }
 
     @Override
     public void setDriveKD(double drivekD) {
-        driveHelper.setKD(drivekD);
+        mDriveFeedbackHelper.setKD(drivekD);
     }
 
     @Override
     public void setDriveKV(double drivekF) {
-        driveHelper.setKV(drivekF);
+        mDriveFeedbackHelper.setKV(drivekF);
     }
 
     @Override
     public void setDriveKS(double driveKS) {
-        driveHelper.setKS(driveKS);
+        mDriveFeedbackHelper.setKS(driveKS);
     }
 
     @Override
     public void setSteerKP(double steerKP) {
-        steerHelper.setKP(steerKP);
+        mSteerFeedbackHelper.setKP(steerKP);
     }
 
     @Override
     public void setSteerKI(double steerKI) {
-        steerHelper.setKI(steerKI);
+        mSteerFeedbackHelper.setKI(steerKI);
     }
 
     @Override
     public void setSteerKD(double steerKD) {
-        steerHelper.setKD(steerKD);
+        mSteerFeedbackHelper.setKD(steerKD);
     }
 
     @Override
     public void setSteerKS(double steerKS) {
-        steerHelper.setKS(steerKS);
+        mSteerFeedbackHelper.setKS(steerKS);
     }
         
     @Override
     public void setSteerKV(double steerKF) {
-        steerHelper.setKV(steerKF);
+        mSteerFeedbackHelper.setKV(steerKF);
     }
 
     @Override
-    public void setSteerVoltageEnabled(boolean enableManualVoltage) {
-        useManualVoltage = enableManualVoltage;
+    public void setSteerUseOpenLoop(boolean enableManualVoltage) {
+        mUseOpenLoopSteering = enableManualVoltage;
     }
 
     @Override
-    public void setSteerVoltageManual(double steerVoltage) {
-        m_steerManualVoltageControl.Output = steerVoltage;
+    public void setSteerVoltageOpenLoop(double steerVoltage) {
+        mSteerControlOpenLoop.Output = steerVoltage;
     }
 
     @Override
     public void updateEncoderOffset(double zeroRotations) {
-        CANcoderLiveConfigHelper.editConfig(m_encoder, (c) -> {
+        CANcoderLiveConfigHelper.editConfig(mEncoder, (c) -> {
             c.MagnetSensor.MagnetOffset = -zeroRotations;
             return c;
         });
@@ -251,21 +260,21 @@ public class FalconSwerveIO implements SwerveModuleIO {
 
     @Override
     public double getEncoderOffset() {
-        return CANcoderLiveConfigHelper.getValueFromConfig(m_encoder, (c) -> {
+        return CANcoderLiveConfigHelper.getValueFromConfig(mEncoder, (c) -> {
             return c.MagnetSensor.MagnetOffset;
         });
     }
 
     @Override
     public double getEncoderRawPosition() {
-        m_encoder.getConfigurator().refresh(encoderConfig);
-        var currentOffset = encoderConfig.MagnetSensor.MagnetOffset;
-        return m_encoder.getAbsolutePosition().getValue() - currentOffset;
+        mEncoder.getConfigurator().refresh(mEncoderConfig);
+        var currentOffset = mEncoderConfig.MagnetSensor.MagnetOffset;
+        return mEncoder.getAbsolutePosition().getValue() - currentOffset;
     }
 
     @Override
     public void stop() {
-        m_drive.stopMotor();
-        m_steer.stopMotor();
+        mDriveMotor.stopMotor();
+        mSteerMotor.stopMotor();
     }
 }

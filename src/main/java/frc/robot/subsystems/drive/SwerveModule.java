@@ -134,14 +134,14 @@ public class SwerveModule {
     }
 
     public SwerveModuleState setStateOpenLoop(SwerveModuleState state) {
-        io.setDriveSpeedOpenLoop(state.speedMetersPerSecond);
+        io.setDriveThrottleOpenLoop(state.speedMetersPerSecond);
         setSteerTarget(state.angle);
         return state;
     }
 
     private void setSteerTarget(Rotation2d angle) {
         if (overrideSteerVoltage) {
-            io.setSteerVoltageManual(steerMotorVoltage.get());
+            io.setSteerVoltageOpenLoop(steerMotorVoltage.get());
         } else {
             io.setSteerPositionTarget(angle.getRotations());
         }

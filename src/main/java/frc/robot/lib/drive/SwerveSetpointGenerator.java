@@ -324,7 +324,7 @@ public class SwerveSetpointGenerator {
 
         ChassisSpeeds desiredState = new ChassisSpeeds();
 
-        SwerveModuleState[] desiredModuleState = Drive.X_MODE_STATES;
+        SwerveModuleState[] desiredModuleState = Drive.kXModeStates;
 
         // Special case: desiredState is a complete stop. In this case, module angle is arbitrary, so just use the previous angle.
         boolean need_to_steer = true;

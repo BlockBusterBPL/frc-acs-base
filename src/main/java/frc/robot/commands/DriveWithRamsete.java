@@ -44,7 +44,7 @@ public class DriveWithRamsete extends CommandBase {
         var pose = drive.getPose();
         var time = timer.get();
         var driveTarget = trajectory.sample(time);
-        var rotateTarget = drive.getAutonTarget();
+        var rotateTarget = drive.getAutonRotationTarget();
         var output = controller.calculate(pose, driveTarget, rotateTarget);
         drive.setVelocityClosedLoop(output);
     }

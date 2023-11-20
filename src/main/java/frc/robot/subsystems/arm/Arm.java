@@ -26,7 +26,7 @@ import frc.robot.lib.leds.LEDState;
 import frc.robot.lib.leds.TimedLEDState;
 import frc.robot.lib.util.TimeDelayedBoolean;
 import frc.robot.lib.util.Util;
-import frc.robot.subsystems.arm.ArmState.Action;
+import frc.robot.subsystems.arm.ArmState.ArmAction;
 import frc.robot.subsystems.arm.ArmState.ArmSend;
 import frc.robot.subsystems.leds.LED;
 
@@ -37,22 +37,21 @@ public class Arm extends SubsystemBase {
     }
 
     public enum GoalState {
-        STOW(new ArmState(0, 0, 0, 0.02, 0.03, 0.05, Action.NEUTRAL, ArmSend.LOW)),
-        TRANSPORT(new ArmState(0.03, 0, 0.03, 0.02, 0.03, 0.05, Action.NEUTRAL, ArmSend.MEDIUM)),
-        INTAKE_CUBE_GROUND(new ArmState(0, 0, 0, 0.02, 0.03, 0.05, Action.INTAKING, ArmSend.LOW)),
-        INTAKE_CUBE_SHELF(new ArmState(0.14, 0.82, 0.2, 0.02, 0.03, 0.05, Action.INTAKING, ArmSend.MEDIUM)),
-        INTAKE_CONE_GROUND(new ArmState(0.03, 0.0, 0.38, 0.02, 0.03, 0.05, Action.INTAKING, ArmSend.MEDIUM)),
-        INTAKE_CONE_SHELF(new ArmState(0.143, 0.78, 0.48, 0.02, 0.03, 0.05, Action.INTAKING, ArmSend.MEDIUM)),
-        INTAKE_WAIT_SHELF(new ArmState(0.143, 0, 0.2, 0.02, 0.03, 0.05, Action.NEUTRAL, ArmSend.FULL)),
-        SCORE_WAIT(new ArmState(0.12, 0, 0.12, 0.02, 0.03, 0.05, Action.NEUTRAL, ArmSend.FULL)),
-        SCORE_WAIT_LOW(new ArmState(0.08, 0, 0.12, 0.02, 0.03, 0.05, Action.NEUTRAL, ArmSend.FULL)),
-        SCORE_CUBE_LOW(new ArmState(0.05, 0, 0, 0.02, 0.03, 0.05, Action.SCORING, ArmSend.FULL)),
-        SCORE_CUBE_MID(new ArmState(0.12, 0.75, 0.16, 0.02, 0.03, 0.05, Action.SCORING, ArmSend.FULL)),
-        SCORE_CUBE_HIGH(new ArmState(0.13, 1.1, 0.13, 0.02, 0.03, 0.05, Action.SCORING, ArmSend.MEDIUM)),
-        SCORE_CONE_LOW(new ArmState(0.05, 0, 0.3, 0.02, 0.03, 0.05, Action.SCORING, ArmSend.FULL)),
-        SCORE_CONE_MID(new ArmState(0.14, 0.7, 0.48, 0.02, 0.03, 0.05, Action.SCORING, ArmSend.FULL)),
-        SCORE_CONE_HIGH(new ArmState(0.13, 1.1, 0.42, 0.02, 0.03, 0.05, Action.SCORING, ArmSend.MEDIUM)),
-        DUMMY_POSITION(new ArmState(0, 0, 0, 0.02, 0.03, 0.05, Action.NEUTRAL, ArmSend.MEDIUM));
+        STOW(ArmState.withConservativeConstraints(0, 0, 0, ArmAction.NEUTRAL, ArmSend.LOW)),
+        TRANSPORT(ArmState.withConservativeConstraints(0.03, 0, 0.03, ArmAction.NEUTRAL, ArmSend.MEDIUM)),
+        INTAKE_CUBE_GROUND(ArmState.withConservativeConstraints(0, 0, 0, ArmAction.INTAKING, ArmSend.LOW)),
+        INTAKE_CUBE_SHELF(ArmState.withConservativeConstraints(0.14, 0.82, 0.2, ArmAction.INTAKING, ArmSend.MEDIUM)),
+        INTAKE_CONE_GROUND(ArmState.withConservativeConstraints(0.03, 0.0, 0.38, ArmAction.INTAKING, ArmSend.MEDIUM)),
+        INTAKE_CONE_SHELF(ArmState.withConservativeConstraints(0.143, 0.78, 0.48, ArmAction.INTAKING, ArmSend.MEDIUM)),
+        INTAKE_WAIT_SHELF(ArmState.withConservativeConstraints(0.143, 0, 0.2, ArmAction.NEUTRAL, ArmSend.FULL)),
+        SCORE_WAIT(ArmState.withLiberalConstraints(0.12, 0, 0.12, ArmAction.NEUTRAL, ArmSend.FULL)),
+        SCORE_WAIT_LOW(ArmState.withLiberalConstraints(0.08, 0, 0.12, ArmAction.NEUTRAL, ArmSend.FULL)),
+        SCORE_CUBE_LOW(ArmState.withConservativeConstraints(0.05, 0, 0, ArmAction.SCORING, ArmSend.MEDIUM)),
+        SCORE_CUBE_MID(ArmState.withConservativeConstraints(0.12, 0.75, 0.16, ArmAction.SCORING, ArmSend.MEDIUM)),
+        SCORE_CUBE_HIGH(ArmState.withConservativeConstraints(0.13, 1.1, 0.13, ArmAction.SCORING, ArmSend.MEDIUM)),
+        SCORE_CONE_LOW(ArmState.withConservativeConstraints(0.05, 0, 0.3, ArmAction.SCORING, ArmSend.MEDIUM)),
+        SCORE_CONE_MID(ArmState.withConservativeConstraints(0.14, 0.7, 0.48, ArmAction.SCORING, ArmSend.MEDIUM)),
+        SCORE_CONE_HIGH(ArmState.withConservativeConstraints(0.13, 1.1, 0.42, ArmAction.SCORING, ArmSend.MEDIUM));
         
         public ArmState state;
 
@@ -61,71 +60,71 @@ public class Arm extends SubsystemBase {
         }
     }
 
-    private ArmMotionPlanner mMotionPlanner;
+    private final ArmMotionPlanner mMotionPlanner;
 
-    private ArmState measuredState = new ArmState();
-    private ArmState expectedState = new ArmState();
-    private ArmState commandedState = new ArmState();
-    private ArmState lastCommandedState = new ArmState();
-    private GoalState goalState = GoalState.STOW;
-    private GoalState lastGoalState = GoalState.STOW;
-    private GameObjectType gameObject = GameObjectType.CUBE;
-    private boolean hasBeenHomed = false;
-    private TimeDelayedBoolean ensureScoringFinished = new TimeDelayedBoolean();
-    private TimeDelayedBoolean ensureIntakeFinished = new TimeDelayedBoolean();
-    private boolean resetMotionPlanner = false;
+    private ArmState mMeasuredState = new ArmState();
+    private ArmState mExpectedState = new ArmState();
+    private ArmState mCommandedState = new ArmState();
+    private ArmState mLastCommandedState = new ArmState();
+    private GoalState mGoalState = GoalState.STOW;
+    private GoalState mLastGoalState = GoalState.STOW;
+    private GameObjectType mGameObject = GameObjectType.CUBE;
+    private boolean mHasBeenHomed = false;
+    private TimeDelayedBoolean mEnsureScoringFinished = new TimeDelayedBoolean();
+    private TimeDelayedBoolean mEnsureIntakeFinished = new TimeDelayedBoolean();
+    private boolean mResetMotionPlanner = false;
     private boolean mGripperHasGamepiece = false;
 
-    public static final double ARM_BASE_LENGTH = Units.inchesToMeters(19); // distance from arm pivot to vertical
+    public static final double kArmBaseLength = Units.inchesToMeters(19); // distance from arm pivot to vertical
                                                                            // extension of wrist pivot
-    public static final double ARM_MASS_OFFSET = 0.0; // FF Amps required to hold elevator horizontal at minimum
-                                                      // extension
-    public static final double ARM_MASS_DISTANCE_FACTOR = 0.0; // Additional FF Amps to hold horizontal required per
+    public static final double kArmMassOffset = 4.0; // FF Amps required to hold elevator horizontal at minimum
+                                                      // extension and wrist vertical
+    public static final double kArmMassDistanceFactor = 8.0; // Additional FF Amps to hold horizontal required per
                                                                // meter of extension
-    public static final double ARM_CONE_BOOST = 0.0; // FF Amps to add to tilt when wrist is at full extension
-    public static final double ELEVATOR_MASS_FACTOR = 0.0; // FF Amps to hold elevator carriage in vertical position
-    public static final double WRIST_MASS_FACTOR = 0.0; // FF Amps to hold wrist in horizontal position
+    public static final double kArmConeBoost = 2.0; // FF Amps to add to tilt when wrist is at full extension
+    public static final double kElevatorMassFactor = 18.0; // FF Amps to hold elevator carriage in vertical position
+    public static final double kWristMassFactor = 6.5; // FF Amps to hold wrist in horizontal position
 
-    private final Mechanism2d sensorMech = new Mechanism2d(1.75, 1.75);
-    private final MechanismRoot2d sensorRoot = sensorMech.getRoot("Main Pivot", 0.25, 0.25);
-    private final MechanismLigament2d sensorElevator = sensorRoot
-            .append(new MechanismLigament2d("Elevator", ARM_BASE_LENGTH, 0, 5, new Color8Bit(Color.kOrange)));
-    private final MechanismLigament2d sensorOffsetPlate = sensorElevator
+    private final Mechanism2d mSensorMech = new Mechanism2d(1.75, 1.75);
+    private final MechanismRoot2d mSensorMechRoot = mSensorMech.getRoot("Main Pivot", 0.25, 0.25);
+    private final MechanismLigament2d mSensorMechElevator = mSensorMechRoot
+            .append(new MechanismLigament2d("Elevator", kArmBaseLength, 0, 5, new Color8Bit(Color.kOrange)));
+    private final MechanismLigament2d mSensorMechOffsetPlate = mSensorMechElevator
             .append(new MechanismLigament2d("Offset Plate", 0.08, 270, 5, new Color8Bit(Color.kGray)));
-    private final MechanismLigament2d sensorWrist = sensorOffsetPlate
+    private final MechanismLigament2d mSensorMechWrist = mSensorMechOffsetPlate
             .append(new MechanismLigament2d("Wrist", Units.inchesToMeters(12), 100, 5, new Color8Bit(Color.kPurple)));
 
-    private final Mechanism2d targetMech = new Mechanism2d(1.75, 1.75);
-    private final MechanismRoot2d targetRoot = targetMech.getRoot("Main Pivot", 0.25, 0.25);
-    private final MechanismLigament2d targetElevator = targetRoot
-            .append(new MechanismLigament2d("Elevator", ARM_BASE_LENGTH, 0, 5, new Color8Bit(Color.kLightGray)));
-    private final MechanismLigament2d targetOffsetPlate = targetElevator
+    private final Mechanism2d mTargetMech = new Mechanism2d(1.75, 1.75);
+    private final MechanismRoot2d mTargetMechRoot = mTargetMech.getRoot("Main Pivot", 0.25, 0.25);
+    private final MechanismLigament2d mTargetMechElevator = mTargetMechRoot
+            .append(new MechanismLigament2d("Elevator", kArmBaseLength, 0, 5, new Color8Bit(Color.kLightGray)));
+    private final MechanismLigament2d mTargetMechOffsetPlate = mTargetMechElevator
             .append(new MechanismLigament2d("Offset Plate", 0.08, 270, 5, new Color8Bit(Color.kLightGray)));
-    private final MechanismLigament2d targetWrist = targetOffsetPlate
+    private final MechanismLigament2d mTargetMechWrist = mTargetMechOffsetPlate
             .append(new MechanismLigament2d("Wrist", Units.inchesToMeters(12), 100, 5, new Color8Bit(Color.kLightGray)));
 
-    private ArmIO armIO;
-    private ArmIOInputsAutoLogged armInputs;
+    private ArmIO mArmIO;
+    private ArmIOInputsAutoLogged mArmInputs;
 
-    private GripperIO gripperIO;
-    private GripperIOInputsAutoLogged gripperInputs;
+    private GripperIO mGripperIO;
+    private GripperIOInputsAutoLogged mGripperInputs;
 
     public Arm(ArmIO armIO, GripperIO gripperIO) {
         mMotionPlanner = new ArmMotionPlanner();
 
-        this.armIO = armIO;
-        armInputs = new ArmIOInputsAutoLogged();
+        mArmIO = armIO;
+        mArmInputs = new ArmIOInputsAutoLogged();
 
-        this.gripperIO = gripperIO;
-        gripperInputs = new GripperIOInputsAutoLogged();
+        mGripperIO = gripperIO;
+        mGripperInputs = new GripperIOInputsAutoLogged();
     }
 
     @Override
     public void periodic() {
-        armIO.updateInputs(armInputs);
-        gripperIO.updateInputs(gripperInputs);
-        Logger.getInstance().processInputs("Arm", armInputs);
-        Logger.getInstance().processInputs("Gripper", gripperInputs);
+        mArmIO.updateInputs(mArmInputs);
+        mGripperIO.updateInputs(mGripperInputs);
+        Logger.getInstance().processInputs("Arm", mArmInputs);
+        Logger.getInstance().processInputs("Gripper", mGripperInputs);
 
         double timestamp = Timer.getFPGATimestamp();
 
@@ -144,50 +143,50 @@ public class Arm extends SubsystemBase {
         }
         if (Constants.getMode() == Mode.SIM) {
             double simCurrent = 0.0;
-            simCurrent += armInputs.tiltSuppliedCurrentAmps;
-            simCurrent += armInputs.extendSuppliedCurrentAmps;
-            simCurrent += armInputs.wristSuppliedCurrentAmps;
-            simCurrent += gripperInputs.suppliedCurrentAmps;
+            simCurrent += mArmInputs.tiltSuppliedCurrentAmps;
+            simCurrent += mArmInputs.extendSuppliedCurrentAmps;
+            simCurrent += mArmInputs.wristSuppliedCurrentAmps;
+            simCurrent += mGripperInputs.suppliedCurrentAmps;
 
             Robot.updateSimCurrentDraw(this.getClass().getName(), simCurrent);
         }
 
-        mGripperHasGamepiece = gripperInputs.coneInIntake || gripperInputs.cubeInIntake;
+        mGripperHasGamepiece = mGripperInputs.coneInIntake || mGripperInputs.cubeInIntake;
         Logger.getInstance().recordOutput("Arm/Gripper/HasGamepiece", mGripperHasGamepiece);
         Logger.getInstance().recordOutput("Arm/Gripper/FinishedIntaking", isDoneIntaking());
         Logger.getInstance().recordOutput("Arm/Gripper/FinishedScoring", isDoneScoring());
 
-        Rotation2d tiltAngle = Rotation2d.fromRotations(armInputs.tiltRotations);
-        Rotation2d wristAngle = Rotation2d.fromRotations(armInputs.wristRotations);
+        Rotation2d tiltAngle = Rotation2d.fromRotations(mArmInputs.tiltRotations);
+        Rotation2d wristAngle = Rotation2d.fromRotations(mArmInputs.wristRotations);
 
-        sensorElevator.setAngle(tiltAngle);
-        sensorElevator.setLength(ARM_BASE_LENGTH + armInputs.extendMeters);
-        sensorWrist.setAngle(wristAngle.unaryMinus().minus(Rotation2d.fromDegrees(100)));
+        mSensorMechElevator.setAngle(tiltAngle);
+        mSensorMechElevator.setLength(kArmBaseLength + mArmInputs.extendMeters);
+        mSensorMechWrist.setAngle(wristAngle.unaryMinus().minus(Rotation2d.fromDegrees(100)));
 
-        measuredState = new ArmState(armInputs.tiltRotations, armInputs.extendMeters, armInputs.wristRotations, commandedState.action, commandedState.send);
+        mMeasuredState = new ArmState(mArmInputs.tiltRotations, mArmInputs.extendMeters, mArmInputs.wristRotations, mCommandedState.action, mCommandedState.send);
 
-        ArmState nextArmState = mMotionPlanner.update(measuredState);
-        lastCommandedState = commandedState;
-        commandedState = nextArmState;
-        expectedState = commandedState;
+        ArmState nextArmState = mMotionPlanner.update(mMeasuredState);
+        mLastCommandedState = mCommandedState;
+        mCommandedState = nextArmState;
+        mExpectedState = mCommandedState;
 
-        Logger.getInstance().recordOutput("Arm/GoalState/Name", goalState.name());
-        Logger.getInstance().recordOutput("Arm/CommandedState/Action", commandedState.action.name());
+        Logger.getInstance().recordOutput("Arm/GoalState/Name", mGoalState.name());
+        Logger.getInstance().recordOutput("Arm/CommandedState/Action", mCommandedState.action.name());
         Logger.getInstance().recordOutput("Arm/RequestedAlignment", getRequestedAlignment().name());
-        Logger.getInstance().recordOutput("Arm/GoalState/Action", goalState.state.action.name());
-        Logger.getInstance().recordOutput("Arm/GoalState/Send", goalState.state.send.name());
-        Logger.getInstance().recordOutput("Arm/CommandedState/Tolerance/Tilt", commandedState.tiltTolerance);
-        Logger.getInstance().recordOutput("Arm/CommandedState/Tolerance/Extend", commandedState.extendTolerance);
-        Logger.getInstance().recordOutput("Arm/CommandedState/Tolerance/Wrist", commandedState.wristTolerance);
+        Logger.getInstance().recordOutput("Arm/GoalState/Action", mGoalState.state.action.name());
+        Logger.getInstance().recordOutput("Arm/GoalState/Send", mGoalState.state.send.name());
+        Logger.getInstance().recordOutput("Arm/CommandedState/Tolerance/Tilt", mCommandedState.tiltTolerance);
+        Logger.getInstance().recordOutput("Arm/CommandedState/Tolerance/Extend", mCommandedState.extendTolerance);
+        Logger.getInstance().recordOutput("Arm/CommandedState/Tolerance/Wrist", mCommandedState.wristTolerance);
 
         // set correct game object type
-        gripperIO.setGameObject(gameObject);
-        Logger.getInstance().recordOutput("Arm/Gripper/GameObject", gameObject.name());
+        mGripperIO.setGameObject(mGameObject);
+        Logger.getInstance().recordOutput("Arm/Gripper/GameObject", mGameObject.name());
 
         // interpret and execute action from next arm state
         double gripperCommandedOutput = 0;
 
-        switch (commandedState.action) {
+        switch (mCommandedState.action) {
             case INTAKING:
                 if (!isDoneIntaking()) {
                     gripperCommandedOutput = -1;
@@ -208,104 +207,105 @@ public class Arm extends SubsystemBase {
                 break;
         }
 
-        gripperIO.setMotor(gripperCommandedOutput);
+        mGripperIO.setMotor(gripperCommandedOutput);
         Logger.getInstance().recordOutput("Arm/Gripper/CommandedOutput", gripperCommandedOutput);
 
-        targetElevator.setAngle(Rotation2d.fromRotations(commandedState.tilt));
-        targetElevator.setLength(ARM_BASE_LENGTH + commandedState.extend);
-        targetWrist.setAngle(Rotation2d.fromRotations(commandedState.wrist).unaryMinus().minus(Rotation2d.fromDegrees(100)));
+        mTargetMechElevator.setAngle(Rotation2d.fromRotations(mCommandedState.tilt));
+        mTargetMechElevator.setLength(kArmBaseLength + mCommandedState.extend);
+        mTargetMechWrist.setAngle(Rotation2d.fromRotations(mCommandedState.wrist).unaryMinus().minus(Rotation2d.fromDegrees(100)));
 
-        Logger.getInstance().recordOutput("Arm/MeasuredPositions", sensorMech);
-        Logger.getInstance().recordOutput("Arm/TargetPositions", targetMech);
+        Logger.getInstance().recordOutput("Arm/MeasuredPositions", mSensorMech);
+        Logger.getInstance().recordOutput("Arm/TargetPositions", mTargetMech);
         Logger.getInstance().recordOutput("Arm/MotionPlanner/AtGoal", atGoal());
         Logger.getInstance().recordOutput("Arm/MotionPlanner/StatesRemaining", mMotionPlanner.getRemainingStates());
 
-        if (resetMotionPlanner) {
+        if (mResetMotionPlanner) {
             mMotionPlanner.reset();
         }
 
-        if (commandedState.tilt != lastCommandedState.tilt) {
-            armIO.setTiltTarget(commandedState.tilt);
+        if (mCommandedState.tilt != mLastCommandedState.tilt) {
+            mArmIO.setTiltTarget(mCommandedState.tilt);
         }
         double tiltFeedForward = calcTiltFeedforward();
         Logger.getInstance().recordOutput("Arm/CalculatedFeedForwards/Tilt", tiltFeedForward);
-        armIO.setTiltFeedForward(tiltFeedForward);
+        mArmIO.setTiltFeedForward(tiltFeedForward);
 
-        if (commandedState.extend != lastCommandedState.extend) {
-            armIO.setExtendTarget(commandedState.extend);
+        if (mCommandedState.extend != mLastCommandedState.extend) {
+            mArmIO.setExtendTarget(mCommandedState.extend);
         }
         double extendFeedForward = calcExtendFeedForward();
         Logger.getInstance().recordOutput("Arm/CalculatedFeedForwards/Extend", extendFeedForward);
-        armIO.setExtendFeedForward(extendFeedForward);
+        mArmIO.setExtendFeedForward(extendFeedForward);
 
-        if (commandedState.wrist != lastCommandedState.wrist ) {
-            armIO.setWristTarget(commandedState.wrist);
+        if (mCommandedState.wrist != mLastCommandedState.wrist ) {
+            mArmIO.setWristTarget(mCommandedState.wrist);
         }
         double wristFeedForward = calcWristFeedForward();
         Logger.getInstance().recordOutput("Arm/CalculatedFeedForwards/Wrist", wristFeedForward);
-        armIO.setWristFeedForward(wristFeedForward);
+        mArmIO.setWristFeedForward(wristFeedForward);
 
-        armIO.updateOutputs();
+        mArmIO.updateOutputs();
     }
 
     public boolean getResetMotionPlanner() {
-        return resetMotionPlanner;
+        return mResetMotionPlanner;
     }
 
     public void setResetMotionPlanner(boolean resetMotionPlanner) {
-        this.resetMotionPlanner = resetMotionPlanner;
+        mResetMotionPlanner = resetMotionPlanner;
     } 
 
     public boolean atGoal() {
-        return mMotionPlanner.isFinished() && measuredState.isInRange(commandedState);
+        return mMotionPlanner.isFinished() && mMeasuredState.isInRange(mCommandedState);
     }
 
     public GoalState getGoalState() {
-        return goalState;
+        return mGoalState;
     }
 
     public GoalState getLastGoalState() {
-        return lastGoalState;
+        return mLastGoalState;
     }
 
     public void setGoalState(GoalState goalState) {
-        lastGoalState = this.goalState;
-        this.goalState = goalState;
+        mLastGoalState = mGoalState;
+        mGoalState = goalState;
 
-        mMotionPlanner.setDesiredState(this.goalState.state, measuredState);
+        mMotionPlanner.setDesiredState(mGoalState.state, mMeasuredState);
     }
 
     private Rotation2d calcWristRefAngle() {
-        return Rotation2d.fromRotations(armInputs.wristRotations).minus(Rotation2d.fromRotations(armInputs.tiltRotations));
+        return Rotation2d.fromRotations(mArmInputs.wristRotations).minus(Rotation2d.fromRotations(mArmInputs.tiltRotations));
     }
 
     private double calcTiltFeedforward() {
-        Rotation2d tiltAngle = Rotation2d.fromRotations(armInputs.tiltRotations);
-        double extendDistance = armInputs.extendMeters;
+        Rotation2d tiltAngle = Rotation2d.fromRotations(mArmInputs.tiltRotations);
+        Rotation2d wristAngle = Rotation2d.fromRotations(mArmInputs.wristRotations);
+        double extendDistance = mArmInputs.extendMeters;
 
         // estimates a value proportional to the torque on each tilt gearbox
-        double wristMass = calcWristRefAngle().getCos() * ARM_CONE_BOOST;
-        double tiltMass = ARM_MASS_OFFSET + (extendDistance * ARM_MASS_DISTANCE_FACTOR);
+        double wristMass = wristAngle.getCos() * kArmConeBoost;
+        double tiltMass = kArmMassOffset + (extendDistance * kArmMassDistanceFactor);
         double tiltFFCurrent = (wristMass + tiltMass) * tiltAngle.getCos();
 
         return tiltFFCurrent;
     }
 
     private double calcExtendFeedForward() {
-        Rotation2d tiltAngle = Rotation2d.fromRotations(armInputs.tiltRotations);
+        Rotation2d tiltAngle = Rotation2d.fromRotations(mArmInputs.tiltRotations);
         
         // estimates a value proportional to the torque on each extend gearbox
-        double extendFeedForward = ELEVATOR_MASS_FACTOR * tiltAngle.getSin();
+        double extendFeedForward = kElevatorMassFactor * tiltAngle.getSin();
 
         return extendFeedForward;
     }
 
     private double calcWristFeedForward() {
-        return calcWristRefAngle().getCos() * WRIST_MASS_FACTOR;
+        return calcWristRefAngle().getCos() * kWristMassFactor;
     }
 
     public GameObjectType getGameObject() {
-        return gameObject;
+        return mGameObject;
     }
 
     public boolean gripperHasGamepiece() {
@@ -313,26 +313,26 @@ public class Arm extends SubsystemBase {
     }
 
     public boolean isDoneIntaking() {
-        return ensureIntakeFinished.update(gripperHasGamepiece(), 0.5);
+        return mEnsureIntakeFinished.update(gripperHasGamepiece(), 0.5);
     }
 
     public boolean isDoneScoring() {
-        return ensureScoringFinished.update(!gripperHasGamepiece(), 0.5);
+        return mEnsureScoringFinished.update(!gripperHasGamepiece(), 0.5);
     }
 
     public boolean gameObjectIsCone() {
-        return this.gameObject == GameObjectType.CONE;
+        return this.mGameObject == GameObjectType.CONE;
     }
 
     public void setGameObject(GameObjectType gameObject) {
-        this.gameObject = gameObject;
+        this.mGameObject = gameObject;
     }
 
     public void swapGameObject() {
         if (gameObjectIsCone()) {
-            gameObject = GameObjectType.CUBE;
+            mGameObject = GameObjectType.CUBE;
         } else {
-            gameObject = GameObjectType.CONE;
+            mGameObject = GameObjectType.CONE;
         }
     }
 
@@ -362,7 +362,7 @@ public class Arm extends SubsystemBase {
     private synchronized Optional<TimedLEDState> handleIntakingLEDs(double timestamp) {
         Optional<TimedLEDState> display = Optional.empty();
         boolean hasPiece = false;
-        switch (gameObject) {
+        switch (mGameObject) {
             case CONE:
                 hasPiece = gripperHasGamepiece();
                 display = Optional.of(hasPiece ? TimedLEDState.StaticLEDState.kHasCone : TimedLEDState.BlinkingLEDState.kConeIntakeWaiting);
@@ -379,7 +379,7 @@ public class Arm extends SubsystemBase {
         AutoAlignPointSelector.RequestedAlignment alignmentType = AutoAlignPointSelector.RequestedAlignment.AUTO;
         LEDState pieceColor = LEDState.kAutoAlign;
         double maxError = 0.56 / 2.0; // m (distance between low goals)
-        switch (gameObject) {
+        switch (mGameObject) {
             case CONE:
                 alignmentType = AutoAlignPointSelector.RequestedAlignment.AUTO_CONE;
                 pieceColor = LEDState.kIntakingCone;
@@ -392,7 +392,7 @@ public class Arm extends SubsystemBase {
                 break;
         }
 
-        if (goalState == GoalState.SCORE_CONE_LOW || goalState == GoalState.SCORE_CUBE_LOW || goalState == GoalState.SCORE_WAIT_LOW) {
+        if (mGoalState == GoalState.SCORE_CONE_LOW || mGoalState == GoalState.SCORE_CUBE_LOW || mGoalState == GoalState.SCORE_WAIT_LOW) {
             // if we aren't low scoring, we need to pick cones or cubes for alignment hinter
             alignmentType = AutoAlignPointSelector.RequestedAlignment.AUTO;
         }

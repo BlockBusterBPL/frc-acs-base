@@ -13,66 +13,66 @@ import frc.robot.subsystems.arm.Arm.GameObjectType;
 
 /** Add your docs here. */
 public class GripperMiniNeoIO implements GripperIO {
-    private final CANSparkMax cube;
-    private final CANSparkMax cone;
+    private final CANSparkMax mCubeMotor;
+    private final CANSparkMax mConeMotor;
 
-    private final RelativeEncoder cubeEncoder;
-    private final RelativeEncoder coneEncoder;
+    private final RelativeEncoder mCubeEncoder;
+    private final RelativeEncoder mConeEncoder;
 
-    private boolean coneMode;
+    private boolean mConeMode;
 
     public GripperMiniNeoIO() {
         ////////// CUBE MOTOR \\\\\\\\\\
-        cube = new CANSparkMax(40, MotorType.kBrushless);
-        cube.restoreFactoryDefaults();
-        cube.setIdleMode(IdleMode.kBrake);
-        cube.setInverted(false);
-        cube.enableVoltageCompensation(12);
-        cube.setSmartCurrentLimit(20);
-        cube.setSecondaryCurrentLimit(25);
+        mCubeMotor = new CANSparkMax(40, MotorType.kBrushless);
+        mCubeMotor.restoreFactoryDefaults();
+        mCubeMotor.setIdleMode(IdleMode.kBrake);
+        mCubeMotor.setInverted(false);
+        mCubeMotor.enableVoltageCompensation(12);
+        mCubeMotor.setSmartCurrentLimit(20);
+        mCubeMotor.setSecondaryCurrentLimit(25);
 
-        cubeEncoder = cube.getEncoder();
+        mCubeEncoder = mCubeMotor.getEncoder();
 
         ////////// CONE MOTOR \\\\\\\\\\
-        cone = new CANSparkMax(41, MotorType.kBrushless);
-        cone.restoreFactoryDefaults();
-        cone.setIdleMode(IdleMode.kBrake);
-        cone.setInverted(false);
-        cone.enableVoltageCompensation(12);
-        cone.setSmartCurrentLimit(20);
-        cone.setSecondaryCurrentLimit(25);
+        mConeMotor = new CANSparkMax(41, MotorType.kBrushless);
+        mConeMotor.restoreFactoryDefaults();
+        mConeMotor.setIdleMode(IdleMode.kBrake);
+        mConeMotor.setInverted(false);
+        mConeMotor.enableVoltageCompensation(12);
+        mConeMotor.setSmartCurrentLimit(20);
+        mConeMotor.setSecondaryCurrentLimit(25);
 
-        coneEncoder = cone.getEncoder();
+        mConeEncoder = mConeMotor.getEncoder();
 
-        coneMode = false;
+        mConeMode = false;
     }
 
     @Override
     public void updateInputs(GripperIOInputs inputs) {
-        if (coneMode) {
-            inputs.motorSpeedRotationsPerSecond = coneEncoder.getVelocity() / 60.0;
+        if (mConeMode) {
+            inputs.motorSpeedRotationsPerSecond = mConeEncoder.getVelocity() / 60.0;
         } else {
-            inputs.motorSpeedRotationsPerSecond = cubeEncoder.getVelocity() / 60.0;
+            inputs.motorSpeedRotationsPerSecond = mCubeEncoder.getVelocity() / 60.0;
         }
 
-        inputs.suppliedCurrentAmps = cube.getOutputCurrent() + cone.getOutputCurrent();
+        inputs.suppliedCurrentAmps = mCubeMotor.getOutputCurrent() + mConeMotor.getOutputCurrent();
 
-        inputs.hottestMotorTempCelsius = Math.max(cube.getMotorTemperature(), cone.getMotorTemperature());
+        inputs.hottestMotorTempCelsius = Math.max(mCubeMotor.getMotorTemperature(), mConeMotor.getMotorTemperature());
     }
 
     @Override
     public void setMotor(double throttle) {
-        if (coneMode) {
-            cone.set(throttle);
-            cube.set(0);
+        if (mConeMode) {
+            mConeMotor.set(throttle);
+            mCubeMotor.set(0);
         } else {
-            cone.set(0);
-            cube.set(throttle);
+            mConeMotor.set(0);
+            mCubeMotor.set(throttle);
         }
     }
 
     @Override
     public void setGameObject(GameObjectType object) {
-        this.coneMode = (object == GameObjectType.CONE);
+        mConeMode = (object == GameObjectType.CONE);
     }
 }

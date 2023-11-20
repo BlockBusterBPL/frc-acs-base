@@ -11,11 +11,11 @@ public class ArmState {
     public double tiltTolerance = Tilt.kLiberalAllowableError;
     public double extendTolerance = Extend.kLiberalAllowableError;
     public double wristTolerance = Wrist.kLiberalAllowableError;
-    public Action action = Action.NEUTRAL;
+    public ArmAction action = ArmAction.NEUTRAL;
     public ArmSend send = ArmSend.MEDIUM;
 
     /**  */
-    public enum Action {
+    public enum ArmAction {
         /** stop intake rollers */
         NEUTRAL,
         /** Run gripper out */
@@ -30,7 +30,7 @@ public class ArmState {
         FULL
     }
 
-    public ArmState(double tilt, double extend, double wrist, double tiltTolerance, double extendTolerance, double wristTolerance, Action action, ArmSend send) {
+    public ArmState(double tilt, double extend, double wrist, double tiltTolerance, double extendTolerance, double wristTolerance, ArmAction action, ArmSend send) {
         this.tilt = tilt;
         this.extend = extend;
         this.wrist = wrist;
@@ -46,25 +46,33 @@ public class ArmState {
     }
 
     public ArmState(double tilt, double extend, double wrist) {
-        this(tilt, extend, wrist, Tilt.kLiberalAllowableError, Extend.kLiberalAllowableError, Wrist.kLiberalAllowableError, Action.NEUTRAL, ArmSend.MEDIUM);
+        this(tilt, extend, wrist, Tilt.kLiberalAllowableError, Extend.kLiberalAllowableError, Wrist.kLiberalAllowableError, ArmAction.NEUTRAL, ArmSend.MEDIUM);
     }
 
-    public ArmState(double tilt, double extend, double wrist, Action action) {
+    public ArmState(double tilt, double extend, double wrist, ArmAction action) {
         this(tilt, extend, wrist, Tilt.kLiberalAllowableError, Extend.kLiberalAllowableError, Wrist.kLiberalAllowableError, action, ArmSend.MEDIUM);
     }
 
-    public ArmState(double tilt, double extend, double wrist, Action action, ArmSend send) {
+    public ArmState(double tilt, double extend, double wrist, ArmAction action, ArmSend send) {
         this(tilt, extend, wrist, Tilt.kLiberalAllowableError, Extend.kLiberalAllowableError, Wrist.kLiberalAllowableError, action, send);
     }
 
     public ArmState() {}
+
+    public static ArmState withConservativeConstraints(double tilt, double extend, double wrist, ArmAction action, ArmSend send) {
+        return new ArmState(tilt, extend, wrist, Tilt.kConservativeAllowableError, Extend.kConservativeAllowableError, Wrist.kConservativeAllowableError, action, send);
+    }
+
+    public static ArmState withLiberalConstraints(double tilt, double extend, double wrist, ArmAction action, ArmSend send) {
+        return new ArmState(tilt, extend, wrist, Tilt.kLiberalAllowableError, Extend.kLiberalAllowableError, Wrist.kLiberalAllowableError, action, send);
+    }
 
     public static ArmState generateWithFailsafeParameters(double tilt, double extend, double wrist) {
         return new ArmState(tilt, extend, wrist, 
             Tilt.kConservativeAllowableError, 
             Extend.kConservativeAllowableError, 
             Wrist.kConservativeAllowableError, 
-            Action.NEUTRAL, ArmSend.LOW);
+            ArmAction.NEUTRAL, ArmSend.LOW);
     }
 
     public double getTilt() {
