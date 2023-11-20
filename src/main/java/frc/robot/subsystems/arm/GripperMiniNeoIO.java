@@ -49,14 +49,15 @@ public class GripperMiniNeoIO implements GripperIO {
 
     @Override
     public void updateInputs(GripperIOInputs inputs) {
-        inputs.motorSpeedRotationsPerSecond[1] = cubeEncoder.getVelocity() / 60.0;
-        inputs.motorSpeedRotationsPerSecond[2] = coneEncoder.getVelocity() / 60.0;
+        if (coneMode) {
+            inputs.motorSpeedRotationsPerSecond = coneEncoder.getVelocity() / 60.0;
+        } else {
+            inputs.motorSpeedRotationsPerSecond = cubeEncoder.getVelocity() / 60.0;
+        }
 
-        inputs.motorCurrentAmps[1] = cube.getOutputCurrent();
-        inputs.motorCurrentAmps[2] = cone.getOutputCurrent();
+        inputs.suppliedCurrentAmps = cube.getOutputCurrent() + cone.getOutputCurrent();
 
-        inputs.motorTempCelsius[1] = cube.getMotorTemperature();
-        inputs.motorTempCelsius[2] = cone.getMotorTemperature();
+        inputs.hottestMotorTempCelsius = Math.max(cube.getMotorTemperature(), cone.getMotorTemperature());
     }
 
     @Override

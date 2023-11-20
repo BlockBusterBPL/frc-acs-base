@@ -72,6 +72,7 @@ public class Arm extends SubsystemBase {
     private TimeDelayedBoolean ensureScoringFinished = new TimeDelayedBoolean();
     private TimeDelayedBoolean ensureIntakeFinished = new TimeDelayedBoolean();
     private boolean resetMotionPlanner = false;
+    private boolean mGripperHasGamepiece = false;
 
     public static final double ARM_BASE_LENGTH = Units.inchesToMeters(19); // distance from arm pivot to vertical
                                                                            // extension of wrist pivot
@@ -141,19 +142,18 @@ public class Arm extends SubsystemBase {
         }
         if (Constants.getMode() == Mode.SIM) {
             double simCurrent = 0.0;
-            for (Double l : armInputs.tiltSuppliedCurrentAmps) {
-                simCurrent += l;
-            }
-            for (Double l : armInputs.extendSuppliedCurrentAmps) {
-                simCurrent += l;
-            }
+            simCurrent += armInputs.tiltSuppliedCurrentAmps;
+            simCurrent += armInputs.extendSuppliedCurrentAmps;
             simCurrent += armInputs.wristSuppliedCurrentAmps;
-            for (Double l : gripperInputs.motorCurrentAmps) {
-                simCurrent += l;
-            }
+            simCurrent += gripperInputs.suppliedCurrentAmps;
 
             Robot.updateSimCurrentDraw(this.getClass().getName(), simCurrent);
         }
+
+        mGripperHasGamepiece = gripperInputs.coneInIntake || gripperInputs.cubeInIntake;
+        Logger.getInstance().recordOutput("Arm/Gripper/HasGamepiece", mGripperHasGamepiece);
+        Logger.getInstance().recordOutput("Arm/Gripper/FinishedIntaking", isDoneIntaking());
+        Logger.getInstance().recordOutput("Arm/Gripper/FinishedScoring", isDoneScoring());
 
         Rotation2d tiltAngle = Rotation2d.fromRotations(armInputs.tiltRotations);
         Rotation2d wristAngle = Rotation2d.fromRotations(armInputs.wristRotations);
@@ -168,8 +168,13 @@ public class Arm extends SubsystemBase {
         lastCommandedState = commandedState;
         commandedState = nextArmState;
         expectedState = commandedState;
+
         Logger.getInstance().recordOutput("Arm/GoalState/Name", goalState.name());
         Logger.getInstance().recordOutput("Arm/GoalState/Action", goalState.state.action.name());
+        Logger.getInstance().recordOutput("Arm/GoalState/Send", goalState.state.send.name());
+        Logger.getInstance().recordOutput("Arm/CommandedState/Tolerance/Tilt", commandedState.tiltTolerance);
+        Logger.getInstance().recordOutput("Arm/CommandedState/Tolerance/Extend", commandedState.extendTolerance);
+        Logger.getInstance().recordOutput("Arm/CommandedState/Tolerance/Wrist", commandedState.wristTolerance);
 
         // set correct game object type
         gripperIO.setGameObject(gameObject);
@@ -210,8 +215,8 @@ public class Arm extends SubsystemBase {
 
         Logger.getInstance().recordOutput("Arm/MeasuredPositions", sensorMech);
         Logger.getInstance().recordOutput("Arm/TargetPositions", targetMech);
-        Logger.getInstance().recordOutput("Arm/PlannerAtGoal", atGoal());
-        Logger.getInstance().recordOutput("Arm/PlannerStatesRemaining", mMotionPlanner.getRemainingStates());
+        Logger.getInstance().recordOutput("Arm/MotionPlanner/AtGoal", atGoal());
+        Logger.getInstance().recordOutput("Arm/MotionPlanner/StatesRemaining", mMotionPlanner.getRemainingStates());
 
         if (resetMotionPlanner) {
             mMotionPlanner.reset();
@@ -220,17 +225,23 @@ public class Arm extends SubsystemBase {
         if (commandedState.tilt != lastCommandedState.tilt) {
             armIO.setTiltTarget(commandedState.tilt);
         }
-        armIO.setTiltFeedForward(calcTiltFeedforward());
+        double tiltFeedForward = calcTiltFeedforward();
+        Logger.getInstance().recordOutput("Arm/CalculatedFeedForwards/Tilt", tiltFeedForward);
+        armIO.setTiltFeedForward(tiltFeedForward);
 
         if (commandedState.extend != lastCommandedState.extend) {
             armIO.setExtendTarget(commandedState.extend);
         }
-        armIO.setExtendFeedForward(calcExtendFeedForward());
+        double extendFeedForward = calcExtendFeedForward();
+        Logger.getInstance().recordOutput("Arm/CalculatedFeedForwards/Extend", extendFeedForward);
+        armIO.setExtendFeedForward(extendFeedForward);
 
         if (commandedState.wrist != lastCommandedState.wrist ) {
             armIO.setWristTarget(commandedState.wrist);
         }
-        armIO.setWristFeedForward(calcWristFeedForward());
+        double wristFeedForward = calcWristFeedForward();
+        Logger.getInstance().recordOutput("Arm/CalculatedFeedForwards/Wrist", wristFeedForward);
+        armIO.setWristFeedForward(wristFeedForward);
 
         armIO.updateOutputs();
     }
@@ -296,7 +307,7 @@ public class Arm extends SubsystemBase {
     }
 
     public boolean gripperHasGamepiece() {
-        return gripperInputs.coneInIntake || gripperInputs.cubeInIntake;
+        return mGripperHasGamepiece;
     }
 
     public boolean isDoneIntaking() {

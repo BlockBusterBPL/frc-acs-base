@@ -7,9 +7,9 @@ import frc.robot.subsystems.arm.Arm.GameObjectType;
 public interface GripperIO {
     @AutoLog
     public static class GripperIOInputs {
-        public double[] motorSpeedRotationsPerSecond = {0.0, 0.0, 0.0};
-        public double[] motorCurrentAmps = {0.0, 0.0, 0.0};
-        public double[] motorTempCelsius = {0.0, 0.0, 0.0};
+        public double motorSpeedRotationsPerSecond = 0.0;
+        public double suppliedCurrentAmps = 0.0;
+        public double hottestMotorTempCelsius = 0.0;
         public boolean cubeInIntake = false;
         public boolean coneInIntake = false;
     }

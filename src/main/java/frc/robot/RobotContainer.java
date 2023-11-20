@@ -84,7 +84,7 @@ public class RobotContainer {
     private final Trigger driverAssistFail = overrides.driverSwitch(2); // disable all drive assists
 
     private final Trigger armForceEnable = overrides.operatorSwitch(0); // bypass arm sanity checks and force manual control
-    private final Trigger armCalibrateStart = overrides.operatorSwitch(1); // run the arm calibration sequence
+    private final Trigger armHomingSequence = overrides.operatorSwitch(1).debounce(1, DebounceType.kRising); // run the arm calibration sequence
     private final Trigger overrideArmSafety = overrides.operatorSwitch(2); // run arm at full speed even off FMS
     private final Trigger overrideLedBrightness = overrides.operatorSwitch(3); // full led brightness when off FMS
     private final Trigger ledsIndicateFailed = overrides.operatorSwitch(4); // indicate arm failed on LEDS

@@ -8,7 +8,9 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
-/** Add your docs here. */
+/** 
+ * A singleton class for sharing robot state information between subsystems.
+ */
 public class RobotStateTracker {
     private Translation2d mCurrentRobotPosition = new Translation2d();
     private ChassisSpeeds mCurrentRobotSpeed = new ChassisSpeeds();

@@ -43,53 +43,38 @@ public class ArmIOFalcons implements ArmIO {
     ///////// STATUS SIGNALS \\\\\\\\\\
     private StatusSignalValue<Double> tiltMasterPosition;
     private StatusSignalValue<Double> tiltMasterVelocity;
-    private StatusSignalValue<Double> tiltMasterAppliedCurrent;
     private StatusSignalValue<Double> tiltMasterSuppliedCurrent;
     private StatusSignalValue<Double> tiltMasterTempCelsius;
-    private StatusSignalValue<Boolean> tiltMasterReverseSoftLimit;
-    private StatusSignalValue<Boolean> tiltMasterForwardSoftLimit;
     private StatusSignalValue<ReverseLimitValue> tiltMasterReverseHardLimit;
-    private StatusSignalValue<ForwardLimitValue> tiltMasterForwardHardLimit;
+    private StatusSignalValue<Boolean> tiltMasterForwardSoftLimit;
 
     private StatusSignalValue<Double> tiltFollowerPosition;
     private StatusSignalValue<Double> tiltFollowerVelocity;
-    private StatusSignalValue<Double> tiltFollowerAppliedCurrent;
     private StatusSignalValue<Double> tiltFollowerSuppliedCurrent;
     private StatusSignalValue<Double> tiltFollowerTempCelsius;
-    private StatusSignalValue<Boolean> tiltFollowerReverseSoftLimit;
-    private StatusSignalValue<Boolean> tiltFollowerForwardSoftLimit;
     private StatusSignalValue<ReverseLimitValue> tiltFollowerReverseHardLimit;
-    private StatusSignalValue<ForwardLimitValue> tiltFollowerForwardHardLimit;
+    private StatusSignalValue<Boolean> tiltFollowerForwardSoftLimit;
 
     private StatusSignalValue<Double> extendMasterPosition;
     private StatusSignalValue<Double> extendMasterVelocity;
-    private StatusSignalValue<Double> extendMasterAppliedCurrent;
     private StatusSignalValue<Double> extendMasterSuppliedCurrent;
     private StatusSignalValue<Double> extendMasterTempCelsius;
-    private StatusSignalValue<Boolean> extendMasterReverseSoftLimit;
-    private StatusSignalValue<Boolean> extendMasterForwardSoftLimit;
     private StatusSignalValue<ReverseLimitValue> extendMasterReverseHardLimit;
-    private StatusSignalValue<ForwardLimitValue> extendMasterForwardHardLimit;
+    private StatusSignalValue<Boolean> extendMasterForwardSoftLimit;
 
     private StatusSignalValue<Double> extendFollowerPosition;
     private StatusSignalValue<Double> extendFollowerVelocity;
-    private StatusSignalValue<Double> extendFollowerAppliedCurrent;
     private StatusSignalValue<Double> extendFollowerSuppliedCurrent;
     private StatusSignalValue<Double> extendFollowerTempCelsius;
-    private StatusSignalValue<Boolean> extendFollowerReverseSoftLimit;
-    private StatusSignalValue<Boolean> extendFollowerForwardSoftLimit;
     private StatusSignalValue<ReverseLimitValue> extendFollowerReverseHardLimit;
-    private StatusSignalValue<ForwardLimitValue> extendFollowerForwardHardLimit;
+    private StatusSignalValue<Boolean> extendFollowerForwardSoftLimit;
 
     private StatusSignalValue<Double> wristPosition;
     private StatusSignalValue<Double> wristVelocity;
-    private StatusSignalValue<Double> wristAppliedCurrent;
     private StatusSignalValue<Double> wristSuppliedCurrent;
     private StatusSignalValue<Double> wristTempCelsius;
-    private StatusSignalValue<Boolean> wristReverseSoftLimit;
-    private StatusSignalValue<Boolean> wristForwardSoftLimit;
     private StatusSignalValue<ReverseLimitValue> wristReverseHardLimit;
-    private StatusSignalValue<ForwardLimitValue> wristForwardHardLimit;
+    private StatusSignalValue<Boolean> wristForwardSoftLimit;
 
     private Collection<StatusSignalValue<?>> m_signals = new ArrayList<StatusSignalValue<?>>();
 
@@ -98,7 +83,7 @@ public class ArmIOFalcons implements ArmIO {
         tiltMaster = new TalonFX(30, "canivore");
         tiltFollower = new TalonFX(31, "canivore");
         tiltConfig = TalonConfigHelper.getBaseConfig();
-
+        
         tiltConfig.Slot0.kP = Constants.ArmSubsystem.Tilt.kP;
         tiltConfig.Slot0.kI = Constants.ArmSubsystem.Tilt.kI;
         tiltConfig.Slot0.kD = Constants.ArmSubsystem.Tilt.kD;
@@ -108,8 +93,7 @@ public class ArmIOFalcons implements ArmIO {
         tiltConfig.MotionMagic.MotionMagicAcceleration = Constants.ArmSubsystem.Tilt.kMagicAccel;
         tiltConfig.MotionMagic.MotionMagicJerk = Constants.ArmSubsystem.Tilt.kMagicJerk;
 
-        tiltMaster.getConfigurator().apply(tiltConfig);
-        tiltFollower.getConfigurator().apply(tiltConfig);
+        
 
         tiltMasterControl = new MotionMagicTorqueCurrentFOC(0, 0, 0, false);
         tiltFollowerControl = new StrictFollower(tiltMaster.getDeviceID());
@@ -117,9 +101,9 @@ public class ArmIOFalcons implements ArmIO {
         ////////// EXTEND MOTORS \\\\\\\\\\
         extendMaster = new TalonFX(32, "canivore");
         extendFollower = new TalonFX(33, "canivore");
-
+        
         extendConfig = TalonConfigHelper.getBaseConfig();
-
+        
         extendConfig.Slot0.kP = Constants.ArmSubsystem.Extend.kP;
         extendConfig.Slot0.kI = Constants.ArmSubsystem.Extend.kI;
         extendConfig.Slot0.kD = Constants.ArmSubsystem.Extend.kD;
@@ -135,9 +119,9 @@ public class ArmIOFalcons implements ArmIO {
 
         ////////// WRIST MOTOR \\\\\\\\\\
         wrist = new TalonFX(34, "canivore");
-
+        
         wristConfig = TalonConfigHelper.getBaseConfig();
-
+        
         wristConfig.Slot0.kP = Constants.ArmSubsystem.Wrist.kP;
         wristConfig.Slot0.kI = Constants.ArmSubsystem.Wrist.kI;
         wristConfig.Slot0.kD = Constants.ArmSubsystem.Wrist.kD;
@@ -150,108 +134,89 @@ public class ArmIOFalcons implements ArmIO {
         wristControl = new MotionMagicTorqueCurrentFOC(0, 0, 0, false);
 
         ////////// ALL MOTORS \\\\\\\\\\
+        configMotors();
         refreshFollowers();
 
         ////////// STATUS SIGNALS \\\\\\\\\\
         tiltMasterPosition = tiltMaster.getPosition();
         tiltMasterVelocity = tiltMaster.getVelocity();
-        tiltMasterAppliedCurrent = tiltMaster.getTorqueCurrent();
         tiltMasterSuppliedCurrent = tiltMaster.getSupplyCurrent();
         tiltMasterTempCelsius = tiltMaster.getDeviceTemp();
-        tiltMasterReverseSoftLimit = tiltMaster.getFault_ReverseSoftLimit();
         tiltMasterForwardSoftLimit = tiltMaster.getFault_ForwardSoftLimit();
         tiltMasterReverseHardLimit = tiltMaster.getReverseLimit();
-        tiltMasterForwardHardLimit = tiltMaster.getForwardLimit();
 
         tiltFollowerPosition = tiltFollower.getPosition();
         tiltFollowerVelocity = tiltFollower.getVelocity();
-        tiltFollowerAppliedCurrent = tiltFollower.getTorqueCurrent();
         tiltFollowerSuppliedCurrent = tiltFollower.getSupplyCurrent();
         tiltFollowerTempCelsius = tiltFollower.getDeviceTemp();
-        tiltFollowerReverseSoftLimit = tiltFollower.getFault_ReverseSoftLimit();
         tiltFollowerForwardSoftLimit = tiltFollower.getFault_ForwardSoftLimit();
         tiltFollowerReverseHardLimit = tiltFollower.getReverseLimit();
-        tiltFollowerForwardHardLimit = tiltFollower.getForwardLimit();
 
         extendMasterPosition = extendMaster.getPosition();
         extendMasterVelocity = extendMaster.getVelocity();
-        extendMasterAppliedCurrent = extendMaster.getTorqueCurrent();
         extendMasterSuppliedCurrent = extendMaster.getSupplyCurrent();
         extendMasterTempCelsius = extendMaster.getDeviceTemp();
-        extendMasterReverseSoftLimit = extendMaster.getFault_ReverseSoftLimit();
         extendMasterForwardSoftLimit = extendMaster.getFault_ForwardSoftLimit();
         extendMasterReverseHardLimit = extendMaster.getReverseLimit();
-        extendMasterForwardHardLimit = extendMaster.getForwardLimit();
 
         extendFollowerPosition = extendFollower.getPosition();
         extendFollowerVelocity = extendFollower.getVelocity();
-        extendFollowerAppliedCurrent = extendFollower.getTorqueCurrent();
         extendFollowerSuppliedCurrent = extendFollower.getSupplyCurrent();
         extendFollowerTempCelsius = extendFollower.getDeviceTemp();
-        extendFollowerReverseSoftLimit = extendFollower.getFault_ReverseSoftLimit();
         extendFollowerForwardSoftLimit = extendFollower.getFault_ForwardSoftLimit();
         extendFollowerReverseHardLimit = extendFollower.getReverseLimit();
-        extendFollowerForwardHardLimit = extendFollower.getForwardLimit();
 
         wristPosition = wrist.getPosition();
         wristVelocity = wrist.getVelocity();
-        wristAppliedCurrent = wrist.getTorqueCurrent();
         wristSuppliedCurrent = wrist.getSupplyCurrent();
         wristTempCelsius = wrist.getDeviceTemp();
-        wristReverseSoftLimit = wrist.getFault_ReverseSoftLimit();
         wristForwardSoftLimit = wrist.getFault_ForwardSoftLimit();
         wristReverseHardLimit = wrist.getReverseLimit();
-        wristForwardHardLimit = wrist.getForwardLimit();
 
         m_signals.add(tiltMasterPosition);
         m_signals.add(tiltMasterVelocity);
-        m_signals.add(tiltMasterAppliedCurrent);
         m_signals.add(tiltMasterSuppliedCurrent);
         m_signals.add(tiltMasterTempCelsius);
-        m_signals.add(tiltMasterReverseSoftLimit);
         m_signals.add(tiltMasterForwardSoftLimit);
         m_signals.add(tiltMasterReverseHardLimit);
-        m_signals.add(tiltMasterForwardHardLimit);
 
         m_signals.add(tiltFollowerPosition);
         m_signals.add(tiltFollowerVelocity);
-        m_signals.add(tiltFollowerAppliedCurrent);
         m_signals.add(tiltFollowerSuppliedCurrent);
         m_signals.add(tiltFollowerTempCelsius);
-        m_signals.add(tiltFollowerReverseSoftLimit);
         m_signals.add(tiltFollowerForwardSoftLimit);
         m_signals.add(tiltFollowerReverseHardLimit);
-        m_signals.add(tiltFollowerForwardHardLimit);
 
         m_signals.add(extendMasterPosition);
         m_signals.add(extendMasterVelocity);
-        m_signals.add(extendMasterAppliedCurrent);
         m_signals.add(extendMasterSuppliedCurrent);
         m_signals.add(extendMasterTempCelsius);
-        m_signals.add(extendMasterReverseSoftLimit);
         m_signals.add(extendMasterForwardSoftLimit);
         m_signals.add(extendMasterReverseHardLimit);
-        m_signals.add(extendMasterForwardHardLimit);
 
         m_signals.add(extendFollowerPosition);
         m_signals.add(extendFollowerVelocity);
-        m_signals.add(extendFollowerAppliedCurrent);
         m_signals.add(extendFollowerSuppliedCurrent);
         m_signals.add(extendFollowerTempCelsius);
-        m_signals.add(extendFollowerReverseSoftLimit);
         m_signals.add(extendFollowerForwardSoftLimit);
         m_signals.add(extendFollowerReverseHardLimit);
-        m_signals.add(extendFollowerForwardHardLimit);
 
         m_signals.add(wristPosition);
         m_signals.add(wristVelocity);
-        m_signals.add(wristAppliedCurrent);
         m_signals.add(wristSuppliedCurrent);
         m_signals.add(wristTempCelsius);
-        m_signals.add(wristReverseSoftLimit);
         m_signals.add(wristForwardSoftLimit);
         m_signals.add(wristReverseHardLimit);
-        m_signals.add(wristForwardHardLimit);
+    }
+
+    private void configMotors() {
+        tiltMaster.getConfigurator().apply(tiltConfig);
+        tiltFollower.getConfigurator().apply(tiltConfig);
+
+        extendMaster.getConfigurator().apply(extendConfig);
+        extendFollower.getConfigurator().apply(extendConfig);
+
+        wrist.getConfigurator().apply(wristConfig);
     }
 
     @Override
@@ -260,49 +225,56 @@ public class ArmIOFalcons implements ArmIO {
 
         inputs.tiltRotations = tiltMasterPosition.getValue();
         inputs.tiltVelocityRotPerSec = tiltMasterVelocity.getValue();
-        inputs.tiltAppliedCurrentAmps[0] = tiltMasterAppliedCurrent.getValue();
-        inputs.tiltAppliedCurrentAmps[1] = tiltFollowerAppliedCurrent.getValue();
-        inputs.tiltSuppliedCurrentAmps[0] = tiltMasterSuppliedCurrent.getValue();
-        inputs.tiltSuppliedCurrentAmps[1] = tiltFollowerSuppliedCurrent.getValue();
-        inputs.tiltTempCelsius[0] = tiltMasterTempCelsius.getValue();
-        inputs.tiltTempCelsius[1] = tiltFollowerTempCelsius.getValue();
-        inputs.tiltReverseSoftLimit[0] = tiltMasterReverseSoftLimit.getValue();
-        inputs.tiltReverseSoftLimit[1] = tiltFollowerReverseSoftLimit.getValue();
-        inputs.tiltForwardSoftLimit[0] = tiltMasterForwardSoftLimit.getValue();
-        inputs.tiltForwardSoftLimit[1] = tiltFollowerForwardSoftLimit.getValue();
-        inputs.tiltReverseHardLimit[0] = tiltMasterReverseHardLimit.getValue() == ReverseLimitValue.ClosedToGround;
-        inputs.tiltReverseHardLimit[1] = tiltFollowerReverseHardLimit.getValue() == ReverseLimitValue.ClosedToGround;
-        inputs.tiltForwardHardLimit[0] = tiltMasterForwardHardLimit.getValue() == ForwardLimitValue.ClosedToGround;
-        inputs.tiltForwardHardLimit[1] = tiltFollowerForwardHardLimit.getValue() == ForwardLimitValue.ClosedToGround;
+        inputs.tiltSuppliedCurrentAmps += tiltMasterSuppliedCurrent.getValue();
+        inputs.tiltSuppliedCurrentAmps += tiltFollowerSuppliedCurrent.getValue();
+        inputs.tiltHottestTempCelsius = Math.max(tiltMasterTempCelsius.getValue(), tiltFollowerTempCelsius.getValue());
+        inputs.tiltForwardSoftLimit = tiltMasterForwardSoftLimit.getValue();
+        inputs.tiltReverseHardLimit = tiltMasterReverseHardLimit.getValue() == ReverseLimitValue.ClosedToGround;
 
         inputs.extendMeters = extendMasterPosition.getValue();
         inputs.extendVelocityMetersPerSec = extendMasterVelocity.getValue();
-        inputs.extendAppliedCurrentAmps[0] = extendMasterAppliedCurrent.getValue();
-        inputs.extendAppliedCurrentAmps[1] = extendFollowerAppliedCurrent.getValue();
-        inputs.extendSuppliedCurrentAmps[0] = extendMasterSuppliedCurrent.getValue();
-        inputs.extendSuppliedCurrentAmps[1] = extendFollowerSuppliedCurrent.getValue();
-        inputs.extendTempCelsius[0] = extendMasterTempCelsius.getValue();
-        inputs.extendTempCelsius[1] = extendFollowerTempCelsius.getValue();
-        inputs.extendReverseSoftLimit[0] = extendMasterReverseSoftLimit.getValue();
-        inputs.extendReverseSoftLimit[1] = extendFollowerReverseSoftLimit.getValue();
-        inputs.extendForwardSoftLimit[0] = extendMasterForwardSoftLimit.getValue();
-        inputs.extendForwardSoftLimit[1] = extendFollowerForwardSoftLimit.getValue();
-        inputs.extendReverseHardLimit[0] = extendMasterReverseHardLimit.getValue() == ReverseLimitValue.ClosedToGround;
-        inputs.extendReverseHardLimit[1] = extendFollowerReverseHardLimit
-                .getValue() == ReverseLimitValue.ClosedToGround;
-        inputs.extendForwardHardLimit[0] = extendMasterForwardHardLimit.getValue() == ForwardLimitValue.ClosedToGround;
-        inputs.extendForwardHardLimit[1] = extendFollowerForwardHardLimit
-                .getValue() == ForwardLimitValue.ClosedToGround;
+        inputs.extendSuppliedCurrentAmps += extendMasterSuppliedCurrent.getValue();
+        inputs.extendSuppliedCurrentAmps += extendFollowerSuppliedCurrent.getValue();
+        inputs.extendHottestTempCelsius = Math.max(extendMasterTempCelsius.getValue(), extendFollowerTempCelsius.getValue());
+        inputs.extendForwardSoftLimit = extendMasterForwardSoftLimit.getValue();
+        inputs.extendReverseHardLimit = extendMasterReverseHardLimit.getValue() == ReverseLimitValue.ClosedToGround;
 
         inputs.wristRotations = wristPosition.getValue();
         inputs.wristVelocityRotPerSec = wristVelocity.getValue();
-        inputs.wristAppliedCurrentAmps = wristAppliedCurrent.getValue();
         inputs.wristSuppliedCurrentAmps = wristSuppliedCurrent.getValue();
         inputs.wristTempCelsius = wristTempCelsius.getValue();
-        inputs.wristReverseSoftLimit = wristReverseSoftLimit.getValue();
-        inputs.wristForwardSoftLimit = wristForwardSoftLimit.getValue();
         inputs.wristReverseHardLimit = wristReverseHardLimit.getValue() == ReverseLimitValue.ClosedToGround;
-        inputs.wristForwardHardLimit = wristForwardHardLimit.getValue() == ForwardLimitValue.ClosedToGround;
+        inputs.wristForwardSoftLimit = wristForwardSoftLimit.getValue();
+    }
+
+    @Override
+    public void setTiltTarget(double rotations) {
+        tiltMasterControl.Position = rotations;
+    }
+
+    @Override
+    public void setTiltFeedForward(double amps) {
+        tiltMasterControl.FeedForward = amps;
+    }
+
+    @Override
+    public void setExtendTarget(double meters) {
+        extendMasterControl.Position = meters;
+    }
+
+    @Override
+    public void setExtendFeedForward(double amps) {
+        extendMasterControl.FeedForward = amps;
+    }
+
+    @Override
+    public void setWristTarget(double rotations) {
+        wristControl.Position = rotations;
+    }
+
+    @Override
+    public void setWristFeedForward(double amps) {
+        wristControl.FeedForward = amps;
     }
 
     @Override
