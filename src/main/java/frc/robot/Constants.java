@@ -26,7 +26,7 @@ import com.ctre.phoenixpro.configs.MotionMagicConfigs;
 import com.ctre.phoenixpro.configs.Slot0Configs;
 
 public final class Constants {
-    private static final RobotType robot = RobotType.ROBOT_SIMBOT;
+    private static final RobotType robot = RobotType.ROBOT_2023_CN2;
     public static final double loopPeriodSecs = 0.02;
     public static final boolean tuningMode = true;
     
@@ -173,6 +173,17 @@ public final class Constants {
         kSmoothKinematicLimits.kMaxSteeringVelocity = Units.degreesToRadians(750.0);
     }
     
+    // public static final Translation2d[] kWheelPositions = {
+    //     // Front left
+    //     new Translation2d(Constants.kDriveTrackwidthMeters / 2.0, Constants.kDriveWheelbaseMeters / 2.0),
+    //     // Front right
+    //     new Translation2d(Constants.kDriveTrackwidthMeters / 2.0, -Constants.kDriveWheelbaseMeters / 2.0),
+    //     // Back left
+    //     new Translation2d(-Constants.kDriveTrackwidthMeters / 2.0, Constants.kDriveWheelbaseMeters / 2.0),
+    //     // Back right
+    //     new Translation2d(-Constants.kDriveTrackwidthMeters / 2.0, -Constants.kDriveWheelbaseMeters / 2.0)
+    // };
+
     public static final Translation2d[] kWheelPositions = {
         // Front left
         new Translation2d(Constants.kDriveTrackwidthMeters / 2.0, Constants.kDriveWheelbaseMeters / 2.0),
@@ -278,18 +289,18 @@ public final class Constants {
     public static final class DriveSubsystem {
         public static final Slot0Configs kDrivePIDConfig = new Slot0Configs();
         static {
-            kDrivePIDConfig.kP = 0.2 * 12;
+            kDrivePIDConfig.kP = 0;//0.2 * 12; 
             kDrivePIDConfig.kI = 0.0;
-            kDrivePIDConfig.kD = 0.000002 * 12;
-            kDrivePIDConfig.kV = 1 / 101.98 * 12;// (kMaxVelocityMetersPerSecond / (Math.PI * Constants.kDriveWheelDiameter * Constants.kDriveReduction));;
-            kDrivePIDConfig.kS = 0.8;
+            kDrivePIDConfig.kD = 0.0;//00002 * 12;
+            kDrivePIDConfig.kV = 0.117;// (kMaxVelocityMetersPerSecond / (Math.PI * Constants.kDriveWheelDiameter * Constants.kDriveReduction));;
+            kDrivePIDConfig.kS = 0.0;//8;
         }
 
         public static final Slot0Configs kSteerPIDConfig = new Slot0Configs();
         static {
-            kSteerPIDConfig.kP = 6.000 * 2 * Math.PI;
+            kSteerPIDConfig.kP = 2.000 * 2 * Math.PI;
             kSteerPIDConfig.kI = 0.0;
-            kSteerPIDConfig.kD = 1.0 * 2 * Math.PI;
+            kSteerPIDConfig.kD = 0.0 * 2 * Math.PI;
             kSteerPIDConfig.kV = 0.1224 * 2 * Math.PI;
             kSteerPIDConfig.kS = 0.8;
         }

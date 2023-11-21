@@ -21,6 +21,12 @@ public class SwerveModule {
     private final SwerveModuleIOInputsAutoLogged inputs = new SwerveModuleIOInputsAutoLogged();
     private final int index;
 
+    public static final double KsteerKP = 6.000 * 2 * Math.PI;
+    public static final double KsteerKI = 0.0;
+    public static final double KsteerKD = 1.0 * 2 * Math.PI;
+    public static final double KsteerKV = 0.1224 * 2 * Math.PI;
+    public static final double KsteerKS = 0.8;
+
     private static final LoggedTunableNumber driveKP = new LoggedTunableNumber("Drive/Module/Drive/KP", Constants.DriveSubsystem.kDrivePIDConfig.kP);
     private static final LoggedTunableNumber driveKI = new LoggedTunableNumber("Drive/Module/Drive/KI", Constants.DriveSubsystem.kDrivePIDConfig.kI);
     private static final LoggedTunableNumber driveKD = new LoggedTunableNumber("Drive/Module/Drive/KD", Constants.DriveSubsystem.kDrivePIDConfig.kD);

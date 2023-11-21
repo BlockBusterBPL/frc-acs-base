@@ -106,12 +106,14 @@ public class RobotContainer {
             switch (Constants.getRobot()) {
                 case ROBOT_2023_CN2:
                     drive = new Drive(
-                            new GyroNavXIO(SPI.Port.kMXP),
+                            // new GyroNavXIO(SPI.Port.kMXP),
+                            new GyroIO() {},
                             new FalconSwerveIO(0, "canivore"),
                             new FalconSwerveIO(1, "canivore"),
                             new FalconSwerveIO(2, "canivore"),
                             new FalconSwerveIO(3, "canivore"));
-                    arm = new Arm(new ArmIOFalcons(), new GripperIOFalcon());
+                    // arm = new Arm(new ArmIOFalcons(), new GripperIOFalcon());
+                    arm = new Arm(new ArmIOSimV1(), new GripperIOSim());
                     leds = new LED(new LEDIOCANdle(8, "canivore"));
                     break;
                 case ROBOT_2023_CN1:

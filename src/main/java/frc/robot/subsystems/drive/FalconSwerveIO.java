@@ -15,6 +15,7 @@ import com.ctre.phoenixpro.hardware.CANcoder;
 import com.ctre.phoenixpro.hardware.TalonFX;
 import com.ctre.phoenixpro.signals.AbsoluteSensorRangeValue;
 import com.ctre.phoenixpro.signals.FeedbackSensorSourceValue;
+import com.ctre.phoenixpro.signals.InvertedValue;
 import com.ctre.phoenixpro.signals.NeutralModeValue;
 import com.ctre.phoenixpro.signals.SensorDirectionValue;
 
@@ -67,6 +68,7 @@ public class FalconSwerveIO implements SwerveModuleIO {
         mDriveConfig.Slot0.kV = 0.0;
         mDriveConfig.TorqueCurrent.PeakForwardTorqueCurrent = 40;
         mDriveConfig.TorqueCurrent.PeakReverseTorqueCurrent = -40;
+        mDriveConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         mDriveMotor.getConfigurator().apply(mDriveConfig);
         mDriveFeedbackHelper = new FalconFeedbackControlHelper(mDriveMotor, mDriveConfig.Slot0, null);
 
@@ -79,12 +81,13 @@ public class FalconSwerveIO implements SwerveModuleIO {
         mSteerConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
         mSteerConfig.Feedback.RotorToSensorRatio = 1/Constants.kSteerReduction;
         mSteerConfig.ClosedLoopGeneral.ContinuousWrap = true;
+        mSteerConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         mSteerMotor.getConfigurator().apply(mSteerConfig);
-        mSteerFeedbackHelper = new FalconFeedbackControlHelper(mSteerMotor, mSteerConfig.Slot0, mSteerConfig.MotionMagic);
+        mSteerFeedbackHelper = new FalconFeedbackControlHelper(mSteerMotor, Constants.DriveSubsystem.kSteerPIDConfig, Constants.DriveSubsystem.kSteerMagicConfig);
 
         mEncoder.getConfigurator().refresh(mEncoderConfig);
         mEncoderConfig.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Signed_PlusMinusHalf;
-        mEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
+        mEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
         mEncoder.getConfigurator().apply(mEncoderConfig);
 
         mDrivePosition = mDriveMotor.getPosition();
@@ -124,20 +127,22 @@ public class FalconSwerveIO implements SwerveModuleIO {
 
     @Override
     public void updateOutputs() {
-        boolean targetSpeedAboveThreshold = mDriveControl.Velocity >= Constants.kMinVelocityForFieldWeakening;
-        boolean currentSpeedAboveThreshold = convertRotationsToMeters(mDriveVelocity.getValue()) >= Constants.kMinVelocityForFieldWeakening;
-        mDriveControl.EnableFOC = !(targetSpeedAboveThreshold && currentSpeedAboveThreshold && Constants.kUseFieldWeakening);
+        // boolean targetSpeedAboveThreshold = mDriveControl.Velocity >= Constants.kMinVelocityForFieldWeakening;
+        // boolean currentSpeedAboveThreshold = convertRotationsToMeters(mDriveVelocity.getValue()) >= Constants.kMinVelocityForFieldWeakening;
+        // mDriveControl.EnableFOC = !(targetSpeedAboveThreshold && currentSpeedAboveThreshold && Constants.kUseFieldWeakening);
         
-        if (mUseOpenLoopDrive) {
-            mDriveMotor.setControl(mDriveControlOpenLoop);
-        } else {
+        // if (mUseOpenLoopDrive) {
+        //     mDriveMotor.setControl(mDriveControlOpenLoop);
+        // } else {
             mDriveMotor.setControl(mDriveControl);
-        }
-        if (mUseOpenLoopSteering) {
-            mSteerMotor.setControl(mSteerControlOpenLoop);
-        } else {
+        // }
+        // if (mUseOpenLoopSteering) {
+        //     mSteerMotor.setControl(mSteerControlOpenLoop);
+        // } else {
+            // mSteerControl.Position = 0;
             mSteerMotor.setControl(mSteerControl);
-        }
+            // mSteerMotor.setControl(new MotionMagicVoltage(0, true, 0, 0, false));
+        // }
     }
 
     private double convertRotationsToMeters(double rotations) {

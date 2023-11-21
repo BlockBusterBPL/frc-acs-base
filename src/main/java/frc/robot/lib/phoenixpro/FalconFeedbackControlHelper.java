@@ -21,9 +21,6 @@ public class FalconFeedbackControlHelper {
     public FalconFeedbackControlHelper(TalonFX motor, Slot0Configs defaultPID, MotionMagicConfigs defaultMagic) {
         m_configurator = motor.getConfigurator();
 
-        m_pidConfigs = new Slot0Configs();
-        m_magicConfigs = new MotionMagicConfigs();
-
         if (defaultPID == null) {
             defaultPID = new Slot0Configs();
         }
@@ -32,8 +29,11 @@ public class FalconFeedbackControlHelper {
             defaultMagic = new MotionMagicConfigs();
         }
 
+        m_pidConfigs = defaultPID;
+        m_magicConfigs = defaultMagic;
+
+        ensureDefaultConfigsApplied(m_pidConfigs, m_magicConfigs);
         refreshConfigs();
-        ensureDefaultConfigsApplied(defaultPID, defaultMagic);
     }
 
     public FalconFeedbackControlHelper(TalonFX motor) {
