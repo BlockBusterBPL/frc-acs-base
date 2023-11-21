@@ -51,7 +51,7 @@ import frc.robot.subsystems.leds.LED.WantedAction;
 public class Robot extends LoggedRobot {
     private static final String batteryNameFile = "/home/lvuser/battery-name.txt";
     private static final double canErrorTimeThreshold = 0.5; // Seconds to disable alert
-    private static final double lowBatteryVoltage = 10.0;
+    private static final double lowBatteryVoltage = 12.5;
     private static final double lowBatteryDisabledTime = 1.5;
     
     private RobotContainer robotContainer;

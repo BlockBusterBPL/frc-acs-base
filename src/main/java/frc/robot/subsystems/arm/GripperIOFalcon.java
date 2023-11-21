@@ -1,5 +1,9 @@
 package frc.robot.subsystems.arm;
 
+import com.ctre.phoenix.CANifier;
+import com.ctre.phoenix.CANifierConfiguration;
+import com.ctre.phoenix.CANifier.PinValues;
+import com.ctre.phoenixpro.StatusSignalValue;
 import com.ctre.phoenixpro.configs.TalonFXConfiguration;
 import com.ctre.phoenixpro.controls.DutyCycleOut;
 import com.ctre.phoenixpro.hardware.TalonFX;
@@ -11,6 +15,10 @@ public class GripperIOFalcon implements GripperIO {
     private final TalonFX mGripperMotor;
     private final TalonFXConfiguration mGripperConfig;
     private final DutyCycleOut mGripperControl;
+
+    private final StatusSignalValue<Double> mGripperSpeed;
+    private final StatusSignalValue<Double> mGripperSupplyCurrent;
+    private final StatusSignalValue<Double> mGripperMotorTemp;
 
     private boolean mConeMode;
 
@@ -26,7 +34,22 @@ public class GripperIOFalcon implements GripperIO {
 
         mGripperControl = new DutyCycleOut(0, true, false);
 
+        mGripperSpeed = mGripperMotor.getVelocity();
+        mGripperSupplyCurrent = mGripperMotor.getSupplyCurrent();
+        mGripperMotorTemp = mGripperMotor.getDeviceTemp();
+
         mConeMode = false;
+    }
+
+    @Override
+    public void updateInputs(GripperIOInputs inputs) {
+        mGripperSpeed.refresh();
+        mGripperSupplyCurrent.refresh();
+        mGripperMotorTemp.refresh();
+
+        inputs.motorSpeedRotationsPerSecond = mGripperSpeed.getValue();
+        inputs.suppliedCurrentAmps = mGripperSupplyCurrent.getValue();
+        inputs.hottestMotorTempCelsius = mGripperMotorTemp.getValue();
     }
 
     @Override

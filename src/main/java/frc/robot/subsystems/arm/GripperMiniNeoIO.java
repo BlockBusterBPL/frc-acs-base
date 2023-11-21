@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems.arm;
 
+import com.ctre.phoenix.CANifier;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMax.IdleMode;

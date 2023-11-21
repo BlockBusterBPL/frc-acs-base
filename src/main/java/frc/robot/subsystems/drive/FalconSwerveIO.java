@@ -44,8 +44,8 @@ public class FalconSwerveIO implements SwerveModuleIO {
     private final FalconFeedbackControlHelper mSteerFeedbackHelper;
 
     private final CANcoder mEncoder;
-
     private final CANcoderConfiguration mEncoderConfig = new CANcoderConfiguration();
+    private double mEncoderOffsetCache = 0.0;
 
     private StatusSignalValue<Double> mDrivePosition;
     private StatusSignalValue<Double> mDriveVelocity;
@@ -66,11 +66,12 @@ public class FalconSwerveIO implements SwerveModuleIO {
 
         mDriveConfig.Slot0.kP = 0.0;
         mDriveConfig.Slot0.kV = 0.0;
+        mDriveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         mDriveConfig.TorqueCurrent.PeakForwardTorqueCurrent = 40;
         mDriveConfig.TorqueCurrent.PeakReverseTorqueCurrent = -40;
         mDriveConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         mDriveMotor.getConfigurator().apply(mDriveConfig);
-        mDriveFeedbackHelper = new FalconFeedbackControlHelper(mDriveMotor, mDriveConfig.Slot0, null);
+        mDriveFeedbackHelper = new FalconFeedbackControlHelper(mDriveMotor, mDriveConfig.Slot0);
 
         mSteerControl = new MotionMagicVoltage(0, true, 0, 0, false);
         mSteerControlOpenLoop = new VoltageOut(0, true, false);
@@ -82,10 +83,12 @@ public class FalconSwerveIO implements SwerveModuleIO {
         mSteerConfig.Feedback.RotorToSensorRatio = 1/Constants.kSteerReduction;
         mSteerConfig.ClosedLoopGeneral.ContinuousWrap = true;
         mSteerConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        mSteerConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         mSteerMotor.getConfigurator().apply(mSteerConfig);
         mSteerFeedbackHelper = new FalconFeedbackControlHelper(mSteerMotor, Constants.DriveSubsystem.kSteerPIDConfig, Constants.DriveSubsystem.kSteerMagicConfig);
 
         mEncoder.getConfigurator().refresh(mEncoderConfig);
+        mEncoderOffsetCache = mEncoderConfig.MagnetSensor.MagnetOffset;
         mEncoderConfig.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Signed_PlusMinusHalf;
         mEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
         mEncoder.getConfigurator().apply(mEncoderConfig);
@@ -127,22 +130,20 @@ public class FalconSwerveIO implements SwerveModuleIO {
 
     @Override
     public void updateOutputs() {
-        // boolean targetSpeedAboveThreshold = mDriveControl.Velocity >= Constants.kMinVelocityForFieldWeakening;
-        // boolean currentSpeedAboveThreshold = convertRotationsToMeters(mDriveVelocity.getValue()) >= Constants.kMinVelocityForFieldWeakening;
-        // mDriveControl.EnableFOC = !(targetSpeedAboveThreshold && currentSpeedAboveThreshold && Constants.kUseFieldWeakening);
+        boolean targetSpeedAboveThreshold = mDriveControl.Velocity >= Constants.kMinVelocityForFieldWeakening;
+        boolean currentSpeedAboveThreshold = convertRotationsToMeters(mDriveVelocity.getValue()) >= Constants.kMinVelocityForFieldWeakening;
+        mDriveControl.EnableFOC = !(targetSpeedAboveThreshold && currentSpeedAboveThreshold && Constants.kUseFieldWeakening);
         
-        // if (mUseOpenLoopDrive) {
-        //     mDriveMotor.setControl(mDriveControlOpenLoop);
-        // } else {
+        if (mUseOpenLoopDrive) {
+            mDriveMotor.setControl(mDriveControlOpenLoop);
+        } else {
             mDriveMotor.setControl(mDriveControl);
-        // }
-        // if (mUseOpenLoopSteering) {
-        //     mSteerMotor.setControl(mSteerControlOpenLoop);
-        // } else {
-            // mSteerControl.Position = 0;
+        }
+        if (mUseOpenLoopSteering) {
+            mSteerMotor.setControl(mSteerControlOpenLoop);
+        } else {
             mSteerMotor.setControl(mSteerControl);
-            // mSteerMotor.setControl(new MotionMagicVoltage(0, true, 0, 0, false));
-        // }
+        }
     }
 
     private double convertRotationsToMeters(double rotations) {
@@ -261,20 +262,23 @@ public class FalconSwerveIO implements SwerveModuleIO {
             c.MagnetSensor.MagnetOffset = -zeroRotations;
             return c;
         });
+        refreshEncoderOffset();
     }
 
     @Override
     public double getEncoderOffset() {
-        return CANcoderLiveConfigHelper.getValueFromConfig(mEncoder, (c) -> {
+        return mEncoderOffsetCache;
+    }
+
+    private void refreshEncoderOffset() {
+        mEncoderOffsetCache = CANcoderLiveConfigHelper.getValueFromConfig(mEncoder, (c) -> {
             return c.MagnetSensor.MagnetOffset;
         });
     }
 
     @Override
     public double getEncoderRawPosition() {
-        mEncoder.getConfigurator().refresh(mEncoderConfig);
-        var currentOffset = mEncoderConfig.MagnetSensor.MagnetOffset;
-        return mEncoder.getAbsolutePosition().getValue() - currentOffset;
+        return mEncoder.getAbsolutePosition().getValue() - mEncoderOffsetCache;
     }
 
     @Override

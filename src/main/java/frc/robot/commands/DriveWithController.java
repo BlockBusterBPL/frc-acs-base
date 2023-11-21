@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.Constants;
 import frc.robot.lib.Utility;
+import frc.robot.lib.dashboard.LoggedTunableBoolean;
 import frc.robot.lib.drive.ControllerDriveInputs;
 import frc.robot.lib.drive.SwerveHeadingController;
 import frc.robot.lib.drive.SwerveHeadingController.HeadingControllerState;
@@ -20,12 +21,16 @@ import frc.robot.lib.util.Util;
 import frc.robot.subsystems.drive.Drive;
 
 public class DriveWithController extends CommandBase {
+    private static final LoggedTunableBoolean mUseOpenLoopDrive = new LoggedTunableBoolean("/Drive/UseOpenLoop", Constants.kDriveUseOpenLoop);
+
     private final Drive drive;
     private final Supplier<ControllerDriveInputs> driveInputSupplier;
     private final Supplier<Boolean> slowModeSupplier;
     private final Supplier<Boolean> disableFieldOrient;
     private final Supplier<Boolean> snapClosestCardinal;
     private final Supplier<Boolean> snapOppositeCardinal;
+
+    private boolean mUseOpenLoop = false;
 
     private boolean snapOppositeFirstRun = true;
     private double snapOppositeReferenceAngle = 0.0;
@@ -78,6 +83,10 @@ public class DriveWithController extends CommandBase {
     // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
+        if (mUseOpenLoopDrive.hasChanged(hashCode())) {
+            mUseOpenLoop = mUseOpenLoopDrive.get();
+        }
+
         var linearSpeedFactor = linearSpeedLimitChooser.getSelected();
         var angularSpeedFactor = angularSpeedLimitChooser.getSelected();
         if (slowModeSupplier.get()) {
@@ -131,13 +140,17 @@ public class DriveWithController extends CommandBase {
             controllerInputs.setRotation(mSwerveHeadingController.update(drive.getPose().getRotation().getDegrees()));
         }
 
-        var speedsFromController = controllerInputs.getVelocityFieldOriented(
+        var speeds = controllerInputs.getVelocityFieldOriented(
             Constants.kMaxVelocityMetersPerSecond, 
             Constants.kMaxAngularVelocityRadiansPerSecond, 
             ( disableFieldOrient.get() ? new Rotation2d() : drive.getPose().getRotation() )
         );
-
-        drive.setVelocityClosedLoop(speedsFromController);
+        
+        if (mUseOpenLoop) {
+            drive.setVelocityOpenLoop(speeds);
+        } else {
+            drive.setVelocityClosedLoop(speeds);
+        }
     }
 
     // Called once the command ends or is interrupted.

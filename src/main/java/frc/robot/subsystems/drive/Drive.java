@@ -49,8 +49,8 @@ public class Drive extends SubsystemBase {
         VELOCITY_CONTROL("CL Velocity"),
         PATH_FOLLOWING("CL Pathfinding"),
         AUTO_ALIGN("CL Auto Align"),
-        AUTO_ALIGN_Y_THETA("CL Auto Align 2"),
-        X_MODE("OL X Mode");
+        AUTO_ALIGN_Y_THETA("CL Auto Align Y Theta"),
+        X_MODE("CL X Mode");
 
         public String title;
 
@@ -231,12 +231,15 @@ public class Drive extends SubsystemBase {
                 mLastSetpoint = generatedSetpoint;
                 setpointStates = generatedSetpoint.mModuleStates;
             }
-            
 
             // Send setpoints to modules
             SwerveModuleState[] optimizedStates = new SwerveModuleState[4];
             for (int i = 0; i < 4; i++) {
-                optimizedStates[i] = mModules[i].setStateClosedLoop(setpointStates[i]);
+                if (mControlState == DriveControlState.OPEN_LOOP) {
+                    optimizedStates[i] = mModules[i].setStateOpenLoop(setpointStates[i]);
+                } else {
+                    optimizedStates[i] = mModules[i].setStateClosedLoop(setpointStates[i]);
+                }
             }
 
             RobotStateTracker.getInstance().setCurrentRobotPose(mLastRobotPose);
@@ -248,6 +251,10 @@ public class Drive extends SubsystemBase {
             // Log setpoint states
             Logger.getInstance().recordOutput("SwerveStates/Setpoints", setpointStates);
             Logger.getInstance().recordOutput("SwerveStates/SetpointsOptimized", optimizedStates);
+
+            Logger.getInstance().recordOutput("Drive/ControlState", mControlState.title);
+            Logger.getInstance().recordOutput("Drive/KinematicLimits", getKinematicLimitsTitle());
+            Logger.getInstance().recordOutput("Drive/BrakeMode", mIsBrakeMode);
         }
 
         // Log measured states

@@ -24,6 +24,8 @@ public class LocalizerIOLL3 implements LocalizerIO {
     public LocalizerIOLL3() {
         kLLLatencyTopic = NetworkTableInstance.getDefault().getDoubleTopic("limelight/tl");
         kLLLatencySub = kLLLatencyTopic.subscribe(0);
+
+        // TODO: Change limelight to use pinhole camera model
     }
 
     @Override

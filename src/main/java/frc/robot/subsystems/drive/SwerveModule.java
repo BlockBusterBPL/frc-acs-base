@@ -13,19 +13,13 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 
 import frc.robot.Constants;
-import frc.robot.lib.util.LoggedTunableNumber;
+import frc.robot.lib.dashboard.LoggedTunableNumber;
 
 /** Add your docs here. */
 public class SwerveModule {
     private final SwerveModuleIO io;
     private final SwerveModuleIOInputsAutoLogged inputs = new SwerveModuleIOInputsAutoLogged();
     private final int index;
-
-    public static final double KsteerKP = 6.000 * 2 * Math.PI;
-    public static final double KsteerKI = 0.0;
-    public static final double KsteerKD = 1.0 * 2 * Math.PI;
-    public static final double KsteerKV = 0.1224 * 2 * Math.PI;
-    public static final double KsteerKS = 0.8;
 
     private static final LoggedTunableNumber driveKP = new LoggedTunableNumber("Drive/Module/Drive/KP", Constants.DriveSubsystem.kDrivePIDConfig.kP);
     private static final LoggedTunableNumber driveKI = new LoggedTunableNumber("Drive/Module/Drive/KI", Constants.DriveSubsystem.kDrivePIDConfig.kI);
@@ -140,7 +134,7 @@ public class SwerveModule {
     }
 
     public SwerveModuleState setStateOpenLoop(SwerveModuleState state) {
-        io.setDriveThrottleOpenLoop(state.speedMetersPerSecond);
+        io.setDriveThrottleOpenLoop(state.speedMetersPerSecond / Constants.kMaxVelocityMetersPerSecond);
         setSteerTarget(state.angle);
         return state;
     }

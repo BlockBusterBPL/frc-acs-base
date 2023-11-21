@@ -43,7 +43,7 @@ public class HeadingControlPlanner {
             }
 
             profile_follower_.setGoalAndConstraints(yaw_goal_.get(), Constants.kHeadingMotionProfileConstraints);
-            double new_yaw_rate = profile_follower_.update(new MotionState(timestamp, current_rotation, current_vel.dtheta, /*acc=*/0.0), timestamp + Robot.defaultPeriodSecs);
+            double new_yaw_rate = profile_follower_.update(new MotionState(timestamp, current_rotation, current_vel.dtheta, /*acc=*/0.0), timestamp + Constants.loopPeriodSecs);
 
             // Return a new ChassisSpeeds that injects the controlled yaw rate
             return new ChassisSpeeds(desired.vxMetersPerSecond, desired.vyMetersPerSecond, new_yaw_rate);

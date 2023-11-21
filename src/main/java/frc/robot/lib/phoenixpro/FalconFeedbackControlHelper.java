@@ -36,6 +36,10 @@ public class FalconFeedbackControlHelper {
         refreshConfigs();
     }
 
+    public FalconFeedbackControlHelper(TalonFX motor, Slot0Configs defaultPID) {
+        this(motor, defaultPID, null);
+    }
+
     public FalconFeedbackControlHelper(TalonFX motor) {
         m_configurator = motor.getConfigurator();
         

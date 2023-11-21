@@ -11,9 +11,9 @@ import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
 /** A concretely typed wrapper class for dasboard widgets represented by a sendable object. */
-public class WidgetSendable<T extends Sendable> {
+public class SendableWidget<T extends Sendable> {
 
-    private static final Collection<WidgetSendable<?>> widgetsList = new ArrayList<>();
+    private static final Collection<SendableWidget<?>> widgetsList = new ArrayList<>();
 
     /**
      * Create a new widget using the supplied sendable object.
@@ -22,7 +22,7 @@ public class WidgetSendable<T extends Sendable> {
      * @param sendable The sendable object to display.
      * @param config The widget configuration.
      */
-    public WidgetSendable(String tab, String title, T sendable, WidgetConfig config) {
+    public SendableWidget(String tab, String title, T sendable, WidgetConfig config) {
         if (config.getUseBuiltInWidgets()) {
             Shuffleboard.getTab(tab).add(title, sendable)
                 .withPosition(config.getColumn(), config.getRow())
@@ -40,7 +40,7 @@ public class WidgetSendable<T extends Sendable> {
         widgetsList.add(this);
     }
 
-    public static Collection<WidgetSendable<?>> getWidgetslist() {
+    public static Collection<SendableWidget<?>> getWidgetslist() {
         return widgetsList;
     }
 

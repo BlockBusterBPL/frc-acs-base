@@ -82,13 +82,13 @@ public class AutoAlignMotionPlanner {
 
         double xOutput = mXController.update(
                new MotionState(timestamp, currentPose.getTranslation().getX(), current_vel_odom_frame.getX(), 0.0),
-                timestamp + Robot.defaultPeriodSecs);
+                timestamp + Constants.loopPeriodSecs);
         double yOutput = mYController.update(
                new MotionState(timestamp, currentPose.getTranslation().getY(), current_vel_odom_frame.getY(), 0.0),
-                timestamp + Robot.defaultPeriodSecs);
+                timestamp + Constants.loopPeriodSecs);
         double thetaOutput = mThetaController.update(
                 new MotionState(timestamp, currentRotation, current_vel.dtheta, 0.0),
-                timestamp + Robot.defaultPeriodSecs);
+                timestamp + Constants.loopPeriodSecs);
 
         ChassisSpeeds setpoint;
 

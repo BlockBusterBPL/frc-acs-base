@@ -5,32 +5,33 @@
 // license that can be found in the LICENSE file at
 // the root directory of this project.
 
-package frc.robot.lib.util;
+package frc.robot.lib.dashboard;
 
 import java.util.HashMap;
 import java.util.Map;
 import frc.robot.Constants;
-import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
+
+import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 
 /**
- * Class for a tunable number. Gets value from dashboard in tuning mode, returns default if not or
+ * Class for a tunable boolean. Gets value from dashboard in tuning mode, returns default if not or
  * value not in dashboard.
  */
-public class LoggedTunableNumber {
-  private static final String tableKey = "TunableNumbers";
+public class LoggedTunableBoolean {
+  private static final String tableKey = "TunableBooleans";
 
   private final String key;
   private boolean hasDefault = false;
-  private double defaultValue;
-  private LoggedDashboardNumber dashboardNumber;
-  private Map<Integer, Double> lastHasChangedValues = new HashMap<>();
+  private boolean defaultValue;
+  private LoggedDashboardBoolean dashboardBoolean;
+  private Map<Integer, Boolean> lastHasChangedValues = new HashMap<>();
 
   /**
    * Create a new LoggedTunableNumber
    *
    * @param dashboardKey Key on dashboard
    */
-  public LoggedTunableNumber(String dashboardKey) {
+  public LoggedTunableBoolean(String dashboardKey) {
     this.key = tableKey + "/" + dashboardKey;
   }
 
@@ -40,7 +41,7 @@ public class LoggedTunableNumber {
    * @param dashboardKey Key on dashboard
    * @param defaultValue Default value
    */
-  public LoggedTunableNumber(String dashboardKey, double defaultValue) {
+  public LoggedTunableBoolean(String dashboardKey, boolean defaultValue) {
     this(dashboardKey);
     initDefault(defaultValue);
   }
@@ -50,12 +51,12 @@ public class LoggedTunableNumber {
    *
    * @param defaultValue The default value
    */
-  public void initDefault(double defaultValue) {
+  public void initDefault(boolean defaultValue) {
     if (!hasDefault) {
       hasDefault = true;
       this.defaultValue = defaultValue;
       if (Constants.tuningMode) {
-        dashboardNumber = new LoggedDashboardNumber(key, defaultValue);
+        dashboardBoolean = new LoggedDashboardBoolean(key, defaultValue);
       }
     }
   }
@@ -65,16 +66,16 @@ public class LoggedTunableNumber {
    *
    * @return The current value
    */
-  public double get() {
+  public boolean get() {
     if (!hasDefault) {
-      return 0.0;
+      return false;
     } else {
-      return Constants.tuningMode ? dashboardNumber.get() : defaultValue;
+      return Constants.tuningMode ? dashboardBoolean.get() : defaultValue;
     }
   }
 
   /**
-   * Checks whether the number has changed since our last check
+   * Checks whether the boolean has changed since our last check
    *
    * @param id Unique identifier for the caller to avoid conflicts when shared between multiple
    *     objects. Recommended approach is to pass the result of "hashCode()"
@@ -82,8 +83,8 @@ public class LoggedTunableNumber {
    *     otherwise.
    */
   public boolean hasChanged(int id) {
-    double currentValue = get();
-    Double lastValue = lastHasChangedValues.get(id);
+    boolean currentValue = get();
+    Boolean lastValue = lastHasChangedValues.get(id);
     if (lastValue == null || currentValue != lastValue) {
       lastHasChangedValues.put(id, currentValue);
       return true;

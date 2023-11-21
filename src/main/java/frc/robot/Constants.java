@@ -26,7 +26,7 @@ import com.ctre.phoenixpro.configs.MotionMagicConfigs;
 import com.ctre.phoenixpro.configs.Slot0Configs;
 
 public final class Constants {
-    private static final RobotType robot = RobotType.ROBOT_2023_CN2;
+    private static final RobotType robot = RobotType.ROBOT_SIMBOT;
     public static final double loopPeriodSecs = 0.02;
     public static final boolean tuningMode = true;
     
@@ -117,6 +117,8 @@ public final class Constants {
     
     public static final double kMaxVelocityMetersPerSecond = 5.05; //Calibrated 3/12 on Comp Bot
     public static final double kMaxAccelerationMetersPerSecondSquared = 4.4;
+
+    public static final boolean kDriveUseOpenLoop = false;
 
     // switch from field-oriented commutation to trapezoidal commutation as an emulated field weakening mode
     public static final boolean kUseFieldWeakening = true;

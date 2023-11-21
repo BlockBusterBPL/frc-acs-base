@@ -55,7 +55,6 @@ public class SimSwerveIO implements SwerveModuleIO {
     }
 
     public void setDriveVoltage(double volts) {
-        // volts = MathUtil.clamp(volts, -12.0, 12.0);
         driveSim.setInputVoltage(volts);
     }
 
