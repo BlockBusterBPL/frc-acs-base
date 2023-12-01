@@ -36,6 +36,7 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.FalconSwerveIO;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroNavXIO;
+import frc.robot.subsystems.drive.GyroPigeon5IO;
 import frc.robot.subsystems.drive.SimSwerveIO;
 import frc.robot.subsystems.drive.SwerveModuleIO;
 import frc.robot.subsystems.leds.LED;
@@ -107,7 +108,7 @@ public class RobotContainer {
                 case ROBOT_2023_CN2:
                     drive = new Drive(
                             // new GyroNavXIO(SPI.Port.kMXP),
-                            new GyroIO() {},
+                            new GyroPigeon5IO(9, "canivore"),
                             new FalconSwerveIO(0, "canivore"),
                             new FalconSwerveIO(1, "canivore"),
                             new FalconSwerveIO(2, "canivore"),
