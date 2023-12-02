@@ -12,7 +12,7 @@ import com.ctre.phoenixpro.hardware.Pigeon2;
 
 /** Add your docs here. */
 public class GyroPigeonIO implements GyroIO {
-    // private final Pigeon2 gyro;
+    private final Pigeon2 gyro;
     private final Pigeon2Configuration gyroConfig;
 
     private final StatusSignalValue<Double> yawSignal;
@@ -30,10 +30,10 @@ public class GyroPigeonIO implements GyroIO {
 
     private final ArrayList<StatusSignalValue<?>> statusSignals;
 
-    public GyroPigeonIO(Pigeon2 gyro) {
-        // this.gyro = gyro;
+    public GyroPigeonIO(int id, String bus) {
+        this.gyro = new Pigeon2(id, bus);
         gyroConfig = new Pigeon2Configuration();
-        
+
         gyro.getConfigurator().apply(gyroConfig);
 
         yawSignal = gyro.getYaw();

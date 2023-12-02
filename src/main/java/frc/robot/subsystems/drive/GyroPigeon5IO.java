@@ -1,6 +1,5 @@
 package frc.robot.subsystems.drive;
 
-import com.ctre.phoenix.ErrorCode;
 import com.ctre.phoenix.sensors.Pigeon2;
 
 public class GyroPigeon5IO implements GyroIO {
@@ -8,6 +7,7 @@ public class GyroPigeon5IO implements GyroIO {
 
     public GyroPigeon5IO(int id, String bus) {
         mPigeon = new Pigeon2(id, bus);
+        mPigeon.setYaw(0, 50);
     }
 
     @Override
