@@ -120,7 +120,7 @@ public class SwerveHeadingController {
 //                var kp = interp * (Constants.kMaintainSwerveHeadingKpHighVelocity - Constants.kMaintainSwerveHeadingKpLowVelocity) + Constants.kMaintainSwerveHeadingKpLowVelocity;
 //                var ki = interp * (Constants.kMaintainSwerveHeadingKiHighVelocity - Constants.kMaintainSwerveHeadingKiLowVelocity) + Constants.kMaintainSwerveHeadingKiLowVelocity;
 //                var kd = interp * (Constants.kMaintainSwerveHeadingKdHighVelocity - Constants.kMaintainSwerveHeadingKdLowVelocity) + Constants.kMaintainSwerveHeadingKdLowVelocity;
-                mPIDFController.setPID(Constants.kMaintainSwerveHeadingKpHighVelocity, 0, 0);
+                mPIDFController.setPID(Constants.kMaintainSwerveHeadingKpHighVelocity, 0, Constants.kMaintainSwerveHeadingKdHighVelocity);
                 // mPIDFController.setOutputRange(-1.0, 1.0);
                 break;
             case POLAR_MAINTAIN:

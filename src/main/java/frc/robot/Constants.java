@@ -250,9 +250,9 @@ public final class Constants {
     public static final double kSnapSwerveHeadingKi = 0.0;
     public static final double kSnapSwerveHeadingKd = 0.0075;
 
-    public static final double kMaintainSwerveHeadingKpHighVelocity = 0.0225;
+    public static final double kMaintainSwerveHeadingKpHighVelocity = 0.0125; //0.0225
     public static final double kMaintainSwerveHeadingKiHighVelocity = 0.0;
-    public static final double kMaintainSwerveHeadingKdHighVelocity = 0.003;
+    public static final double kMaintainSwerveHeadingKdHighVelocity = 0.001; // 0.003
 
     public static final double kMaintainSwerveHeadingKpLowVelocity = 0.02;  // 0.01;
     public static final double kMaintainSwerveHeadingKiLowVelocity = 0.0;
@@ -300,7 +300,7 @@ public final class Constants {
 
         public static final Slot0Configs kSteerPIDConfig = new Slot0Configs();
         static {
-            kSteerPIDConfig.kP = 2.000 * 2 * Math.PI;
+            kSteerPIDConfig.kP = 3.000 * 2 * Math.PI;
             kSteerPIDConfig.kI = 0.0;
             kSteerPIDConfig.kD = 0.0 * 2 * Math.PI;
             kSteerPIDConfig.kV = 0.1224 * 2 * Math.PI;
